@@ -1,4 +1,4 @@
-import { View, Pressable, StyleSheet } from 'react-native';
+import { View, Pressable, StyleSheet, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { Text, Card, Badge } from '@/components/ui';
@@ -36,13 +36,21 @@ export function DoseCard({ dose, onTake, onSkip }: DoseCardProps) {
         <Text variant="bodyStrong" color={taken ? 'textFaint' : 'primary'}>
           {dose.time}
         </Text>
-        <View style={[styles.iconDot, taken && styles.iconDotDone]}>
-          <Ionicons
-            name={formIcon[dose.form ?? ''] ?? 'medical'}
-            size={16}
-            color={taken ? colors.textFaint : colors.primary}
+        {dose.imageUri ? (
+          <Image
+            source={{ uri: dose.imageUri }}
+            style={[styles.photoDot, taken && styles.cardDone]}
+            resizeMode="cover"
           />
-        </View>
+        ) : (
+          <View style={[styles.iconDot, taken && styles.iconDotDone]}>
+            <Ionicons
+              name={formIcon[dose.form ?? ''] ?? 'medical'}
+              size={16}
+              color={taken ? colors.textFaint : colors.primary}
+            />
+          </View>
+        )}
       </View>
 
       <View style={styles.info}>
@@ -98,6 +106,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   iconDotDone: { backgroundColor: colors.canvas },
+  photoDot: { width: 32, height: 32, borderRadius: radius.pill },
   info: { flex: 1, gap: 2 },
   struck: { textDecorationLine: 'line-through', color: colors.textFaint },
   tags: { flexDirection: 'row', gap: spacing.xs, marginTop: 4, flexWrap: 'wrap' },

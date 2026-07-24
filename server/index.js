@@ -62,7 +62,7 @@ app.get(['/', '/dashboard'], (_req, res) => {
 
 // ---- Prompt -----------------------------------------------------------------
 
-const SYSTEM_PROMPT = `Bạn là trợ lý y tế chuyên đọc ĐƠN THUỐC (tiếng Việt hoặc tiếng Anh) từ ảnh chụp.
+const SYSTEM_PROMPT = (lang) => `Bạn là trợ lý y tế chuyên đọc ĐƠN THUỐC (tiếng Việt hoặc tiếng Anh) từ ảnh chụp.
 
 Nhiệm vụ:
 1. Đọc (transcribe) toàn bộ chữ trong ảnh vào trường rawText, giữ nguyên như thấy.
@@ -84,6 +84,9 @@ Quy tắc:
 - durationDays: số ngày dùng (số nguyên) nếu có.
 - quantityTotal: tổng số lượng đã kê/mua (số) nếu có.
 - notes: lưu ý khác cho riêng thuốc đó.
+- uses: công dụng chính của thuốc — 1–2 câu NGẮN, dễ hiểu cho bệnh nhân phổ thông, dựa trên kiến thức dược về hoạt chất trong tên thuốc (vd "Giảm đau, hạ sốt." cho Paracetamol). KHÔNG chẩn đoán. Nếu không nhận ra thuốc, để trống — KHÔNG đoán bừa.${
+  lang === 'en' ? ' Viết uses bằng TIẾNG ANH.' : ' Viết uses bằng TIẾNG VIỆT.'
+}
 - doctorName, clinic, issuedDate (YYYY-MM-DD): điền nếu đọc được, để trống nếu không.
 - Nếu ảnh không phải đơn thuốc hoặc không đọc được chữ nào: trả medications = [] và rawText mô tả ngắn những gì thấy.
 
@@ -129,6 +132,10 @@ const TOOLS = [
                 durationDays: { type: 'integer' },
                 quantityTotal: { type: 'number' },
                 notes: { type: 'string' },
+                uses: {
+                  type: 'string',
+                  description: 'Công dụng chính của thuốc, 1–2 câu ngắn dễ hiểu; để trống nếu không nhận ra thuốc',
+                },
               },
               required: ['name'],
             },
@@ -228,10 +235,11 @@ app.post('/api/explain-medication', async (req, res) => {
 });
 
 app.post('/api/scan-prescription', async (req, res) => {
-  const { imageBase64, mediaType } = req.body || {};
+  const { imageBase64, mediaType, lang } = req.body || {};
   if (!imageBase64 || typeof imageBase64 !== 'string') {
     return res.status(400).json({ ok: false, error: 'missing_image' });
   }
+  const language = lang === 'en' ? 'en' : 'vi';
 
   const dataUrl = `data:${mediaType || 'image/jpeg'};base64,${imageBase64}`;
   const imageKb = Math.round((imageBase64.length * 0.75) / 1024);
@@ -246,7 +254,7 @@ app.post('/api/scan-prescription', async (req, res) => {
       tools: TOOLS,
       tool_choice: { type: 'function', function: { name: 'extract_prescription' } },
       messages: [
-        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'system', content: SYSTEM_PROMPT(language) },
         {
           role: 'user',
           content: [
@@ -287,6 +295,18 @@ app.post('/api/scan-prescription', async (req, res) => {
     console.error('[scan error]', err?.status, err?.message);
     return res.status(500).json({ ok: false, error: 'server_error' });
   }
+});
+
+// Catch-all error handler — logs full detail server-side, returns a generic
+// message so stack traces / internals never reach the client.
+// eslint-disable-next-line no-unused-vars
+app.use((err, _req, res, _next) => {
+  if (err?.type === 'entity.too.large') {
+    return res.status(413).json({ ok: false, error: 'payload_too_large' });
+  }
+  console.error('[unhandled]', err?.message);
+  if (res.headersSent) return;
+  return res.status(500).json({ ok: false, error: 'server_error' });
 });
 
 app.listen(PORT, '0.0.0.0', () => {

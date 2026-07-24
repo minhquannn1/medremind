@@ -19,6 +19,8 @@ export interface MedicationDraft {
   durationDays: string;
   quantityTotal: string;
   notes: string;
+  /** AI "what this medicine is for" from the scan, shown on review and saved. */
+  uses: string;
   times: string[]; // HH:mm
 }
 
@@ -39,6 +41,7 @@ export function emptyMedicationDraft(overrides: Partial<MedicationDraft> = {}): 
     durationDays: '',
     quantityTotal: '',
     notes: '',
+    uses: '',
     times: ['08:00'],
     ...overrides,
   };

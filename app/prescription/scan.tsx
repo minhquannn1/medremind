@@ -10,9 +10,11 @@ import { Screen, Header, Text, Button } from '@/components/ui';
 import { colors, radius, spacing } from '@/theme';
 import { scanPrescriptionImage, type ScannedMedication } from '@/features/scan/aiScanner';
 import type { MedicationDraft } from '@/features/prescription/draft';
+import { useAppStore } from '@/store/appStore';
 
 export default function ScanPrescription() {
   const { t } = useTranslation();
+  const { language } = useAppStore();
   const router = useRouter();
   const cameraRef = useRef<CameraView>(null);
   const [permission, requestPermission] = useCameraPermissions();
@@ -27,6 +29,7 @@ export default function ScanPrescription() {
     durationDays: m.durationDays != null ? String(m.durationDays) : '',
     quantityTotal: m.quantityTotal != null ? String(m.quantityTotal) : '',
     notes: m.notes ?? '',
+    uses: m.uses ?? '',
     times: m.times?.length ? m.times : ['08:00'],
   });
 
@@ -37,7 +40,7 @@ export default function ScanPrescription() {
     }
     setProcessing(true);
     try {
-      const result = await scanPrescriptionImage(base64, 'image/jpeg');
+      const result = await scanPrescriptionImage(base64, 'image/jpeg', language);
 
       if (!result.ok) {
         const msg =

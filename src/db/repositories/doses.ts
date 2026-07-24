@@ -14,6 +14,7 @@ export interface TodayDose {
   dosage: string | null;
   relationToMeal: string | null;
   takeWith: string | null;
+  imageUri: string | null;
   scheduledAt: string;
   time: string; // HH:mm
   status: DoseStatus;
@@ -103,6 +104,7 @@ export async function getDosesForDay(patientId: number, day = dayjs()): Promise<
       dosage: medications.dosage,
       relationToMeal: medications.relationToMeal,
       takeWith: medications.takeWith,
+      imageUri: medications.imageUri,
     })
     .from(doseLogs)
     .innerJoin(medications, eq(doseLogs.medicationId, medications.id))
@@ -117,6 +119,7 @@ export async function getDosesForDay(patientId: number, day = dayjs()): Promise<
       dosage: r.dosage,
       relationToMeal: r.relationToMeal,
       takeWith: r.takeWith,
+      imageUri: r.imageUri,
       scheduledAt: r.scheduledAt,
       time: dayjs(r.scheduledAt).format('HH:mm'),
       status: r.status as DoseStatus,

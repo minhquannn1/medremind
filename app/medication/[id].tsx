@@ -1,8 +1,9 @@
 import { useCallback, useState } from 'react';
-import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, Image, Pressable, Alert } from 'react-native';
 import { useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 
 import { Screen, Header, Text, Card, Badge, TimeField, Divider, Button } from '@/components/ui';
 import { colors, radius, spacing } from '@/theme';
@@ -12,6 +13,7 @@ import {
   listScheduleTimes,
   updateScheduleTime,
   updateMedicationExplanation,
+  updateMedicationImage,
 } from '@/db/repositories/prescriptions';
 import { explainMedication } from '@/features/medication/explainMedication';
 import { syncReminders } from '@/features/notifications/scheduler';
@@ -59,6 +61,37 @@ export default function MedicationDetail() {
     }, [load]),
   );
 
+  const savePhoto = async (uri: string) => {
+    await updateMedicationImage(medicationId, uri);
+    setMed((prev) => (prev ? { ...prev, imageUri: uri } : prev));
+    if (activePatientId) queueBackup(activePatientId);
+  };
+
+  const pickPhoto = () => {
+    Alert.alert(t('medication.photo'), undefined, [
+      {
+        text: t('scan.title'),
+        onPress: async () => {
+          const perm = await ImagePicker.requestCameraPermissionsAsync();
+          if (!perm.granted) return;
+          const result = await ImagePicker.launchCameraAsync({ quality: 0.5 });
+          if (!result.canceled && result.assets[0]) await savePhoto(result.assets[0].uri);
+        },
+      },
+      {
+        text: t('scan.fromGallery'),
+        onPress: async () => {
+          const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ['images'],
+            quality: 0.5,
+          });
+          if (!result.canceled && result.assets[0]) await savePhoto(result.assets[0].uri);
+        },
+      },
+      { text: t('common.cancel'), style: 'cancel' },
+    ]);
+  };
+
   const onChangeTime = async (scheduleId: number, hhmm: string) => {
     await updateScheduleTime(scheduleId, hhmm);
     setTimes((prev) => prev.map((tm) => (tm.id === scheduleId ? { ...tm, time: hhmm } : tm)));
@@ -94,12 +127,29 @@ export default function MedicationDetail() {
       <Header title={med.name} />
 
       <Card style={styles.hero}>
-        <View style={styles.heroIcon}>
-          <Ionicons name="medical" size={28} color={colors.primary} />
-        </View>
+        {med.imageUri ? (
+          <Pressable onPress={pickPhoto} style={styles.heroPhotoWrap}>
+            <Image source={{ uri: med.imageUri }} style={styles.heroPhoto} resizeMode="cover" />
+            <View style={styles.photoEdit}>
+              <Ionicons name="camera" size={14} color={colors.textInverse} />
+            </View>
+          </Pressable>
+        ) : (
+          <View style={styles.heroIcon}>
+            <Ionicons name="medical" size={28} color={colors.primary} />
+          </View>
+        )}
         <Text variant="heading" center>
           {med.name}
         </Text>
+        {!med.imageUri && (
+          <Pressable onPress={pickPhoto} style={styles.addPhotoLink} hitSlop={6}>
+            <Ionicons name="camera-outline" size={16} color={colors.primary} />
+            <Text variant="label" color="primary">
+              {t('medication.addPhoto')}
+            </Text>
+          </Pressable>
+        )}
         {med.quantityRemaining != null && (
           <Badge
             label={`${t('medication.quantityRemaining')}: ${med.quantityRemaining}${med.quantityTotal != null ? ` / ${med.quantityTotal}` : ''}`}
@@ -214,6 +264,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  heroPhotoWrap: { borderRadius: radius.lg, overflow: 'hidden' },
+  heroPhoto: { width: 120, height: 120, borderRadius: radius.lg },
+  photoEdit: {
+    position: 'absolute',
+    right: spacing.xs,
+    bottom: spacing.xs,
+    width: 26,
+    height: 26,
+    borderRadius: radius.pill,
+    backgroundColor: colors.overlay,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addPhotoLink: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   sectionTitle: { marginTop: spacing.lg, marginBottom: spacing.xs },
   hint: { marginBottom: spacing.md },
   flex: { flex: 1 },

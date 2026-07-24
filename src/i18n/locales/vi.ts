@@ -140,6 +140,8 @@ export const vi = {
     explaining: 'Đang tạo giải thích…',
     explainError: 'Không tạo được giải thích. Kiểm tra kết nối và thử lại.',
     explainRetry: 'Thử lại',
+    photo: 'Ảnh thuốc',
+    addPhoto: 'Thêm ảnh thuốc',
   },
   schedule: {
     title: 'Lịch uống',

@@ -173,6 +173,8 @@ export async function importPatientData(
         notes: m.notes,
         explanation: m.explanation,
         explanationLang: m.explanationLang,
+        // Medicine photos are device-local files and don't survive a device change.
+        imageUri: null,
         createdAt: m.createdAt,
       })
       .returning({ id: medications.id });

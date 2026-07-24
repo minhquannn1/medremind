@@ -1,4 +1,4 @@
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Image } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
 import { Text, Card, Badge } from '@/components/ui';
@@ -36,13 +36,17 @@ export function MedicationRow({
   return (
     <Card style={styles.card} onPress={onPress}>
       <View style={styles.head}>
-        <View style={styles.icon}>
-          <Ionicons
-            name={formIcon[medication.form ?? ''] ?? 'medical'}
-            size={20}
-            color={colors.primary}
-          />
-        </View>
+        {medication.imageUri ? (
+          <Image source={{ uri: medication.imageUri }} style={styles.photo} resizeMode="cover" />
+        ) : (
+          <View style={styles.icon}>
+            <Ionicons
+              name={formIcon[medication.form ?? ''] ?? 'medical'}
+              size={20}
+              color={colors.primary}
+            />
+          </View>
+        )}
         <View style={styles.flex}>
           <Text variant="bodyStrong" numberOfLines={1}>
             {medication.name}
@@ -107,6 +111,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  photo: { width: 40, height: 40, borderRadius: radius.md },
   times: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   timeChip: {
     flexDirection: 'row',

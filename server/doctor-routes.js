@@ -12,6 +12,9 @@ export const doctorRouter = express.Router();
 
 const nowIso = () => new Date().toISOString();
 
+// Mask an email for logs: "al***@gmail.com" — enough to correlate, not full PII.
+const maskEmail = (e) => String(e).replace(/^(.{1,2})[^@]*(@.*)$/, '$1***$2');
+
 // ---- Doctor auth ------------------------------------------------------------
 
 doctorRouter.post('/doctor/register', (req, res) => {
@@ -38,11 +41,11 @@ doctorRouter.post('/doctor/login', (req, res) => {
   const key = String(email).toLowerCase();
   const doctor = db.prepare('SELECT * FROM doctors WHERE email = ?').get(key);
   if (!doctor) {
-    console.log(`[doctor login] FAIL — no doctor for "${key}"`);
+    console.log(`[doctor login] FAIL — no such doctor (${maskEmail(key)})`);
     return res.status(401).json({ ok: false, error: 'invalid_credentials' });
   }
   if (!verifyPassword(String(password), doctor.password_hash)) {
-    console.log(`[doctor login] FAIL — wrong password for "${key}"`);
+    console.log(`[doctor login] FAIL — wrong password (${maskEmail(key)})`);
     return res.status(401).json({ ok: false, error: 'invalid_credentials' });
   }
   return res.json({ ok: true, token: signToken(doctor.id, 'doctor'), name: doctor.name });
@@ -126,15 +129,88 @@ doctorRouter.get('/pair/:code', (req, res) => {
   return res.json({ ok: true, doctorName: doctor?.name ?? '', patientName: p.name });
 });
 
+// Normalize a client-supplied snapshot into a strict, safe shape before storing.
+// Numeric fields become real numbers (so the dashboard can't be tricked into
+// rendering an HTML string where a number is expected — the stored-XSS vector);
+// strings are length-capped; unknown fields are dropped.
+const num = (v) => {
+  const x = Number(v);
+  return Number.isFinite(x) ? x : null;
+};
+const str = (v, max = 500) => (v == null ? null : String(v).slice(0, max));
+const adh = (a) =>
+  a && typeof a === 'object'
+    ? { taken: num(a.taken) ?? 0, total: num(a.total) ?? 0, ratio: num(a.ratio) }
+    : null;
+
+function sanitizeSnapshot(snap) {
+  if (!snap || typeof snap !== 'object') return {};
+  const p = snap.patient && typeof snap.patient === 'object' ? snap.patient : null;
+  const patient = p
+    ? {
+        name: str(p.name, 200),
+        age: num(p.age),
+        dob: str(p.dob, 40),
+        gender: str(p.gender, 20),
+        heightCm: num(p.heightCm),
+        weightKg: num(p.weightKg),
+        conditions: Array.isArray(p.conditions) ? p.conditions.slice(0, 100).map((x) => str(x, 300)) : [],
+        allergies: Array.isArray(p.allergies) ? p.allergies.slice(0, 100).map((x) => str(x, 300)) : [],
+        conditionsDetail: Array.isArray(p.conditionsDetail)
+          ? p.conditionsDetail.slice(0, 100).map((c) => ({ name: str(c?.name, 300), note: str(c?.note, 300) }))
+          : [],
+        allergiesDetail: Array.isArray(p.allergiesDetail)
+          ? p.allergiesDetail.slice(0, 100).map((a) => ({
+              substance: str(a?.substance, 300),
+              severity: str(a?.severity, 20),
+              reaction: str(a?.reaction, 300),
+            }))
+          : [],
+      }
+    : null;
+  const medications = Array.isArray(snap.medications)
+    ? snap.medications.slice(0, 200).map((m) => ({
+        name: str(m?.name, 200),
+        dosage: str(m?.dosage, 200),
+        form: str(m?.form, 30),
+        relationToMeal: str(m?.relationToMeal, 30),
+        times: Array.isArray(m?.times) ? m.times.slice(0, 50).map((t) => str(t, 10)) : [],
+        schedule: Array.isArray(m?.schedule)
+          ? m.schedule.slice(0, 50).map((x) => ({ time: str(x?.time, 10), doseAmount: num(x?.doseAmount) }))
+          : [],
+        quantityRemaining: num(m?.quantityRemaining),
+        quantityTotal: num(m?.quantityTotal),
+        startDate: str(m?.startDate, 40),
+        durationDays: num(m?.durationDays),
+        takeWith: str(m?.takeWith, 300),
+        notes: str(m?.notes, 500),
+      }))
+    : [];
+  const history = Array.isArray(snap.history)
+    ? snap.history.slice(0, 90).map((d) => ({ date: str(d?.date, 40), taken: num(d?.taken) ?? 0, total: num(d?.total) ?? 0 }))
+    : [];
+  const appointments = Array.isArray(snap.appointments)
+    ? snap.appointments.slice(0, 100).map((x) => ({ type: str(x?.type, 20), date: str(x?.date, 40), note: str(x?.note, 300) }))
+    : [];
+  return {
+    patient,
+    adherence: adh(snap.adherence),
+    adherence30: adh(snap.adherence30),
+    medications,
+    history,
+    appointments,
+  };
+}
+
 doctorRouter.post('/sync', (req, res) => {
   const { pairCode, snapshot } = req.body || {};
   if (!pairCode || !snapshot) return res.status(400).json({ ok: false, error: 'missing_fields' });
   const p = db.prepare('SELECT * FROM patients WHERE pair_code = ?').get(String(pairCode).toUpperCase());
   if (!p) return res.status(404).json({ ok: false, error: 'invalid_code' });
 
-  const adherence = snapshot.adherence || {};
-  const taken = Number.isFinite(adherence.taken) ? adherence.taken : 0;
-  const total = Number.isFinite(adherence.total) ? adherence.total : 0;
+  const clean = sanitizeSnapshot(snapshot);
+  const taken = clean.adherence?.taken ?? 0;
+  const total = clean.adherence?.total ?? 0;
 
   db.prepare(
     `INSERT INTO snapshots (patient_id, data, adherence_taken, adherence_total, updated_at)
@@ -143,7 +219,7 @@ doctorRouter.post('/sync', (req, res) => {
        data = @data, adherence_taken = @taken, adherence_total = @total, updated_at = @updated`,
   ).run({
     pid: p.id,
-    data: JSON.stringify(snapshot),
+    data: JSON.stringify(clean),
     taken,
     total,
     updated: nowIso(),

@@ -22,6 +22,8 @@ export interface MedicationInput {
   startDate?: string | null;
   quantityTotal?: number | null;
   notes?: string | null;
+  explanation?: string | null;
+  explanationLang?: string | null;
   times: { time: string; doseAmount: number }[];
 }
 
@@ -75,6 +77,8 @@ export async function addMedicationToPrescription(
       quantityTotal: med.quantityTotal,
       quantityRemaining: med.quantityTotal,
       notes: med.notes,
+      explanation: med.explanation,
+      explanationLang: med.explanationLang,
       createdAt: nowIso(),
     })
     .returning({ id: medications.id });
@@ -133,6 +137,13 @@ export async function listScheduleTimes(medicationId: number): Promise<ScheduleT
 
 export async function updateScheduleTime(id: number, time: string): Promise<void> {
   await db.update(scheduleTimes).set({ time }).where(eq(scheduleTimes.id, id));
+}
+
+export async function updateMedicationImage(
+  medicationId: number,
+  imageUri: string | null,
+): Promise<void> {
+  await db.update(medications).set({ imageUri }).where(eq(medications.id, medicationId));
 }
 
 export async function updateMedicationExplanation(

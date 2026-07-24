@@ -60,6 +60,7 @@ CREATE TABLE IF NOT EXISTS medications (
   notes TEXT,
   explanation TEXT,
   explanation_lang TEXT,
+  image_uri TEXT,
   created_at TEXT NOT NULL
 );
 
@@ -108,6 +109,7 @@ CREATE INDEX IF NOT EXISTS idx_presc_patient ON prescriptions(patient_id);
 const MIGRATIONS = [
   `ALTER TABLE medications ADD COLUMN explanation TEXT`,
   `ALTER TABLE medications ADD COLUMN explanation_lang TEXT`,
+  `ALTER TABLE medications ADD COLUMN image_uri TEXT`,
   `ALTER TABLE patients ADD COLUMN account_user_id INTEGER`,
   `ALTER TABLE patients ADD COLUMN account_email TEXT`,
 ];

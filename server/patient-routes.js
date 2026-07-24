@@ -6,6 +6,9 @@ export const patientRouter = express.Router();
 
 const nowIso = () => new Date().toISOString();
 
+// Mask an email for logs: "al***@gmail.com" — enough to correlate, not full PII.
+const maskEmail = (e) => String(e).replace(/^(.{1,2})[^@]*(@.*)$/, '$1***$2');
+
 patientRouter.post('/patient/register', (req, res) => {
   const { email, password, name } = req.body || {};
   if (!email || !password || !name) {
@@ -35,14 +38,13 @@ patientRouter.post('/patient/login', (req, res) => {
   const key = String(email).trim().toLowerCase();
   const account = db.prepare('SELECT * FROM accounts WHERE email = ?').get(key);
   if (!account) {
-    console.log(`[patient login] FAIL — no account for "${key}"`);
+    console.log(`[patient login] FAIL — no such account (${maskEmail(key)})`);
     return res.status(401).json({ ok: false, error: 'invalid_credentials' });
   }
   if (!verifyPassword(String(password), account.password_hash)) {
-    console.log(`[patient login] FAIL — wrong password for "${key}"`);
+    console.log(`[patient login] FAIL — wrong password (${maskEmail(key)})`);
     return res.status(401).json({ ok: false, error: 'invalid_credentials' });
   }
-  console.log(`[patient login] OK — "${key}"`);
   return res.json({
     ok: true,
     token: signToken(account.id, 'patient'),

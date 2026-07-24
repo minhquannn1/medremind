@@ -69,6 +69,22 @@ export function MedicationEditor({
         )}
       </View>
 
+      {/* AI-detected drug uses from the scan ("what is this medicine for") */}
+      {draft.uses ? (
+        <View style={styles.uses}>
+          <View style={styles.usesHead}>
+            <Ionicons name="sparkles" size={14} color={colors.primary} />
+            <Text variant="caption" color="primary">
+              {t('medication.whatIsItFor')}
+            </Text>
+          </View>
+          <Text variant="body">{draft.uses}</Text>
+          <Text variant="caption" color="textFaint">
+            {t('medication.aiDisclaimer')}
+          </Text>
+        </View>
+      ) : null}
+
       <Input
         label={t('medication.name')}
         value={draft.name}
@@ -186,4 +202,12 @@ const styles = StyleSheet.create({
   },
   row: { flexDirection: 'row', gap: spacing.md },
   half: { flex: 1 },
+  uses: {
+    backgroundColor: colors.primarySoft,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    gap: spacing.xs,
+    marginBottom: spacing.lg,
+  },
+  usesHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
 });

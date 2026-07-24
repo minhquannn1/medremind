@@ -22,6 +22,8 @@ export interface ScannedMedication {
   durationDays?: number;
   quantityTotal?: number;
   notes?: string;
+  /** AI plain-language "what this medicine is for", in the app language. */
+  uses?: string;
 }
 
 export type ScanErrorCode = 'network' | 'server' | 'timeout';
@@ -39,6 +41,7 @@ export interface ScanResult {
 export async function scanPrescriptionImage(
   imageBase64: string,
   mediaType = 'image/jpeg',
+  lang: 'vi' | 'en' = 'vi',
 ): Promise<ScanResult> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
@@ -47,7 +50,7 @@ export async function scanPrescriptionImage(
     const res = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'bypass-tunnel-reminder': 'true' },
-      body: JSON.stringify({ imageBase64, mediaType }),
+      body: JSON.stringify({ imageBase64, mediaType, lang }),
       signal: controller.signal,
     });
 

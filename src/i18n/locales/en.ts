@@ -142,6 +142,8 @@ export const en: Translation = {
     explaining: 'Generating explanation…',
     explainError: 'Could not generate an explanation. Check your connection and try again.',
     explainRetry: 'Try again',
+    photo: 'Medicine photo',
+    addPhoto: 'Add medicine photo',
   },
   schedule: {
     title: 'Schedule',

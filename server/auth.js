@@ -13,7 +13,8 @@ if (!process.env.JWT_SECRET) {
   );
 }
 
-const TOKEN_TTL = '30d';
+const TOKEN_TTL = '7d';
+const JWT_ALGO = 'HS256';
 
 export function hashPassword(plain) {
   return bcrypt.hashSync(plain, 10);
@@ -24,7 +25,7 @@ export function verifyPassword(plain, hash) {
 }
 
 export function signToken(id, role) {
-  return jwt.sign({ sub: id, role }, JWT_SECRET, { expiresIn: TOKEN_TTL });
+  return jwt.sign({ sub: id, role }, JWT_SECRET, { expiresIn: TOKEN_TTL, algorithm: JWT_ALGO });
 }
 
 function verifyRole(req, res, next, role, field) {
@@ -32,7 +33,7 @@ function verifyRole(req, res, next, role, field) {
   const token = header.startsWith('Bearer ') ? header.slice(7) : null;
   if (!token) return res.status(401).json({ ok: false, error: 'unauthorized' });
   try {
-    const payload = jwt.verify(token, JWT_SECRET);
+    const payload = jwt.verify(token, JWT_SECRET, { algorithms: [JWT_ALGO] });
     if (payload.role !== role) return res.status(403).json({ ok: false, error: 'wrong_role' });
     req[field] = Number(payload.sub);
     next();

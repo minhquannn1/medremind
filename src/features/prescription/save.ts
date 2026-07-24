@@ -2,6 +2,7 @@ import { createPrescription, type MedicationInput } from '@/db/repositories/pres
 import { syncReminders } from '@/features/notifications/scheduler';
 import { queueBackup } from '@/features/sync/backup';
 import { todayDate } from '@/lib/date';
+import i18n from '@/i18n';
 import type { MedicationDraft } from './draft';
 
 export interface PrescriptionHeaderDraft {
@@ -28,6 +29,10 @@ export function draftToMedicationInput(draft: MedicationDraft): MedicationInput 
     startDate: todayDate(),
     quantityTotal: toNumber(draft.quantityTotal),
     notes: draft.notes.trim() || null,
+    // Uses detected at scan time become the medication's explanation, so the
+    // detail screen shows it instantly without another AI call.
+    explanation: draft.uses.trim() || null,
+    explanationLang: draft.uses.trim() ? i18n.language : null,
     times: draft.times.map((time) => ({ time, doseAmount: 1 })),
   };
 }

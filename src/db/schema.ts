@@ -56,6 +56,7 @@ export const medications = sqliteTable('medications', {
   notes: text('notes'),
   explanation: text('explanation'), // AI plain-language "what this medicine is for"
   explanationLang: text('explanation_lang'), // language the explanation was generated in
+  imageUri: text('image_uri'), // user photo of the medicine (box/pill), device-local
   createdAt: text('created_at').notNull(),
 });
 
