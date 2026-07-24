@@ -19,6 +19,7 @@ import {
   removeAllergy,
 } from '@/db/repositories/patients';
 import { getLifestyleTips } from '@/content/lifestyleTips';
+import { queueBackup } from '@/features/sync/backup';
 import type { Patient, MedicalCondition, Allergy } from '@/db/schema';
 import { ageFromDob } from '@/lib/date';
 
@@ -78,6 +79,7 @@ export default function Profile() {
       weightKg: weight ? Number(weight) : null,
     });
     setEditingMetrics(false);
+    queueBackup(activePatientId);
     load();
   };
 
@@ -148,10 +150,12 @@ export default function Profile() {
         icon="pulse"
         onAdd={async (text) => {
           await addCondition(activePatientId, text);
+          queueBackup(activePatientId);
           load();
         }}
         onRemove={async (id) => {
           await removeCondition(id);
+          queueBackup(activePatientId);
           load();
         }}
       />
@@ -166,10 +170,12 @@ export default function Profile() {
         tone="danger"
         onAdd={async (text) => {
           await addAllergy(activePatientId, text);
+          queueBackup(activePatientId);
           load();
         }}
         onRemove={async (id) => {
           await removeAllergy(id);
+          queueBackup(activePatientId);
           load();
         }}
       />

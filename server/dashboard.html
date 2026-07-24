@@ -253,23 +253,87 @@ async function openPatient(id) {
   if (!snap) {
     html += '<div class="card"><div class="empty">Bệnh nhân chưa đồng bộ dữ liệu.<br>Yêu cầu bệnh nhân nhập mã <b>' + p.pairCode + '</b> trong app.</div></div>';
   } else {
+    const MEAL = { before: 'trước ăn', after: 'sau ăn', with: 'trong bữa ăn', anytime: '' };
+    const FORM = { tablet: 'viên nén', capsule: 'viên nang', syrup: 'siro', drops: 'thuốc nhỏ', injection: 'tiêm', cream: 'kem bôi', other: '' };
+    const STATUS = { taken: '✓ Đã uống', skipped: 'Bỏ qua', missed: 'Quên' };
+    const APPT = { revisit: 'Tái khám', refill: 'Mua thêm thuốc' };
+
     if (snap.patient) {
       const pt = snap.patient;
-      const bits = [pt.age != null ? pt.age + ' tuổi' : null, pt.gender ? ({male:'Nam',female:'Nữ',other:'Khác'}[pt.gender] || pt.gender) : null,
-        pt.heightCm ? pt.heightCm + 'cm' : null, pt.weightKg ? pt.weightKg + 'kg' : null].filter(Boolean).join(' · ');
-      if (bits) html += `<h2>Thông tin</h2><div class="card"><div class="muted">${escapeHtml(bits)}</div>` +
-        (pt.conditions && pt.conditions.length ? `<div style="margin-top:8px"><b>Tiền sử:</b> ${escapeHtml(pt.conditions.join(', '))}</div>` : '') +
-        (pt.allergies && pt.allergies.length ? `<div style="margin-top:4px"><b>Dị ứng:</b> ${escapeHtml(pt.allergies.join(', '))}</div>` : '') + '</div>';
+      const bmi = pt.heightCm && pt.weightKg ? (pt.weightKg / Math.pow(pt.heightCm / 100, 2)).toFixed(1) : null;
+      const bits = [pt.age != null ? pt.age + ' tuổi' : null,
+        pt.dob ? 'sinh ' + new Date(pt.dob).toLocaleDateString('vi-VN') : null,
+        pt.gender ? ({male:'Nam',female:'Nữ',other:'Khác'}[pt.gender] || pt.gender) : null,
+        pt.heightCm ? pt.heightCm + 'cm' : null, pt.weightKg ? pt.weightKg + 'kg' : null,
+        bmi ? 'BMI ' + bmi : null].filter(Boolean).join(' · ');
+      const conds = (pt.conditionsDetail && pt.conditionsDetail.length)
+        ? pt.conditionsDetail.map(c => c.name + (c.note ? ' (' + c.note + ')' : '')).join(', ')
+        : (pt.conditions || []).join(', ');
+      const allers = (pt.allergiesDetail && pt.allergiesDetail.length)
+        ? pt.allergiesDetail.map(a => a.substance
+            + (a.severity ? ' — ' + ({mild:'nhẹ',moderate:'vừa',severe:'NẶNG'}[a.severity] || a.severity) : '')
+            + (a.reaction ? ' (' + a.reaction + ')' : '')).join(', ')
+        : (pt.allergies || []).join(', ');
+      if (bits || conds || allers) html += `<h2>Thông tin</h2><div class="card"><div class="muted">${escapeHtml(bits)}</div>` +
+        (conds ? `<div style="margin-top:8px"><b>Tiền sử:</b> ${escapeHtml(conds)}</div>` : '') +
+        (allers ? `<div style="margin-top:4px"><b>Dị ứng:</b> ${escapeHtml(allers)}</div>` : '') + '</div>';
     }
+
+    if (snap.adherence30 && snap.adherence30.total > 0) {
+      const r30 = snap.adherence30.ratio, c30 = ringColor(r30);
+      html += `<h2>Tuân thủ</h2><div class="card"><div class="row">
+        <span class="muted">7 ngày: <span class="pill ${cls}">${snap.adherence ? snap.adherence.taken + '/' + snap.adherence.total : '—'}</span></span>
+        <span class="muted">30 ngày: <span class="pill ${c30}">${snap.adherence30.taken}/${snap.adherence30.total} (${Math.round(r30 * 100)}%)</span></span>
+      </div></div>`;
+    }
+
     if (snap.medications && snap.medications.length) {
-      html += '<h2>Thuốc đang dùng</h2><div class="card">' + snap.medications.map(m =>
-        `<div class="med"><div class="name">${escapeHtml(m.name)}</div><div class="meta">${escapeHtml([m.dosage, m.times && m.times.length ? m.times.join(', ') : null].filter(Boolean).join(' · '))}</div></div>`
+      html += '<h2>Thuốc đang dùng</h2><div class="card">' + snap.medications.map(m => {
+        const sched = (m.schedule && m.schedule.length)
+          ? m.schedule.map(s => s.time + (s.doseAmount && s.doseAmount !== 1 ? ' (×' + s.doseAmount + ')' : '')).join(', ')
+          : (m.times && m.times.length ? m.times.join(', ') : null);
+        const line1 = [m.dosage, FORM[m.form] || null, MEAL[m.relationToMeal] || null, sched].filter(Boolean).join(' · ');
+        const stock = m.quantityRemaining != null && m.quantityTotal != null
+          ? 'Còn ' + m.quantityRemaining + '/' + m.quantityTotal : null;
+        const line2 = [m.startDate ? 'Từ ' + new Date(m.startDate).toLocaleDateString('vi-VN') : null,
+          m.durationDays ? m.durationDays + ' ngày' : null, stock,
+          m.takeWith ? 'Uống với: ' + m.takeWith : null].filter(Boolean).join(' · ');
+        return `<div class="med"><div class="name">${escapeHtml(m.name)}</div>` +
+          (line1 ? `<div class="meta">${escapeHtml(line1)}</div>` : '') +
+          (line2 ? `<div class="meta">${escapeHtml(line2)}</div>` : '') +
+          (m.notes ? `<div class="meta">Ghi chú: ${escapeHtml(m.notes)}</div>` : '') + '</div>';
+      }).join('') + '</div>';
+    }
+
+    if (snap.prescriptions && snap.prescriptions.length) {
+      html += '<h2>Đơn thuốc</h2><div class="card">' + snap.prescriptions.map(rx => {
+        const title = [rx.doctorName, rx.clinic].filter(Boolean).join(' · ') || 'Đơn thuốc';
+        const meta = [rx.issuedDate ? 'Kê ngày ' + new Date(rx.issuedDate).toLocaleDateString('vi-VN') : null,
+          rx.medicationCount != null ? rx.medicationCount + ' thuốc' : null,
+          rx.status === 'completed' ? 'Đã hoàn thành' : 'Đang dùng'].filter(Boolean).join(' · ');
+        return `<div class="med"><div class="name">${escapeHtml(title)}</div><div class="meta">${escapeHtml(meta)}</div>` +
+          (rx.notes ? `<div class="meta">Ghi chú: ${escapeHtml(rx.notes)}</div>` : '') + '</div>';
+      }).join('') + '</div>';
+    }
+
+    if (snap.appointments && snap.appointments.length) {
+      html += '<h2>Lịch hẹn sắp tới</h2><div class="card">' + snap.appointments.map(a =>
+        `<div class="med"><div class="name">${escapeHtml(APPT[a.type] || a.type)}</div>
+        <div class="meta">${escapeHtml(new Date(a.date).toLocaleString('vi-VN'))}${a.note ? ' · ' + escapeHtml(a.note) : ''}</div></div>`
       ).join('') + '</div>';
     }
+
     if (snap.history && snap.history.length) {
-      html += '<h2>Lịch sử 7 ngày gần nhất</h2><div class="card">' + snap.history.slice(0, 7).map(d => {
+      html += '<h2>Lịch sử uống thuốc (30 ngày)</h2><div class="card">' + snap.history.map(d => {
         const r = d.total ? d.taken / d.total : null; const c = ringColor(r);
-        return `<div class="hist-day"><span>${escapeHtml(d.date)}</span><span class="pill ${c}">${d.taken}/${d.total}</span></div>`;
+        const doses = (d.doses && d.doses.length)
+          ? '<div style="padding:4px 0 8px 12px">' + d.doses.map(x =>
+              `<div class="faint">${escapeHtml(x.time)} · ${escapeHtml(x.name)} — ${escapeHtml(STATUS[x.status] || x.status)}</div>`
+            ).join('') + '</div>'
+          : '';
+        return doses
+          ? `<details><summary class="hist-day" style="cursor:pointer;list-style:none"><span>${escapeHtml(d.date)}</span><span class="pill ${c}">${d.taken}/${d.total}</span></summary>${doses}</details>`
+          : `<div class="hist-day"><span>${escapeHtml(d.date)}</span><span class="pill ${c}">${d.taken}/${d.total}</span></div>`;
       }).join('') + '</div>';
     }
   }

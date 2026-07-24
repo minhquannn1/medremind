@@ -36,9 +36,12 @@ app.disable('x-powered-by');
 app.use(securityHeaders);
 app.use(corsMiddleware);
 
-// Body parsing: the scan endpoint needs room for a base64 image; everything
-// else is capped tightly to limit DoS via oversized payloads.
+// Body parsing: the scan endpoint needs room for a base64 image, the backup
+// endpoint for a full app-data export, and sync for a detailed snapshot;
+// everything else is capped tightly to limit DoS via oversized payloads.
 app.use('/api/scan-prescription', express.json({ limit: '25mb' }));
+app.use('/api/patient/backup', express.json({ limit: '5mb' }));
+app.use('/api/sync', express.json({ limit: '1mb' }));
 app.use(express.json({ limit: '128kb' }));
 
 // Rate limiting per surface (registered before the routes they protect).
@@ -46,6 +49,7 @@ app.use('/api', apiLimiter);
 app.use(['/api/patient/login', '/api/patient/register', '/api/doctor/login', '/api/doctor/register'], authLimiter);
 app.use('/api/pair', pairLimiter);
 app.use('/api/sync', syncLimiter);
+app.use('/api/patient/backup', syncLimiter);
 app.use(['/api/scan-prescription', '/api/explain-medication'], aiLimiter);
 
 // Doctor portal API (auth, patients, pairing, sync) + web dashboard.

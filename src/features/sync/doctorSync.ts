@@ -6,8 +6,13 @@
 import { SCAN_API_URL } from '@/features/scan/aiScanner';
 import { getSetting, setSetting, SettingsKeys } from '@/db/repositories/settings';
 import { getPatient, listConditions, listAllergies } from '@/db/repositories/patients';
-import { listActiveMedicationsWithSchedule } from '@/db/repositories/prescriptions';
+import {
+  listActiveMedicationsWithSchedule,
+  listPrescriptions,
+  listMedications,
+} from '@/db/repositories/prescriptions';
 import { getAdherence, getDoseHistory } from '@/db/repositories/doses';
+import { listUpcomingAppointments } from '@/db/repositories/appointments';
 import { ageFromDob } from '@/lib/date';
 
 const API_BASE = SCAN_API_URL.replace(/\/scan-prescription\/?$/, '');
@@ -70,26 +75,74 @@ async function buildSnapshot(patientId: number) {
   const conditions = await listConditions(patientId);
   const allergies = await listAllergies(patientId);
   const adherence = await getAdherence(patientId, 7);
+  const adherence30 = await getAdherence(patientId, 30);
   const meds = await listActiveMedicationsWithSchedule(patientId);
-  const history = await getDoseHistory(patientId, 14);
+  const history = await getDoseHistory(patientId, 30);
+  const prescriptionList = await listPrescriptions(patientId);
+  const appointments = await listUpcomingAppointments(patientId);
+
+  const prescriptions = await Promise.all(
+    prescriptionList.map(async (p) => ({
+      id: p.id,
+      doctorName: p.doctorName,
+      clinic: p.clinic,
+      issuedDate: p.issuedDate,
+      status: p.status,
+      notes: p.notes,
+      createdAt: p.createdAt,
+      medicationCount: (await listMedications(p.id)).length,
+    })),
+  );
 
   return {
     patient: {
       name: patient?.fullName ?? '',
       age: ageFromDob(patient?.dob),
+      dob: patient?.dob ?? null,
       gender: patient?.gender ?? null,
       heightCm: patient?.heightCm ?? null,
       weightKg: patient?.weightKg ?? null,
       conditions: conditions.map((c) => c.name),
       allergies: allergies.map((a) => a.substance),
+      conditionsDetail: conditions.map((c) => ({ name: c.name, note: c.note })),
+      allergiesDetail: allergies.map((a) => ({
+        substance: a.substance,
+        severity: a.severity,
+        reaction: a.reaction,
+      })),
     },
     adherence: { taken: adherence.taken, total: adherence.total, ratio: adherence.ratio },
+    adherence30: { taken: adherence30.taken, total: adherence30.total, ratio: adherence30.ratio },
     medications: meds.map(({ medication, times }) => ({
       name: medication.name,
+      form: medication.form,
       dosage: medication.dosage,
+      relationToMeal: medication.relationToMeal,
+      takeWith: medication.takeWith,
+      durationDays: medication.durationDays,
+      startDate: medication.startDate,
+      quantityTotal: medication.quantityTotal,
+      quantityRemaining: medication.quantityRemaining,
+      notes: medication.notes,
+      prescriptionId: medication.prescriptionId,
       times: times.map((t) => t.time).sort(),
+      schedule: times
+        .map((t) => ({ time: t.time, doseAmount: t.doseAmount }))
+        .sort((a, b) => a.time.localeCompare(b.time)),
     })),
-    history: history.map((d) => ({ date: d.date, taken: d.taken, total: d.total })),
+    prescriptions,
+    appointments: appointments.map((a) => ({ type: a.type, date: a.date, note: a.note })),
+    history: history.map((d) => ({
+      date: d.date,
+      taken: d.taken,
+      total: d.total,
+      doses: d.doses.map((dose) => ({
+        name: dose.medicationName,
+        time: dose.time,
+        status: dose.status,
+        takenAt: dose.takenAt,
+      })),
+    })),
   };
 }
 

@@ -1,5 +1,6 @@
 import { createPrescription, type MedicationInput } from '@/db/repositories/prescriptions';
 import { syncReminders } from '@/features/notifications/scheduler';
+import { queueBackup } from '@/features/sync/backup';
 import { todayDate } from '@/lib/date';
 import type { MedicationDraft } from './draft';
 
@@ -52,5 +53,6 @@ export async function savePrescription(
 
   // Reschedule all reminders to include the new medications
   await syncReminders(patientId);
+  queueBackup(patientId);
   return id;
 }

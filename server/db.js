@@ -43,5 +43,13 @@ CREATE TABLE IF NOT EXISTS snapshots (
   updated_at TEXT NOT NULL
 );
 
+-- Full app-data backup per patient account (JSON export of the on-device db),
+-- used to restore data when the user signs in on a new device.
+CREATE TABLE IF NOT EXISTS backups (
+  account_id INTEGER PRIMARY KEY,
+  data TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_patients_doctor ON patients(doctor_id);
 `);

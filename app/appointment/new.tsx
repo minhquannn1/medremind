@@ -8,6 +8,7 @@ import { spacing } from '@/theme';
 import { useAppStore } from '@/store/appStore';
 import { createAppointment } from '@/db/repositories/appointments';
 import { scheduleAppointmentReminder, requestNotificationPermission } from '@/features/notifications/scheduler';
+import { queueBackup } from '@/features/sync/backup';
 import { dayjs } from '@/lib/date';
 import i18n from '@/i18n';
 
@@ -44,6 +45,7 @@ export default function NewAppointment() {
         note: note.trim() || null,
         notificationId,
       });
+      queueBackup(activePatientId);
       router.back();
     } catch (e) {
       Alert.alert('Error', String(e));

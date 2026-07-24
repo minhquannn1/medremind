@@ -10,6 +10,7 @@ import { colors, radius, spacing } from '@/theme';
 import { useAppStore } from '@/store/appStore';
 import { getDosesForDay, markDose, type TodayDose } from '@/db/repositories/doses';
 import { listUpcomingAppointments, deleteAppointment } from '@/db/repositories/appointments';
+import { queueBackup } from '@/features/sync/backup';
 import type { Appointment } from '@/db/schema';
 import { dayjs, partOfDay, formatDate } from '@/lib/date';
 
@@ -40,11 +41,13 @@ export default function Schedule() {
 
   const handleMark = async (doseId: number, status: 'taken' | 'skipped') => {
     await markDose(doseId, status);
+    if (activePatientId) queueBackup(activePatientId);
     load();
   };
 
   const removeAppointment = async (id: number) => {
     await deleteAppointment(id);
+    if (activePatientId) queueBackup(activePatientId);
     load();
   };
 

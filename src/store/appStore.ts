@@ -1,6 +1,9 @@
 import { create } from 'zustand';
 import { getSetting, setSetting, SettingsKeys } from '@/db/repositories/settings';
 import { getPatientByAccount, claimOrphanPatient } from '@/db/repositories/patients';
+import { importPatientData } from '@/db/repositories/backup';
+import { fetchServerBackup } from '@/features/sync/backup';
+import { syncReminders } from '@/features/notifications/scheduler';
 import {
   loginPatient,
   registerPatient,
@@ -74,7 +77,21 @@ export const useAppStore = create<AppState>((set) => ({
     const res = await loginPatient(email, password);
     if (!res.ok) return res;
     await persistSession(res.token, res.account);
-    const patient = await getPatientByAccount(res.account.userId);
+    let patient = await getPatientByAccount(res.account.userId);
+    if (!patient) {
+      // Fresh device: restore the account's cloud backup if one exists.
+      const backup = await fetchServerBackup(res.token);
+      if (backup) {
+        try {
+          const patientId = await importPatientData(backup, res.account.userId, res.account.email);
+          await syncReminders(patientId);
+          patient = await getPatientByAccount(res.account.userId);
+        } catch {
+          // A failed restore should not block sign-in; the user can start fresh.
+          patient = await getPatientByAccount(res.account.userId);
+        }
+      }
+    }
     set({
       authed: true,
       account: res.account,

@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Screen, Text, Button, Input, SegmentedControl, DateField } from '@/components/ui';
 import { colors, radius, spacing } from '@/theme';
 import { createPatient } from '@/db/repositories/patients';
+import { queueBackup } from '@/features/sync/backup';
 import { useAppStore } from '@/store/appStore';
 import { ageFromDob } from '@/lib/date';
 
@@ -43,6 +44,7 @@ export default function Onboarding() {
         accountEmail: account?.email ?? null,
       });
       await completeOnboarding(id);
+      queueBackup(id);
       router.replace('/(tabs)');
     } catch (e) {
       Alert.alert('Error', String(e));

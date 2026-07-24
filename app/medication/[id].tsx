@@ -15,6 +15,7 @@ import {
 } from '@/db/repositories/prescriptions';
 import { explainMedication } from '@/features/medication/explainMedication';
 import { syncReminders } from '@/features/notifications/scheduler';
+import { queueBackup } from '@/features/sync/backup';
 import type { Medication, ScheduleTime } from '@/db/schema';
 
 export default function MedicationDetail() {
@@ -61,7 +62,10 @@ export default function MedicationDetail() {
   const onChangeTime = async (scheduleId: number, hhmm: string) => {
     await updateScheduleTime(scheduleId, hhmm);
     setTimes((prev) => prev.map((tm) => (tm.id === scheduleId ? { ...tm, time: hhmm } : tm)));
-    if (activePatientId) await syncReminders(activePatientId);
+    if (activePatientId) {
+      await syncReminders(activePatientId);
+      queueBackup(activePatientId);
+    }
   };
 
   if (!med) {

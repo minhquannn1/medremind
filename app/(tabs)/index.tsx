@@ -22,6 +22,7 @@ import { listActiveMedicationsWithSchedule } from '@/db/repositories/prescriptio
 import { listUpcomingAppointments } from '@/db/repositories/appointments';
 import { encouragementOfTheDay } from '@/content/encouragements';
 import { syncToDoctor } from '@/features/sync/doctorSync';
+import { queueBackup } from '@/features/sync/backup';
 import { dayjs, formatDate } from '@/lib/date';
 
 const LOW_STOCK_THRESHOLD = 5;
@@ -80,7 +81,10 @@ export default function Home() {
     await markDose(doseId, status);
     await loadData();
     // Push updated adherence to the doctor if linked (fire-and-forget).
-    if (activePatientId) void syncToDoctor(activePatientId);
+    if (activePatientId) {
+      void syncToDoctor(activePatientId);
+      queueBackup(activePatientId);
+    }
   };
 
   const greeting = (() => {

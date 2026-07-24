@@ -16,6 +16,7 @@ import {
   updatePrescriptionStatus,
 } from '@/db/repositories/prescriptions';
 import { syncReminders } from '@/features/notifications/scheduler';
+import { queueBackup } from '@/features/sync/backup';
 import type { Prescription, Medication, ScheduleTime } from '@/db/schema';
 import { formatDate } from '@/lib/date';
 
@@ -53,7 +54,10 @@ export default function PrescriptionDetail() {
         style: 'destructive',
         onPress: async () => {
           await deletePrescription(prescriptionId);
-          if (activePatientId) await syncReminders(activePatientId);
+          if (activePatientId) {
+            await syncReminders(activePatientId);
+            queueBackup(activePatientId);
+          }
           router.back();
         },
       },
@@ -64,7 +68,10 @@ export default function PrescriptionDetail() {
     if (!prescription) return;
     const next = prescription.status === 'active' ? 'completed' : 'active';
     await updatePrescriptionStatus(prescriptionId, next);
-    if (activePatientId) await syncReminders(activePatientId);
+    if (activePatientId) {
+      await syncReminders(activePatientId);
+      queueBackup(activePatientId);
+    }
     load();
   };
 

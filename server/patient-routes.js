@@ -56,3 +56,37 @@ patientRouter.get('/patient/me', requirePatient, (req, res) => {
   if (!account) return res.status(404).json({ ok: false, error: 'not_found' });
   return res.json({ ok: true, account });
 });
+
+// ---- Full-data backup (upload) / restore (download) -------------------------
+// The app uploads a JSON export of its entire local database. Stored as an
+// opaque blob keyed by account so a new device can restore everything.
+
+const MAX_BACKUP_BYTES = 4 * 1024 * 1024;
+
+patientRouter.put('/patient/backup', requirePatient, (req, res) => {
+  const { data } = req.body || {};
+  if (!data || typeof data !== 'object') {
+    return res.status(400).json({ ok: false, error: 'missing_data' });
+  }
+  const json = JSON.stringify(data);
+  if (json.length > MAX_BACKUP_BYTES) {
+    return res.status(413).json({ ok: false, error: 'backup_too_large' });
+  }
+  const updatedAt = nowIso();
+  db.prepare(
+    `INSERT INTO backups (account_id, data, updated_at)
+     VALUES (@id, @data, @updated)
+     ON CONFLICT(account_id) DO UPDATE SET data = @data, updated_at = @updated`,
+  ).run({ id: req.accountId, data: json, updated: updatedAt });
+  return res.json({ ok: true, updatedAt });
+});
+
+patientRouter.get('/patient/backup', requirePatient, (req, res) => {
+  const row = db.prepare('SELECT data, updated_at FROM backups WHERE account_id = ?').get(req.accountId);
+  if (!row) return res.json({ ok: true, data: null, updatedAt: null });
+  try {
+    return res.json({ ok: true, data: JSON.parse(row.data), updatedAt: row.updated_at });
+  } catch {
+    return res.status(500).json({ ok: false, error: 'corrupt_backup' });
+  }
+});
