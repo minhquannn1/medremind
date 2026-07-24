@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MedRemind · Bảng theo dõi bác sĩ</title>
+<style>
+  :root {
+    --teal: #0E7C7B; --teal-soft: #E3F2F1; --coral: #F27059;
+    --ink: #1C2A2A; --muted: #5B6B6B; --faint: #8A9A9A;
+    --bg: #F6F9F9; --surface: #FFFFFF; --border: #E1E9E9;
+    --good: #2E9E5B; --warn: #D98A0B; --bad: #D64545;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg); color: var(--ink); line-height: 1.5; }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 24px 16px 64px; }
+  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+  .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 20px; }
+  .logo .dot { width: 34px; height: 34px; border-radius: 10px; background: var(--teal);
+    display: grid; place-items: center; color: #fff; font-size: 18px; }
+  button { font: inherit; cursor: pointer; border: none; border-radius: 10px; padding: 10px 16px;
+    background: var(--teal); color: #fff; font-weight: 600; transition: opacity .15s; }
+  button:hover { opacity: .9; }
+  button.ghost { background: transparent; color: var(--teal); padding: 6px 10px; }
+  button.danger { background: transparent; color: var(--bad); }
+  input { font: inherit; width: 100%; padding: 11px 13px; border: 1px solid var(--border);
+    border-radius: 10px; background: var(--surface); margin-top: 6px; }
+  input:focus { outline: 2px solid var(--teal-soft); border-color: var(--teal); }
+  label { display: block; font-size: 13px; color: var(--muted); margin-top: 14px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 20px; margin-bottom: 16px; }
+  .auth { max-width: 380px; margin: 8vh auto 0; }
+  .auth h1 { font-size: 22px; margin-bottom: 4px; }
+  .auth p.sub { color: var(--muted); margin-bottom: 20px; }
+  .auth button { width: 100%; margin-top: 20px; }
+  .switch { text-align: center; margin-top: 14px; color: var(--muted); font-size: 14px; }
+  .switch a { color: var(--teal); font-weight: 600; text-decoration: none; cursor: pointer; }
+  .err { color: var(--bad); font-size: 14px; margin-top: 12px; min-height: 18px; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .patient { display: flex; align-items: center; gap: 14px; padding: 14px 4px; cursor: pointer;
+    border-top: 1px solid var(--border); }
+  .patient:first-child { border-top: none; }
+  .ring { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center;
+    font-size: 13px; font-weight: 700; flex-shrink: 0; }
+  .pname { font-weight: 600; }
+  .psub { font-size: 13px; color: var(--faint); }
+  .pill { font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; }
+  .pill.good { background: #E7F6ED; color: var(--good); }
+  .pill.warn { background: #FCF2DF; color: var(--warn); }
+  .pill.bad { background: #FBE9E9; color: var(--bad); }
+  .pill.gray { background: #EEF2F2; color: var(--faint); }
+  .code { font-family: ui-monospace, monospace; font-size: 22px; letter-spacing: 2px;
+    color: var(--teal); background: var(--teal-soft); padding: 12px; border-radius: 10px;
+    text-align: center; margin: 12px 0; }
+  .med { padding: 12px 0; border-top: 1px solid var(--border); }
+  .med:first-child { border-top: none; }
+  .med .name { font-weight: 600; }
+  .med .meta { font-size: 13px; color: var(--muted); }
+  .hist-day { display: flex; align-items: center; justify-content: space-between; padding: 8px 0;
+    border-top: 1px solid var(--border); font-size: 14px; }
+  .muted { color: var(--muted); } .faint { color: var(--faint); font-size: 13px; }
+  .empty { text-align: center; color: var(--faint); padding: 40px 0; }
+  h2 { font-size: 15px; text-transform: uppercase; letter-spacing: .5px; color: var(--faint);
+    margin: 22px 0 10px; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <!-- Auth -->
+  <div id="authView" class="auth hidden">
+    <div class="logo" style="justify-content:center;margin-bottom:20px"><span class="dot">✚</span> MedRemind</div>
+    <div class="card">
+      <h1 id="authTitle">Đăng nhập bác sĩ</h1>
+      <p class="sub" id="authSub">Theo dõi việc tuân thủ uống thuốc của bệnh nhân.</p>
+      <div id="nameField" class="hidden">
+        <label>Họ tên bác sĩ</label>
+        <input id="name" placeholder="BS. Nguyễn Văn A" />
+      </div>
+      <label>Email</label>
+      <input id="email" type="email" placeholder="bacsi@benhvien.vn" />
+      <label>Mật khẩu</label>
+      <input id="password" type="password" placeholder="••••••" />
+      <div class="err" id="authErr"></div>
+      <button id="authBtn" onclick="submitAuth()">Đăng nhập</button>
+      <div class="switch" id="switchAuth">Chưa có tài khoản? <a onclick="toggleMode()">Đăng ký</a></div>
+    </div>
+  </div>
+
+  <!-- App -->
+  <div id="appView" class="hidden">
+    <header>
+      <div class="logo"><span class="dot">✚</span> MedRemind</div>
+      <div class="row" style="gap:14px">
+        <span class="muted" id="docName"></span>
+        <button class="ghost" onclick="logout()">Đăng xuất</button>
+      </div>
+    </header>
+
+    <!-- Patient list -->
+    <div id="listView">
+      <div class="row" style="margin-bottom:14px">
+        <h2 style="margin:0">Bệnh nhân</h2>
+        <button onclick="showAddPatient()">+ Thêm bệnh nhân</button>
+      </div>
+      <div class="card" id="patientList"><div class="empty">Đang tải…</div></div>
+    </div>
+
+    <!-- Add patient -->
+    <div id="addView" class="hidden">
+      <button class="ghost" onclick="showList()">← Quay lại</button>
+      <div class="card">
+        <h1 style="font-size:20px;margin-bottom:4px">Thêm bệnh nhân</h1>
+        <p class="muted">Tạo mã ghép nối để bệnh nhân nhập vào app.</p>
+        <div id="addForm">
+          <label>Tên bệnh nhân</label>
+          <input id="patientName" placeholder="Nguyễn Thị B" />
+          <button style="margin-top:16px" onclick="createPatient()">Tạo mã ghép nối</button>
+        </div>
+        <div id="codeResult" class="hidden">
+          <p class="muted" style="margin-top:12px">Đưa mã này cho bệnh nhân nhập vào app MedRemind:</p>
+          <div class="code" id="newCode"></div>
+          <button class="ghost" onclick="showList()">Xong</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Patient detail -->
+    <div id="detailView" class="hidden">
+      <button class="ghost" onclick="showList()">← Quay lại</button>
+      <div id="detailContent"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = ''; // same origin
+let mode = 'login';
+let token = localStorage.getItem('medremind_token');
+
+function el(id) { return document.getElementById(id); }
+function show(id) { ['authView','appView'].forEach(v => el(v).classList.toggle('hidden', v !== id)); }
+
+async function api(path, opts = {}) {
+  const res = await fetch(API + path, {
+    ...opts,
+    headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}), ...(opts.headers || {}) },
+  });
+  const data = await res.json().catch(() => ({}));
+  if (res.status === 401) { logout(); throw new Error('unauthorized'); }
+  return { ok: res.ok, data };
+}
+
+function toggleMode() {
+  mode = mode === 'login' ? 'register' : 'login';
+  el('authTitle').textContent = mode === 'login' ? 'Đăng nhập bác sĩ' : 'Đăng ký bác sĩ';
+  el('authBtn').textContent = mode === 'login' ? 'Đăng nhập' : 'Đăng ký';
+  el('nameField').classList.toggle('hidden', mode === 'login');
+  el('switchAuth').innerHTML = mode === 'login'
+    ? 'Chưa có tài khoản? <a onclick="toggleMode()">Đăng ký</a>'
+    : 'Đã có tài khoản? <a onclick="toggleMode()">Đăng nhập</a>';
+  el('authErr').textContent = '';
+}
+
+async function submitAuth() {
+  el('authErr').textContent = '';
+  const email = el('email').value.trim();
+  const password = el('password').value;
+  const name = el('name').value.trim();
+  if (!email || !password || (mode === 'register' && !name)) {
+    el('authErr').textContent = 'Vui lòng điền đầy đủ thông tin.'; return;
+  }
+  const body = mode === 'register' ? { email, password, name } : { email, password };
+  const { ok, data } = await api('/api/doctor/' + mode, { method: 'POST', body: JSON.stringify(body) });
+  if (!ok || !data.token) {
+    const msgs = { email_taken: 'Email đã được đăng ký.', invalid_credentials: 'Sai email hoặc mật khẩu.',
+      weak_password: 'Mật khẩu cần ít nhất 8 ký tự.' };
+    el('authErr').textContent = msgs[data.error] || 'Có lỗi xảy ra. Thử lại.'; return;
+  }
+  token = data.token; localStorage.setItem('medremind_token', token);
+  el('docName').textContent = data.name || '';
+  enterApp();
+}
+
+function logout() { token = null; localStorage.removeItem('medremind_token'); show('authView'); }
+
+async function enterApp() {
+  show('appView'); showList();
+  const { ok, data } = await api('/api/doctor/me');
+  if (ok && data.doctor) el('docName').textContent = data.doctor.name;
+  loadPatients();
+}
+
+function showList() { el('listView').classList.remove('hidden'); el('addView').classList.add('hidden'); el('detailView').classList.add('hidden'); loadPatients(); }
+function showAddPatient() { el('listView').classList.add('hidden'); el('addView').classList.remove('hidden'); el('detailView').classList.add('hidden'); el('addForm').classList.remove('hidden'); el('codeResult').classList.add('hidden'); el('patientName').value = ''; }
+
+function ringColor(ratio) { if (ratio == null) return 'gray'; if (ratio >= 0.8) return 'good'; if (ratio >= 0.5) return 'warn'; return 'bad'; }
+function ringStyle(cls) {
+  const c = { good: '#E7F6ED', warn: '#FCF2DF', bad: '#FBE9E9', gray: '#EEF2F2' }[cls];
+  const fg = { good: '#2E9E5B', warn: '#D98A0B', bad: '#D64545', gray: '#8A9A9A' }[cls];
+  return `background:${c};color:${fg}`;
+}
+
+async function loadPatients() {
+  const { ok, data } = await api('/api/doctor/patients');
+  if (!ok) return;
+  const list = el('patientList');
+  if (!data.patients.length) { list.innerHTML = '<div class="empty">Chưa có bệnh nhân. Nhấn “Thêm bệnh nhân” để tạo mã ghép nối.</div>'; return; }
+  list.innerHTML = data.patients.map(p => {
+    const ratio = p.adherence ? p.adherence.ratio : null;
+    const cls = ringColor(ratio);
+    const pct = ratio != null ? Math.round(ratio * 100) + '%' : '—';
+    const status = !p.linked ? '<span class="pill gray">Chờ ghép nối</span>'
+      : p.adherence ? `<span class="pill ${cls}">${pct} tuân thủ</span>`
+      : '<span class="pill gray">Chưa có dữ liệu</span>';
+    const sub = p.linked ? (p.updatedAt ? 'Cập nhật: ' + new Date(p.updatedAt).toLocaleString('vi-VN') : 'Đã ghép nối') : 'Mã: ' + p.pairCode;
+    return `<div class="patient" onclick="openPatient(${p.id})">
+      <div class="ring" style="${ringStyle(cls)}">${pct}</div>
+      <div style="flex:1"><div class="pname">${escapeHtml(p.name)}</div><div class="psub">${escapeHtml(sub)}</div></div>
+      ${status}</div>`;
+  }).join('');
+}
+
+async function createPatient() {
+  const name = el('patientName').value.trim();
+  if (!name) return;
+  const { ok, data } = await api('/api/doctor/patients', { method: 'POST', body: JSON.stringify({ name }) });
+  if (ok && data.pairCode) {
+    el('addForm').classList.add('hidden');
+    el('codeResult').classList.remove('hidden');
+    el('newCode').textContent = data.pairCode;
+  }
+}
+
+async function openPatient(id) {
+  el('listView').classList.add('hidden'); el('addView').classList.add('hidden');
+  el('detailView').classList.remove('hidden');
+  el('detailContent').innerHTML = '<div class="card"><div class="empty">Đang tải…</div></div>';
+  const { ok, data } = await api('/api/doctor/patients/' + id);
+  if (!ok) return;
+  const p = data.patient, snap = data.snapshot;
+  const ratio = p.adherence ? p.adherence.ratio : null;
+  const cls = ringColor(ratio);
+  const pct = ratio != null ? Math.round(ratio * 100) + '%' : '—';
+
+  let html = `<div class="card"><div class="row">
+    <div><h1 style="font-size:22px">${escapeHtml(p.name)}</h1>
+    <div class="faint">${p.linked ? (p.updatedAt ? 'Cập nhật: ' + new Date(p.updatedAt).toLocaleString('vi-VN') : 'Đã ghép nối') : 'Chưa ghép nối · Mã: ' + p.pairCode}</div></div>
+    <div class="ring" style="width:64px;height:64px;font-size:16px;${ringStyle(cls)}">${pct}</div>
+  </div></div>`;
+
+  if (!snap) {
+    html += '<div class="card"><div class="empty">Bệnh nhân chưa đồng bộ dữ liệu.<br>Yêu cầu bệnh nhân nhập mã <b>' + p.pairCode + '</b> trong app.</div></div>';
+  } else {
+    if (snap.patient) {
+      const pt = snap.patient;
+      const bits = [pt.age != null ? pt.age + ' tuổi' : null, pt.gender ? ({male:'Nam',female:'Nữ',other:'Khác'}[pt.gender] || pt.gender) : null,
+        pt.heightCm ? pt.heightCm + 'cm' : null, pt.weightKg ? pt.weightKg + 'kg' : null].filter(Boolean).join(' · ');
+      if (bits) html += `<h2>Thông tin</h2><div class="card"><div class="muted">${escapeHtml(bits)}</div>` +
+        (pt.conditions && pt.conditions.length ? `<div style="margin-top:8px"><b>Tiền sử:</b> ${escapeHtml(pt.conditions.join(', '))}</div>` : '') +
+        (pt.allergies && pt.allergies.length ? `<div style="margin-top:4px"><b>Dị ứng:</b> ${escapeHtml(pt.allergies.join(', '))}</div>` : '') + '</div>';
+    }
+    if (snap.medications && snap.medications.length) {
+      html += '<h2>Thuốc đang dùng</h2><div class="card">' + snap.medications.map(m =>
+        `<div class="med"><div class="name">${escapeHtml(m.name)}</div><div class="meta">${escapeHtml([m.dosage, m.times && m.times.length ? m.times.join(', ') : null].filter(Boolean).join(' · '))}</div></div>`
+      ).join('') + '</div>';
+    }
+    if (snap.history && snap.history.length) {
+      html += '<h2>Lịch sử 7 ngày gần nhất</h2><div class="card">' + snap.history.slice(0, 7).map(d => {
+        const r = d.total ? d.taken / d.total : null; const c = ringColor(r);
+        return `<div class="hist-day"><span>${escapeHtml(d.date)}</span><span class="pill ${c}">${d.taken}/${d.total}</span></div>`;
+      }).join('') + '</div>';
+    }
+  }
+  html += '<button class="danger" onclick="deletePatient(' + id + ')">Xóa bệnh nhân</button>';
+  el('detailContent').innerHTML = html;
+}
+
+async function deletePatient(id) {
+  if (!confirm('Xóa bệnh nhân này khỏi danh sách theo dõi?')) return;
+  await api('/api/doctor/patients/' + id, { method: 'DELETE' });
+  showList();
+}
+
+function escapeHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+// Boot
+if (token) { enterApp(); } else { show('authView'); }
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+node_modules/
+.env
+# Local dev database — production uses a mounted volume (DOCTOR_DB_PATH)
+doctor.db
+doctor.db-shm
+doctor.db-wal
+*.db
+*.db-shm
+*.db-wal
