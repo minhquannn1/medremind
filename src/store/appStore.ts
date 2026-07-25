@@ -1,12 +1,13 @@
 import { create } from 'zustand';
 import { getSetting, setSetting, SettingsKeys } from '@/db/repositories/settings';
 import { getPatientByAccount, claimOrphanPatient } from '@/db/repositories/patients';
-import { importPatientData } from '@/db/repositories/backup';
+import { importPatientData, deleteLocalPatientData } from '@/db/repositories/backup';
 import { fetchServerBackup } from '@/features/sync/backup';
 import { syncReminders } from '@/features/notifications/scheduler';
 import {
   loginPatient,
   registerPatient,
+  deletePatientAccount,
   type AuthAccount,
   type AuthErrorCode,
 } from '@/features/auth/patientAuth';
@@ -25,6 +26,7 @@ interface AppState {
   signIn: (email: string, password: string) => Promise<AuthOutcome>;
   signUp: (email: string, password: string, name: string) => Promise<AuthOutcome>;
   signOut: () => Promise<void>;
+  deleteAccount: () => Promise<boolean>;
   completeOnboarding: (patientId: number) => Promise<void>;
   setLanguage: (lang: AppLanguage) => Promise<void>;
   setActivePatient: (id: number) => Promise<void>;
@@ -125,6 +127,33 @@ export const useAppStore = create<AppState>((set) => ({
     await setSetting(SettingsKeys.accountEmail, '');
     await setSetting(SettingsKeys.accountName, '');
     set({ authed: false, account: null, onboarded: false, activePatientId: null });
+  },
+
+  deleteAccount: async () => {
+    const token = await getSetting(SettingsKeys.authToken);
+    if (!token) return false;
+    const pairCode = await getSetting(SettingsKeys.doctorPairCode);
+    const deleted = await deletePatientAccount(token, pairCode || null);
+    if (!deleted) return false;
+
+    // Server data is gone; remove the on-device copy and its reminders too.
+    const userId = Number(await getSetting(SettingsKeys.accountUserId));
+    const patient = await getPatientByAccount(userId);
+    if (patient) {
+      await deleteLocalPatientData(patient.id);
+      try {
+        await syncReminders(patient.id);
+      } catch {
+        // Reminder cleanup is best-effort; nothing references the data anymore.
+      }
+    }
+
+    await setSetting(SettingsKeys.authToken, '');
+    await setSetting(SettingsKeys.accountUserId, '');
+    await setSetting(SettingsKeys.accountEmail, '');
+    await setSetting(SettingsKeys.accountName, '');
+    set({ authed: false, account: null, onboarded: false, activePatientId: null });
+    return true;
   },
 
   completeOnboarding: async (patientId: number) => {

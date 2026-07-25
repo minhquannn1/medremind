@@ -92,3 +92,30 @@ patientRouter.get('/patient/backup', requirePatient, (req, res) => {
     return res.status(500).json({ ok: false, error: 'corrupt_backup' });
   }
 });
+
+// ---- Account deletion --------------------------------------------------------
+// App Store Guideline 5.1.1(v): the app must let users delete their account and
+// all server-side data. Removes the account row, its cloud backup, and — when
+// the app passes the doctor pair code it was linked with — the shared snapshot.
+
+patientRouter.delete('/patient/account', requirePatient, (req, res) => {
+  const account = db.prepare('SELECT id, email FROM accounts WHERE id = ?').get(req.accountId);
+  if (!account) return res.status(404).json({ ok: false, error: 'not_found' });
+
+  const { pairCode } = req.body || {};
+  db.transaction(() => {
+    db.prepare('DELETE FROM backups WHERE account_id = ?').run(account.id);
+    if (pairCode) {
+      const p = db
+        .prepare('SELECT id FROM patients WHERE pair_code = ?')
+        .get(String(pairCode).trim().toUpperCase());
+      if (p) {
+        db.prepare('DELETE FROM snapshots WHERE patient_id = ?').run(p.id);
+        db.prepare('UPDATE patients SET linked = 0 WHERE id = ?').run(p.id);
+      }
+    }
+    db.prepare('DELETE FROM accounts WHERE id = ?').run(account.id);
+  })();
+  console.log(`[patient account] deleted (${maskEmail(account.email)})`);
+  return res.json({ ok: true });
+});

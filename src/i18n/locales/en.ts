@@ -47,6 +47,13 @@ export const en: Translation = {
     errorWeakPassword: 'Password must be at least 8 characters.',
     errorMissingFields: 'Please fill in all fields.',
     errorNetwork: 'Could not reach the server. Check your connection and try again.',
+    deleteAccount: 'Delete account',
+    deleteAccountConfirmTitle: 'Delete account?',
+    deleteAccountConfirmBody:
+      'Your account, on-device medication data, and server backup will be permanently deleted. This cannot be undone.',
+    deleteAccountFinalTitle: 'Are you absolutely sure?',
+    deleteAccountFinalBody: 'This is the final step. All your data will be lost forever.',
+    deleteAccountError: 'Could not delete the account. Check your connection and try again.',
   },
   onboarding: {
     welcomeTitle: 'Welcome to MedRemind',
@@ -54,6 +61,8 @@ export const en: Translation = {
     createProfile: 'Create your profile',
     profileHint: 'This helps personalize reminders and advice.',
     start: 'Get started',
+    disclaimer:
+      'MedRemind provides reminders and reference information only — it does not diagnose or replace advice from your doctor or pharmacist.',
   },
   home: {
     greetingMorning: 'Good morning',
@@ -249,6 +258,8 @@ export const en: Translation = {
     permissionBody: 'Allow camera access to scan prescriptions.',
     grant: 'Grant permission',
     fromGallery: 'Pick from gallery',
+    disclaimer:
+      'AI-read information is for reference only. Always compare with the original prescription and follow your doctor or pharmacist.',
   },
   settings: {
     title: 'Settings',
@@ -259,5 +270,7 @@ export const en: Translation = {
     reminderSound: 'Reminder sound',
     reminderVibration: 'Reminder vibration',
     about: 'About',
+    privacyPolicy: 'Privacy policy',
+    support: 'Support & contact',
   },
 };

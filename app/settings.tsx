@@ -9,12 +9,18 @@ import { colors, radius, spacing } from '@/theme';
 import { useAppStore } from '@/store/appStore';
 import { getBoolSetting, setSetting, SettingsKeys } from '@/db/repositories/settings';
 import { applyReminderPrefs } from '@/features/notifications/scheduler';
+import { SCAN_API_URL } from '@/features/scan/aiScanner';
 import type { AppLanguage } from '@/i18n';
+
+const SITE_BASE = SCAN_API_URL.replace(/\/api\/scan-prescription\/?$/, '');
+const PRIVACY_URL = `${SITE_BASE}/privacy`;
+const SUPPORT_URL = `${SITE_BASE}/support`;
 
 export default function Settings() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { language, setLanguage, activePatientId, account, signOut } = useAppStore();
+  const { language, setLanguage, activePatientId, account, signOut, deleteAccount } = useAppStore();
+  const [deleting, setDeleting] = useState(false);
 
   const onLogout = () => {
     Alert.alert(t('auth.logout'), t('auth.logoutConfirm'), [
@@ -25,6 +31,35 @@ export default function Settings() {
         onPress: async () => {
           await signOut();
           router.replace('/auth');
+        },
+      },
+    ]);
+  };
+
+  const onDeleteAccount = () => {
+    Alert.alert(t('auth.deleteAccountConfirmTitle'), t('auth.deleteAccountConfirmBody'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('auth.deleteAccount'),
+        style: 'destructive',
+        onPress: () => {
+          Alert.alert(t('auth.deleteAccountFinalTitle'), t('auth.deleteAccountFinalBody'), [
+            { text: t('common.cancel'), style: 'cancel' },
+            {
+              text: t('auth.deleteAccount'),
+              style: 'destructive',
+              onPress: async () => {
+                setDeleting(true);
+                const ok = await deleteAccount();
+                setDeleting(false);
+                if (ok) {
+                  router.replace('/auth');
+                } else {
+                  Alert.alert(t('auth.deleteAccount'), t('auth.deleteAccountError'));
+                }
+              },
+            },
+          ]);
         },
       },
     ]);
@@ -143,6 +178,29 @@ export default function Settings() {
         )}
         <Divider />
         <Button label={t('auth.logout')} variant="ghost" icon="log-out-outline" onPress={onLogout} />
+        <Button
+          label={deleting ? t('common.loading') : t('auth.deleteAccount')}
+          variant="danger"
+          icon="trash-outline"
+          disabled={deleting}
+          onPress={onDeleteAccount}
+        />
+      </Card>
+
+      {/* Legal */}
+      <Card style={styles.linkCard} onPress={() => Linking.openURL(PRIVACY_URL)}>
+        <Ionicons name="shield-checkmark-outline" size={20} color={colors.primary} />
+        <Text variant="body" style={styles.flex}>
+          {t('settings.privacyPolicy')}
+        </Text>
+        <Ionicons name="open-outline" size={18} color={colors.textMuted} />
+      </Card>
+      <Card style={styles.linkCardTight} onPress={() => Linking.openURL(SUPPORT_URL)}>
+        <Ionicons name="help-buoy-outline" size={20} color={colors.primary} />
+        <Text variant="body" style={styles.flex}>
+          {t('settings.support')}
+        </Text>
+        <Ionicons name="open-outline" size={18} color={colors.textMuted} />
       </Card>
 
       <View style={styles.about}>
@@ -165,6 +223,7 @@ const styles = StyleSheet.create({
   },
   toggleLabel: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   linkCard: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: spacing.lg },
+  linkCardTight: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: spacing.md },
   accountCard: { marginTop: spacing.lg, gap: 2 },
   flex: { flex: 1 },
   about: { marginTop: spacing['2xl'] },

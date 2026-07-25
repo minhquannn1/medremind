@@ -45,6 +45,13 @@ export const vi = {
     errorWeakPassword: 'Mật khẩu cần ít nhất 8 ký tự.',
     errorMissingFields: 'Vui lòng điền đầy đủ thông tin.',
     errorNetwork: 'Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.',
+    deleteAccount: 'Xóa tài khoản',
+    deleteAccountConfirmTitle: 'Xóa tài khoản?',
+    deleteAccountConfirmBody:
+      'Tài khoản, dữ liệu thuốc trên máy và bản sao lưu trên máy chủ sẽ bị xóa vĩnh viễn. Không thể hoàn tác.',
+    deleteAccountFinalTitle: 'Bạn chắc chắn chứ?',
+    deleteAccountFinalBody: 'Đây là bước cuối cùng. Toàn bộ dữ liệu sẽ mất vĩnh viễn.',
+    deleteAccountError: 'Không xóa được tài khoản. Kiểm tra mạng rồi thử lại.',
   },
   onboarding: {
     welcomeTitle: 'Chào mừng đến với MedRemind',
@@ -52,6 +59,8 @@ export const vi = {
     createProfile: 'Tạo hồ sơ của bạn',
     profileHint: 'Thông tin này giúp cá nhân hóa nhắc nhở và lời khuyên.',
     start: 'Bắt đầu',
+    disclaimer:
+      'MedRemind chỉ hỗ trợ nhắc lịch và cung cấp thông tin tham khảo — không chẩn đoán hay thay thế tư vấn của bác sĩ, dược sĩ.',
   },
   home: {
     greetingMorning: 'Chào buổi sáng',
@@ -247,6 +256,8 @@ export const vi = {
     permissionBody: 'Cho phép camera để quét đơn thuốc.',
     grant: 'Cấp quyền',
     fromGallery: 'Chọn từ thư viện',
+    disclaimer:
+      'Thông tin do AI đọc chỉ để tham khảo. Luôn đối chiếu với đơn gốc và làm theo chỉ định của bác sĩ, dược sĩ.',
   },
   settings: {
     title: 'Cài đặt',
@@ -257,6 +268,8 @@ export const vi = {
     reminderSound: 'Âm báo khi nhắc',
     reminderVibration: 'Rung khi nhắc',
     about: 'Giới thiệu',
+    privacyPolicy: 'Chính sách quyền riêng tư',
+    support: 'Hỗ trợ & liên hệ',
   },
 };
 

@@ -230,3 +230,39 @@ export async function importPatientData(
 
   return patientId;
 }
+
+/**
+ * Permanently deletes everything stored on-device for one patient profile.
+ * Used by account deletion, where local health data must go away with the
+ * account instead of lingering for the next sign-in to adopt.
+ */
+export async function deleteLocalPatientData(patientId: number): Promise<void> {
+  const prescriptionRows = await db
+    .select({ id: prescriptions.id })
+    .from(prescriptions)
+    .where(eq(prescriptions.patientId, patientId));
+  const presIds = prescriptionRows.map((p) => p.id);
+
+  if (presIds.length) {
+    const medicationRows = await db
+      .select({ id: medications.id })
+      .from(medications)
+      .where(inArray(medications.prescriptionId, presIds));
+    const medIds = medicationRows.map((m) => m.id);
+
+    if (medIds.length) {
+      await db.delete(doseLogs).where(inArray(doseLogs.medicationId, medIds));
+      await db.delete(scheduleTimes).where(inArray(scheduleTimes.medicationId, medIds));
+    }
+    await db.delete(medications).where(inArray(medications.prescriptionId, presIds));
+    await db.delete(prescriptions).where(inArray(prescriptions.id, presIds));
+  }
+
+  await db.delete(appointments).where(eq(appointments.patientId, patientId));
+  await db.delete(medicalConditions).where(eq(medicalConditions.patientId, patientId));
+  await db.delete(allergies).where(eq(allergies.patientId, patientId));
+  await db.delete(patients).where(eq(patients.id, patientId));
+
+  await setSetting(SettingsKeys.doctorPairCode, '');
+  await setSetting(SettingsKeys.doctorName, '');
+}

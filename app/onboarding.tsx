@@ -64,6 +64,9 @@ export default function Onboarding() {
         <Text variant="body" color="textMuted">
           {t('onboarding.welcomeBody')}
         </Text>
+        <Text variant="caption" color="textFaint" style={styles.disclaimer}>
+          {t('onboarding.disclaimer')}
+        </Text>
       </View>
 
       <View style={styles.form}>
@@ -142,6 +145,7 @@ export default function Onboarding() {
 
 const styles = StyleSheet.create({
   hero: { marginTop: spacing.xl, marginBottom: spacing['2xl'] },
+  disclaimer: { marginTop: spacing.md },
   logo: {
     width: 64,
     height: 64,

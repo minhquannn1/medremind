@@ -17,6 +17,7 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.minhquan.medremind",
       "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
         "NSCameraUsageDescription": "Cho phép truy cập camera để chụp và quét đơn thuốc.",
         "NSPhotoLibraryUsageDescription": "Cho phép truy cập thư viện ảnh để chọn ảnh đơn thuốc.",
         "UIBackgroundModes": [

@@ -63,3 +63,33 @@ export function registerPatient(email: string, password: string, name: string): 
 export function loginPatient(email: string, password: string): Promise<AuthResult> {
   return post('/patient/login', { email: email.trim(), password });
 }
+
+/**
+ * Permanently deletes the account and all server-side data (backup + any
+ * doctor-shared snapshot, identified by pairCode). Required by App Store
+ * Guideline 5.1.1(v).
+ */
+export async function deletePatientAccount(
+  token: string,
+  pairCode: string | null,
+): Promise<boolean> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    const res = await fetch(`${API_BASE}/patient/account`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+        'bypass-tunnel-reminder': 'true',
+      },
+      body: JSON.stringify({ pairCode }),
+      signal: controller.signal,
+    });
+    return res.ok;
+  } catch {
+    return false;
+  } finally {
+    clearTimeout(timer);
+  }
+}

@@ -90,9 +90,22 @@ export default function NewPrescription() {
     }
   };
 
+  const fromScan = Boolean(prefill.medications?.length || prefill.rawText);
+
   return (
     <Screen>
       <Header title={t('prescriptions.new')} />
+
+      {/* AI results are reference-only — the user must verify against the
+          original prescription (App Review guideline 1.4.1). */}
+      {fromScan ? (
+        <View style={styles.disclaimer}>
+          <Ionicons name="information-circle-outline" size={18} color={colors.textMuted} />
+          <Text variant="caption" color="textMuted" style={styles.disclaimerText}>
+            {t('scan.disclaimer')}
+          </Text>
+        </View>
+      ) : null}
 
       {/* Prescription header */}
       <Card style={styles.section}>
@@ -190,6 +203,14 @@ export default function NewPrescription() {
 
 const styles = StyleSheet.create({
   section: { marginBottom: spacing.lg },
+  disclaimer: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    marginBottom: spacing.md,
+    paddingHorizontal: spacing.xs,
+  },
+  disclaimerText: { flex: 1 },
   rawText: { marginBottom: spacing.lg, gap: spacing.xs },
   rawTextBody: { fontFamily: 'Courier', lineHeight: 20 },
   medsTitle: { marginBottom: spacing.md },

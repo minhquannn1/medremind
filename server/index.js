@@ -59,6 +59,13 @@ app.use('/api', patientRouter);
 app.get(['/', '/dashboard'], (_req, res) => {
   res.sendFile(join(__dirname, 'dashboard.html'));
 });
+// Public legal pages — linked from the app and App Store Connect.
+app.get('/privacy', (_req, res) => {
+  res.sendFile(join(__dirname, 'privacy.html'));
+});
+app.get('/support', (_req, res) => {
+  res.sendFile(join(__dirname, 'support.html'));
+});
 
 // ---- Prompt -----------------------------------------------------------------
 
