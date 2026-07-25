@@ -1,0 +1,13 @@
+node_modules
+server/node_modules
+server/doctor.db
+server/doctor.db-shm
+server/doctor.db-wal
+server/.env
+ios
+android
+assets
+app
+src
+.git
+.expo
