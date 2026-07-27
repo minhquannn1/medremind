@@ -27,7 +27,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "image": "./assets/adaptive-icon.png",
+        "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0E7C7B"
       },
       "package": "com.minhquan.medremind",

@@ -26,12 +26,21 @@ Upload them in filename order — the numbering is the intended story:
 
 ## iPad support
 
-The app declares `"supportsTablet": true` in `app.json`, which is why Apple asks
-for iPad screenshots. On a 13" iPad the layout is a stretched phone UI with a lot
-of empty space (see `raw/ipad/`). Setting `"supportsTablet": false` and rebuilding
-makes MedRemind an iPhone-only app, drops the iPad screenshot requirement, and
-avoids review comments about the tablet experience. The iPad set is included here
-in case iPad support is kept.
+The binary ships as iPhone + iPad, which is why Apple asks for iPad screenshots.
+On a 13" iPad the layout is a stretched phone UI with a lot of empty space (see
+`raw/ipad/`). The iPad set is included in case tablet support is kept.
+
+To go iPhone-only, edit the **Xcode project**, not `app.json` — this is a
+non-CNG project, so `expo.ios.supportsTablet` is ignored (see `CLAUDE.md`):
+
+```
+ios/MedRemind.xcodeproj/project.pbxproj
+  TARGETED_DEVICE_FAMILY = "1,2";   →   TARGETED_DEVICE_FAMILY = "1";
+```
+
+(or set *Supported Destinations* to iPhone only in Xcode's target editor), then
+rebuild. That drops the iPad screenshot requirement and avoids review comments
+about the tablet experience.
 
 ## Regenerating
 

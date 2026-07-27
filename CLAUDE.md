@@ -52,6 +52,22 @@ DDL in `init.ts`.
   - Model is `OPENAI_MODEL` in `server/.env` (default `gpt-4o`).
   - `aiScanner.ts` is provider-agnostic — it just hits the proxy. Swapping the
     AI provider only touches `server/index.js`.
+- **`ios/` is committed, so app.json native settings do NOT reach the build.**
+  This is a non-CNG (no-prebuild) project: `expo run:ios` compiles `ios/` as-is.
+  Anything under `expo.ios`, `expo.android`, `splash`, `icon`, `scheme`,
+  `orientation` or `plugins` in `app.json` only takes effect after
+  `npx expo prebuild`, which would overwrite manual native edits. Until then,
+  change the native project directly:
+  - Info.plist keys (e.g. `ITSAppUsesNonExemptEncryption`) →
+    `ios/MedRemind/Info.plist`
+  - iPad support → `TARGETED_DEVICE_FAMILY` in
+    `ios/MedRemind.xcodeproj/project.pbxproj` (`"1,2"` = iPhone + iPad,
+    `"1"` = iPhone only). `expo.ios.supportsTablet` in app.json is ignored.
+  - Run `npx expo-doctor` to list config that is out of sync.
+- **No EAS.** There is no `eas.json`; store builds are made locally in Xcode
+  (`open ios/MedRemind.xcworkspace` → Archive). Never add
+  `@react-native-ml-kit/*` — it was removed and desyncs `ios/Podfile.lock`,
+  which breaks `expo run:ios`.
 - **Hermes + private class fields:** `babel.config.js` force-transforms
   `#private` fields (loose) because a transitive dep ships them and this Hermes
   build rejects them. Don't remove those plugins.

@@ -19,6 +19,7 @@ Primary language: **Vietnamese**. Add English (U.S.) as a second localization.
 | Support URL | `https://medremind-backend-production.up.railway.app/support` |
 | Marketing URL | `https://medremind-backend-production.up.railway.app/about` |
 | Privacy Policy URL | `https://medremind-backend-production.up.railway.app/privacy` |
+| Export compliance | Nothing to answer — `ITSAppUsesNonExemptEncryption = false` is set in `ios/MedRemind/Info.plist`, so App Store Connect stops asking on upload. The app only uses HTTPS/TLS, which is exempt. |
 
 ---
 
