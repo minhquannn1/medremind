@@ -186,8 +186,30 @@ function sanitizeSnapshot(snap) {
         notes: str(m?.notes, 500),
       }))
     : [];
+  const prescriptions = Array.isArray(snap.prescriptions)
+    ? snap.prescriptions.slice(0, 200).map((rx) => ({
+        doctorName: str(rx?.doctorName, 200),
+        clinic: str(rx?.clinic, 200),
+        issuedDate: str(rx?.issuedDate, 40),
+        status: str(rx?.status, 20),
+        notes: str(rx?.notes, 500),
+        medicationCount: num(rx?.medicationCount),
+      }))
+    : [];
   const history = Array.isArray(snap.history)
-    ? snap.history.slice(0, 90).map((d) => ({ date: str(d?.date, 40), taken: num(d?.taken) ?? 0, total: num(d?.total) ?? 0 }))
+    ? snap.history.slice(0, 90).map((d) => ({
+        date: str(d?.date, 40),
+        taken: num(d?.taken) ?? 0,
+        total: num(d?.total) ?? 0,
+        doses: Array.isArray(d?.doses)
+          ? d.doses.slice(0, 50).map((x) => ({
+              name: str(x?.name, 200),
+              time: str(x?.time, 10),
+              status: str(x?.status, 20),
+              takenAt: str(x?.takenAt, 40),
+            }))
+          : [],
+      }))
     : [];
   const appointments = Array.isArray(snap.appointments)
     ? snap.appointments.slice(0, 100).map((x) => ({ type: str(x?.type, 20), date: str(x?.date, 40), note: str(x?.note, 300) }))
@@ -197,6 +219,7 @@ function sanitizeSnapshot(snap) {
     adherence: adh(snap.adherence),
     adherence30: adh(snap.adherence30),
     medications,
+    prescriptions,
     history,
     appointments,
   };

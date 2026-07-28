@@ -4,6 +4,7 @@ import { getPatientByAccount, claimOrphanPatient } from '@/db/repositories/patie
 import { importPatientData, deleteLocalPatientData } from '@/db/repositories/backup';
 import { fetchServerBackup } from '@/features/sync/backup';
 import { syncReminders } from '@/features/notifications/scheduler';
+import { ensureNotificationPermission } from '@/features/permissions/ensure';
 import {
   loginPatient,
   registerPatient,
@@ -86,6 +87,10 @@ export const useAppStore = create<AppState>((set) => ({
       if (backup) {
         try {
           const patientId = await importPatientData(backup, res.account.userId, res.account.email);
+          // A restored profile already has medications but no scheduled alerts,
+          // and syncReminders silently no-ops without permission — ask here or
+          // the user gets their data back with every reminder missing.
+          await ensureNotificationPermission();
           await syncReminders(patientId);
           patient = await getPatientByAccount(res.account.userId);
         } catch {
