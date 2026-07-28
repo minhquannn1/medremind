@@ -69,6 +69,10 @@ app.get('/support', (_req, res) => {
 app.get('/about', (_req, res) => {
   res.sendFile(join(__dirname, 'about.html'));
 });
+// Browsers request this on every page load; without it the console logs a 404.
+app.get('/favicon.ico', (_req, res) => {
+  res.type('image/png').sendFile(join(__dirname, 'favicon.png'));
+});
 
 // ---- Prompt -----------------------------------------------------------------
 
