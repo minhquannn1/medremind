@@ -143,12 +143,16 @@ function el(id) { return document.getElementById(id); }
 function show(id) { ['authView','appView'].forEach(v => el(v).classList.toggle('hidden', v !== id)); }
 
 async function api(path, opts = {}) {
+  const { signingIn, ...init } = opts;
   const res = await fetch(API + path, {
-    ...opts,
+    ...init,
     headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: 'Bearer ' + token } : {}), ...(opts.headers || {}) },
   });
   const data = await res.json().catch(() => ({}));
-  if (res.status === 401) { logout(); throw new Error('unauthorized'); }
+  // A 401 on a signed-in request means the session expired. During sign-in it
+  // just means wrong credentials, which submitAuth reports inline — bouncing
+  // through logout() there would swallow the message.
+  if (res.status === 401 && !signingIn) { logout(); throw new Error('unauthorized'); }
   return { ok: res.ok, data };
 }
 
@@ -172,10 +176,11 @@ async function submitAuth() {
     el('authErr').textContent = 'Vui lòng điền đầy đủ thông tin.'; return;
   }
   const body = mode === 'register' ? { email, password, name } : { email, password };
-  const { ok, data } = await api('/api/doctor/' + mode, { method: 'POST', body: JSON.stringify(body) });
+  const { ok, data } = await api('/api/doctor/' + mode, { method: 'POST', body: JSON.stringify(body), signingIn: true });
   if (!ok || !data.token) {
     const msgs = { email_taken: 'Email đã được đăng ký.', invalid_credentials: 'Sai email hoặc mật khẩu.',
-      weak_password: 'Mật khẩu cần ít nhất 8 ký tự.' };
+      weak_password: 'Mật khẩu cần ít nhất 8 ký tự.', missing_fields: 'Vui lòng điền đầy đủ thông tin.',
+      too_many_requests: 'Bạn đã thử quá nhiều lần. Vui lòng đợi 15 phút rồi thử lại.' };
     el('authErr').textContent = msgs[data.error] || 'Có lỗi xảy ra. Thử lại.'; return;
   }
   token = data.token; localStorage.setItem('medremind_token', token);

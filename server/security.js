@@ -31,11 +31,15 @@ export const apiLimiter = rateLimit({ ...base, windowMs: 15 * MIN, limit: 300 })
 // Security headers. The dashboard is a self-contained page with inline
 // script/style, so 'unsafe-inline' is required there; everything else is
 // locked down (no external scripts, no framing, no object embeds).
+// scriptSrcAttr must be set explicitly: helmet merges these directives with
+// its defaults, and its default 'none' blocks every onclick= handler on the
+// dashboard, leaving all its buttons dead.
 export const securityHeaders = helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
       scriptSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrcAttr: ["'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
       imgSrc: ["'self'", 'data:'],
       connectSrc: ["'self'"],
