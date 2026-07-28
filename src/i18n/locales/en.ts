@@ -44,6 +44,8 @@ export const en: Translation = {
     haveAccount: 'Already have an account?',
     errorEmailTaken: 'This email is already registered.',
     errorInvalidCredentials: 'Wrong email or password.',
+    errorAccountDeleted:
+      'This account no longer exists — it has been deleted. Please sign up for a new account.',
     errorWeakPassword: 'Password must be at least 8 characters.',
     errorMissingFields: 'Please fill in all fields.',
     errorNetwork: 'Could not reach the server. Check your connection and try again.',
@@ -194,6 +196,7 @@ export const en: Translation = {
     date: 'Date',
     add: 'Add appointment',
     upcoming: 'Upcoming',
+    onThisDay: 'Appointments this day',
     none: 'No appointments',
   },
   lifestyle: {
@@ -236,6 +239,18 @@ export const en: Translation = {
     permissionNeeded: 'Notifications needed',
     permissionBody: 'Enable notifications to get medication reminders on time.',
     enable: 'Enable notifications',
+  },
+  permissions: {
+    openSettings: 'Open Settings',
+    cameraTitle: 'Camera access needed',
+    cameraBody:
+      'MedRemind uses the camera to photograph prescriptions and medicines. Enable it in Settings → MedRemind → Camera.',
+    photosTitle: 'Photo access needed',
+    photosBody:
+      'MedRemind needs your photo library so you can pick a prescription photo. Enable it in Settings → MedRemind → Photos.',
+    notificationsTitle: 'Notifications are off',
+    notificationsBody:
+      'Your prescription was saved, but you will NOT get dose reminders. Enable them in Settings → MedRemind → Notifications.',
   },
   scan: {
     title: 'Scan prescription',

@@ -28,6 +28,7 @@ export default function Auth() {
     const map: Record<AuthErrorCode, string> = {
       email_taken: t('auth.errorEmailTaken'),
       invalid_credentials: t('auth.errorInvalidCredentials'),
+      account_deleted: t('auth.errorAccountDeleted'),
       weak_password: t('auth.errorWeakPassword'),
       missing_fields: t('auth.errorMissingFields'),
       network: t('auth.errorNetwork'),

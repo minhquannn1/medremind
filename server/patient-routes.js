@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import express from 'express';
 import { db } from './db.js';
 import { hashPassword, verifyPassword, signToken, requirePatient } from './auth.js';
@@ -8,6 +9,10 @@ const nowIso = () => new Date().toISOString();
 
 // Mask an email for logs: "al***@gmail.com" — enough to correlate, not full PII.
 const maskEmail = (e) => String(e).replace(/^(.{1,2})[^@]*(@.*)$/, '$1***$2');
+
+// One-way so a deleted account leaves no readable address behind.
+const emailHash = (e) =>
+  crypto.createHash('sha256').update(String(e).trim().toLowerCase()).digest('hex');
 
 patientRouter.post('/patient/register', (req, res) => {
   const { email, password, name } = req.body || {};
@@ -24,6 +29,8 @@ patientRouter.post('/patient/register', (req, res) => {
   const info = db
     .prepare('INSERT INTO accounts (email, password_hash, name, created_at) VALUES (?, ?, ?, ?)')
     .run(key, hashPassword(String(password)), String(name), nowIso());
+  // Registering again with a previously deleted address makes it live again.
+  db.prepare('DELETE FROM deleted_accounts WHERE email_hash = ?').run(emailHash(key));
   return res.json({
     ok: true,
     token: signToken(info.lastInsertRowid, 'patient'),
@@ -38,6 +45,15 @@ patientRouter.post('/patient/login', (req, res) => {
   const key = String(email).trim().toLowerCase();
   const account = db.prepare('SELECT * FROM accounts WHERE email = ?').get(key);
   if (!account) {
+    const tombstone = db
+      .prepare('SELECT deleted_at FROM deleted_accounts WHERE email_hash = ?')
+      .get(emailHash(key));
+    if (tombstone) {
+      console.log(`[patient login] FAIL — account was deleted (${maskEmail(key)})`);
+      return res
+        .status(410)
+        .json({ ok: false, error: 'account_deleted', deletedAt: tombstone.deleted_at });
+    }
     console.log(`[patient login] FAIL — no such account (${maskEmail(key)})`);
     return res.status(401).json({ ok: false, error: 'invalid_credentials' });
   }
@@ -115,6 +131,10 @@ patientRouter.delete('/patient/account', requirePatient, (req, res) => {
       }
     }
     db.prepare('DELETE FROM accounts WHERE id = ?').run(account.id);
+    db.prepare(
+      `INSERT INTO deleted_accounts (email_hash, deleted_at) VALUES (?, ?)
+       ON CONFLICT(email_hash) DO UPDATE SET deleted_at = excluded.deleted_at`,
+    ).run(emailHash(account.email), nowIso());
   })();
   console.log(`[patient account] deleted (${maskEmail(account.email)})`);
   return res.json({ ok: true });

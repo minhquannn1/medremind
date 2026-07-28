@@ -18,6 +18,10 @@ import {
 import { explainMedication } from '@/features/medication/explainMedication';
 import { syncReminders } from '@/features/notifications/scheduler';
 import { queueBackup } from '@/features/sync/backup';
+import {
+  ensureCameraPermission,
+  ensureMediaLibraryPermission,
+} from '@/features/permissions/ensure';
 import type { Medication, ScheduleTime } from '@/db/schema';
 
 export default function MedicationDetail() {
@@ -72,8 +76,7 @@ export default function MedicationDetail() {
       {
         text: t('scan.title'),
         onPress: async () => {
-          const perm = await ImagePicker.requestCameraPermissionsAsync();
-          if (!perm.granted) return;
+          if (!(await ensureCameraPermission())) return;
           const result = await ImagePicker.launchCameraAsync({ quality: 0.5 });
           if (!result.canceled && result.assets[0]) await savePhoto(result.assets[0].uri);
         },
@@ -81,6 +84,7 @@ export default function MedicationDetail() {
       {
         text: t('scan.fromGallery'),
         onPress: async () => {
+          if (!(await ensureMediaLibraryPermission())) return;
           const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ['images'],
             quality: 0.5,

@@ -7,7 +7,8 @@ import { Screen, Header, Card, Input, Button, SegmentedControl, DateField } from
 import { spacing } from '@/theme';
 import { useAppStore } from '@/store/appStore';
 import { createAppointment } from '@/db/repositories/appointments';
-import { scheduleAppointmentReminder, requestNotificationPermission } from '@/features/notifications/scheduler';
+import { scheduleAppointmentReminder } from '@/features/notifications/scheduler';
+import { ensureNotificationPermission } from '@/features/permissions/ensure';
 import { queueBackup } from '@/features/sync/backup';
 import { dayjs } from '@/lib/date';
 import i18n from '@/i18n';
@@ -31,7 +32,7 @@ export default function NewAppointment() {
     }
     setSaving(true);
     try {
-      await requestNotificationPermission();
+      await ensureNotificationPermission();
       const when = dayjs(date);
       const notificationId = await scheduleAppointmentReminder(
         i18n.t('reminders.appointmentTitle'),

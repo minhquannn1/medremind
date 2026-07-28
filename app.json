@@ -19,10 +19,7 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSCameraUsageDescription": "Cho phép truy cập camera để chụp và quét đơn thuốc.",
-        "NSPhotoLibraryUsageDescription": "Cho phép truy cập thư viện ảnh để chọn ảnh đơn thuốc.",
-        "UIBackgroundModes": [
-          "remote-notification"
-        ]
+        "NSPhotoLibraryUsageDescription": "Cho phép truy cập thư viện ảnh để chọn ảnh đơn thuốc."
       }
     },
     "android": {
@@ -60,7 +57,8 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Cho phép $(PRODUCT_NAME) sử dụng camera để quét đơn thuốc."
+          "cameraPermission": "Cho phép $(PRODUCT_NAME) sử dụng camera để quét đơn thuốc.",
+          "microphonePermission": false
         }
       ],
       [

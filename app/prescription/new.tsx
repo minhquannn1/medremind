@@ -14,7 +14,10 @@ import {
 import { savePrescription } from '@/features/prescription/save';
 import { colors, radius, spacing } from '@/theme';
 import { useAppStore } from '@/store/appStore';
-import { requestNotificationPermission } from '@/features/notifications/scheduler';
+import {
+  ensureMediaLibraryPermission,
+  ensureNotificationPermission,
+} from '@/features/permissions/ensure';
 
 interface Prefill {
   doctorName?: string;
@@ -59,6 +62,7 @@ export default function NewPrescription() {
     setDrafts((prev) => prev.filter((d) => d.key !== key));
 
   const pickImage = async () => {
+    if (!(await ensureMediaLibraryPermission())) return;
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       quality: 0.6,
@@ -77,7 +81,7 @@ export default function NewPrescription() {
     }
     setSaving(true);
     try {
-      await requestNotificationPermission();
+      await ensureNotificationPermission();
       await savePrescription(
         activePatientId,
         { doctorName, clinic, issuedDate, notes, imageUri },

@@ -1,7 +1,25 @@
-import { and, eq, gte, asc } from 'drizzle-orm';
+import { and, eq, gte, lte, asc } from 'drizzle-orm';
 import { db } from '../client';
 import { appointments, type Appointment } from '../schema';
 import { nowIso, dayjs } from '@/lib/date';
+
+/** Appointments falling on one calendar day, for the schedule screen. */
+export async function listAppointmentsForDay(
+  patientId: number,
+  day: dayjs.Dayjs,
+): Promise<Appointment[]> {
+  return db
+    .select()
+    .from(appointments)
+    .where(
+      and(
+        eq(appointments.patientId, patientId),
+        gte(appointments.date, day.startOf('day').toISOString()),
+        lte(appointments.date, day.endOf('day').toISOString()),
+      ),
+    )
+    .orderBy(asc(appointments.date));
+}
 
 export async function listUpcomingAppointments(patientId: number): Promise<Appointment[]> {
   return db

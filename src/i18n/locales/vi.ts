@@ -42,6 +42,8 @@ export const vi = {
     haveAccount: 'Đã có tài khoản?',
     errorEmailTaken: 'Email này đã được đăng ký.',
     errorInvalidCredentials: 'Sai email hoặc mật khẩu.',
+    errorAccountDeleted:
+      'Tài khoản này không tồn tại — tài khoản đã bị xóa. Vui lòng đăng ký tài khoản mới.',
     errorWeakPassword: 'Mật khẩu cần ít nhất 8 ký tự.',
     errorMissingFields: 'Vui lòng điền đầy đủ thông tin.',
     errorNetwork: 'Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.',
@@ -192,6 +194,7 @@ export const vi = {
     date: 'Ngày',
     add: 'Thêm lịch hẹn',
     upcoming: 'Sắp tới',
+    onThisDay: 'Lịch hẹn ngày này',
     none: 'Chưa có lịch hẹn',
   },
   lifestyle: {
@@ -234,6 +237,18 @@ export const vi = {
     permissionNeeded: 'Cần quyền thông báo',
     permissionBody: 'Bật thông báo để nhận nhắc nhở uống thuốc đúng giờ.',
     enable: 'Bật thông báo',
+  },
+  permissions: {
+    openSettings: 'Mở Cài đặt',
+    cameraTitle: 'Cần quyền camera',
+    cameraBody:
+      'MedRemind cần dùng camera để chụp đơn thuốc và ảnh thuốc. Vào Cài đặt → MedRemind → Camera để bật.',
+    photosTitle: 'Cần quyền ảnh',
+    photosBody:
+      'MedRemind cần truy cập thư viện ảnh để bạn chọn ảnh đơn thuốc. Vào Cài đặt → MedRemind → Ảnh để bật.',
+    notificationsTitle: 'Thông báo đang tắt',
+    notificationsBody:
+      'Đơn thuốc đã được lưu, nhưng bạn sẽ KHÔNG nhận được nhắc nhở uống thuốc. Vào Cài đặt → MedRemind → Thông báo để bật.',
   },
   scan: {
     title: 'Quét đơn thuốc',

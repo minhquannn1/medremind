@@ -16,6 +16,7 @@ export interface AuthAccount {
 export type AuthErrorCode =
   | 'email_taken'
   | 'invalid_credentials'
+  | 'account_deleted'
   | 'weak_password'
   | 'missing_fields'
   | 'network';

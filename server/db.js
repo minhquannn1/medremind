@@ -43,6 +43,14 @@ CREATE TABLE IF NOT EXISTS snapshots (
   updated_at TEXT NOT NULL
 );
 
+-- Tombstones for deleted patient accounts, so signing in again can say the
+-- account was deleted instead of "wrong password". Only a one-way hash of the
+-- address is kept — the email itself is gone with the account.
+CREATE TABLE IF NOT EXISTS deleted_accounts (
+  email_hash TEXT PRIMARY KEY,
+  deleted_at TEXT NOT NULL
+);
+
 -- Full app-data backup per patient account (JSON export of the on-device db),
 -- used to restore data when the user signs in on a new device.
 CREATE TABLE IF NOT EXISTS backups (

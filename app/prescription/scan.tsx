@@ -11,6 +11,7 @@ import { colors, radius, spacing } from '@/theme';
 import { scanPrescriptionImage, type ScannedMedication } from '@/features/scan/aiScanner';
 import type { MedicationDraft } from '@/features/prescription/draft';
 import { useAppStore } from '@/store/appStore';
+import { ensureMediaLibraryPermission } from '@/features/permissions/ensure';
 
 export default function ScanPrescription() {
   const { t } = useTranslation();
@@ -108,6 +109,7 @@ export default function ScanPrescription() {
   };
 
   const pickFromGallery = async () => {
+    if (!(await ensureMediaLibraryPermission())) return;
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
       quality: 0.6,
