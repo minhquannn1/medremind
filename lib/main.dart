@@ -6,7 +6,7 @@ import 'db/database.dart';
 import 'features/notifications/scheduler.dart';
 import 'router.dart';
 import 'store/app_state.dart';
-import 'theme/tokens.dart';
+import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -70,7 +70,7 @@ class _MedRemindAppState extends ConsumerState<MedRemindApp> {
       title: 'MedRemind',
       debugShowCheckedModeBanner: false,
       routerConfig: router,
-      theme: _theme,
+      theme: AppTheme.light,
       locale: Locale(ref.watch(appStateProvider).language.name),
       supportedLocales: const [Locale('vi'), Locale('en')],
       localizationsDelegates: const [
@@ -81,15 +81,3 @@ class _MedRemindAppState extends ConsumerState<MedRemindApp> {
     );
   }
 }
-
-final ThemeData _theme = ThemeData(
-  useMaterial3: true,
-  scaffoldBackgroundColor: AppColors.canvas,
-  colorScheme: ColorScheme.fromSeed(
-    seedColor: AppColors.primary,
-    primary: AppColors.primary,
-    surface: AppColors.surface,
-  ),
-  splashFactory: NoSplash.splashFactory,
-  highlightColor: Colors.transparent,
-);

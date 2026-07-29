@@ -58,6 +58,10 @@ dev_dependencies:
   # instead of a mock that could drift from the schema.
   sqflite_common_ffi: ^2.3.4
 
+  # Generates every launcher icon size from one source image, so a new icon
+  # can never land on one platform at the wrong size or miss a density.
+  flutter_launcher_icons: ^0.14.4
+
   # Drives the real app on a simulator/device for end-to-end checks.
   integration_test:
     sdk: flutter
@@ -67,3 +71,15 @@ flutter:
 
   assets:
     - assets/
+
+# Regenerate after changing assets/icon/icon.png:
+#   dart run flutter_launcher_icons
+flutter_launcher_icons:
+  image_path: "assets/icon/icon.png"
+  android: true
+  ios: true
+  # iOS rejects icons with an alpha channel at upload, so it is flattened
+  # against the brand teal rather than left transparent.
+  remove_alpha_ios: true
+  background_color_ios: "#0E7C7B"
+  min_sdk_android: 21

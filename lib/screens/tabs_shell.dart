@@ -41,33 +41,32 @@ class _TabsShellState extends ConsumerState<TabsShell> {
           ProfileScreen(),
         ],
       ),
+      // Colours, height, indicator and label styles all come from
+      // navigationBarTheme so the bar stays token-driven.
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
-        backgroundColor: AppColors.surface,
-        indicatorColor: AppColors.primarySoft,
         onDestinationSelected: (i) {
           if (i != _index) setState(() => _index = i);
         },
         destinations: [
           NavigationDestination(
             icon: const Icon(Icons.home_outlined),
-            selectedIcon: const Icon(Icons.home, color: AppColors.primary),
+            selectedIcon: const Icon(Icons.home),
             label: t.t('tabs.home'),
           ),
           NavigationDestination(
             icon: const Icon(Icons.description_outlined),
-            selectedIcon:
-                const Icon(Icons.description, color: AppColors.primary),
+            selectedIcon: const Icon(Icons.description),
             label: t.t('tabs.prescriptions'),
           ),
           NavigationDestination(
             icon: const Icon(Icons.schedule_outlined),
-            selectedIcon: const Icon(Icons.schedule, color: AppColors.primary),
+            selectedIcon: const Icon(Icons.schedule),
             label: t.t('tabs.schedule'),
           ),
           NavigationDestination(
             icon: const Icon(Icons.person_outline),
-            selectedIcon: const Icon(Icons.person, color: AppColors.primary),
+            selectedIcon: const Icon(Icons.person),
             label: t.t('tabs.profile'),
           ),
         ],
