@@ -57,6 +57,8 @@ const Map<String, String> localeVi = {
   'auth.errorWeakPassword': 'Mật khẩu cần ít nhất 8 ký tự.',
   'auth.errorMissingFields': 'Vui lòng điền đầy đủ thông tin.',
   'auth.errorNetwork': 'Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.',
+  'auth.showPassword': 'Hiện mật khẩu',
+  'auth.hidePassword': 'Ẩn mật khẩu',
   'auth.deleteAccount': 'Xóa tài khoản',
   'auth.deleteAccountConfirmTitle': 'Xóa tài khoản?',
   'auth.deleteAccountConfirmBody':

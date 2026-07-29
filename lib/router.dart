@@ -57,13 +57,9 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/onboarding',
         builder: (_, _) => const OnboardingScreen(),
       ),
-      GoRoute(path: '/home', builder: (_, _) => const TabsShell(index: 0)),
-      GoRoute(
-        path: '/prescriptions',
-        builder: (_, _) => const TabsShell(index: 1),
-      ),
-      GoRoute(path: '/schedule', builder: (_, _) => const TabsShell(index: 2)),
-      GoRoute(path: '/profile', builder: (_, _) => const TabsShell(index: 3)),
+      // One route for all four tabs: TabsShell owns the selected index, so a
+      // tab tap never pushes a route and never rebuilds the other tabs.
+      GoRoute(path: '/home', builder: (_, _) => const TabsShell()),
     ],
   );
 });

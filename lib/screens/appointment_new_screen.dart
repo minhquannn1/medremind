@@ -116,6 +116,15 @@ class _AppointmentNewScreenState
         TimeField(
           label: t.t('medication.times'),
           value: _time,
+          title: t.t('medication.times'),
+          presetLabels: {
+            'schedule.morning': t.t('schedule.morning'),
+            'schedule.noon': t.t('schedule.noon'),
+            'schedule.evening': t.t('schedule.evening'),
+            'schedule.night': t.t('schedule.night'),
+          },
+          doneLabel: t.t('common.done'),
+          cancelLabel: t.t('common.cancel'),
           onChanged: (v) => setState(() => _time = v),
         ),
 

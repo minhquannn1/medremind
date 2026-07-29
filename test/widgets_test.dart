@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:medremind/components/app_button.dart';
@@ -7,6 +8,8 @@ import 'package:medremind/components/app_input.dart';
 import 'package:medremind/components/app_text.dart';
 import 'package:medremind/components/controls.dart';
 import 'package:medremind/components/layout.dart';
+import 'package:medremind/components/fields.dart';
+import 'package:medremind/screens/tabs_shell.dart';
 import 'package:medremind/theme/tokens.dart';
 
 Widget _host(Widget child) => MaterialApp(home: Scaffold(body: child));
@@ -151,6 +154,47 @@ void main() {
       expect(find.text('ít nhất 8 ký tự'), findsNothing);
     });
 
+    testWidgets('hides the password and reveals it when the eye is tapped',
+        (tester) async {
+      await tester.pumpWidget(_host(const AppInput(
+        label: 'Mật khẩu',
+        obscureText: true,
+        obscureToggle: true,
+        revealLabel: 'Hiện mật khẩu',
+        hideLabel: 'Ẩn mật khẩu',
+      )));
+
+      TextField field() => tester.widget<TextField>(find.byType(TextField));
+      expect(field().obscureText, isTrue, reason: 'starts hidden');
+
+      await tester.tap(find.byIcon(Icons.visibility_outlined));
+      await tester.pump();
+      expect(field().obscureText, isFalse, reason: 'revealed after tapping');
+      expect(find.byIcon(Icons.visibility_off_outlined), findsOneWidget);
+
+      await tester.tap(find.byIcon(Icons.visibility_off_outlined));
+      await tester.pump();
+      expect(field().obscureText, isTrue, reason: 'hidden again');
+    });
+
+    testWidgets('no eye button on a normal field', (tester) async {
+      await tester.pumpWidget(_host(const AppInput(label: 'Email')));
+      expect(find.byIcon(Icons.visibility_outlined), findsNothing);
+    });
+
+    testWidgets('no eye button when the toggle is not requested',
+        (tester) async {
+      await tester.pumpWidget(_host(const AppInput(
+        label: 'Mật khẩu',
+        obscureText: true,
+      )));
+      expect(find.byIcon(Icons.visibility_outlined), findsNothing);
+      expect(
+        tester.widget<TextField>(find.byType(TextField)).obscureText,
+        isTrue,
+      );
+    });
+
     testWidgets('a tappable field does not accept typing', (tester) async {
       var taps = 0;
       await tester.pumpWidget(_host(AppInput(
@@ -282,6 +326,120 @@ void main() {
       expect(find.text('Chưa có đơn thuốc'), findsOneWidget);
       expect(find.text('Thêm đơn để bắt đầu.'), findsOneWidget);
       expect(find.text('Thêm'), findsOneWidget);
+    });
+  });
+
+  group('TabsShell', () {
+    Future<void> pumpShell(WidgetTester tester) async {
+      await tester.pumpWidget(const ProviderScope(
+        child: MaterialApp(home: TabsShell()),
+      ));
+      await tester.pump();
+    }
+
+    testWidgets('keeps one persistent bar and swaps tabs in place',
+        (tester) async {
+      await pumpShell(tester);
+
+      expect(find.byType(NavigationBar), findsOneWidget);
+      // All four tabs live in the stack at once — that is what preserves each
+      // tab's scroll position and loaded data across switches.
+      expect(find.byType(IndexedStack), findsOneWidget);
+
+      final navigator = tester.widget<Navigator>(find.byType(Navigator).first);
+      expect(navigator, isNotNull);
+    });
+
+    testWidgets('tapping a tab does not push a route', (tester) async {
+      await pumpShell(tester);
+
+      final before = tester.widget<IndexedStack>(find.byType(IndexedStack)).index;
+      expect(before, 0);
+
+      await tester.tap(find.byIcon(Icons.person_outline));
+      await tester.pump();
+
+      final after = tester.widget<IndexedStack>(find.byType(IndexedStack)).index;
+      expect(after, 3, reason: 'the visible child changes');
+      expect(find.byType(NavigationBar), findsOneWidget,
+          reason: 'still exactly one bar — a pushed screen would add another');
+    });
+
+    testWidgets('honours the initial tab', (tester) async {
+      await tester.pumpWidget(const ProviderScope(
+        child: MaterialApp(home: TabsShell(initialIndex: 1)),
+      ));
+      await tester.pump();
+      expect(
+        tester.widget<IndexedStack>(find.byType(IndexedStack)).index,
+        1,
+      );
+    });
+  });
+
+  group('TimeField', () {
+    const labels = {
+      'schedule.morning': 'Sáng',
+      'schedule.noon': 'Trưa',
+      'schedule.evening': 'Chiều',
+      'schedule.night': 'Tối',
+    };
+
+    Future<void> openSheet(WidgetTester tester, {String value = '08:00',
+        required ValueChanged<String> onChanged}) async {
+      await tester.pumpWidget(_host(TimeField(
+        label: 'Giờ uống',
+        value: value,
+        title: 'Giờ uống',
+        presetLabels: labels,
+        doneLabel: 'Xong',
+        cancelLabel: 'Hủy',
+        onChanged: onChanged,
+      )));
+      await tester.tap(find.byType(TimeField));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('shows the current time and one-tap presets', (tester) async {
+      await openSheet(tester, onChanged: (_) {});
+
+      expect(find.text('Sáng 08:00'), findsOneWidget);
+      expect(find.text('Trưa 12:00'), findsOneWidget);
+      expect(find.text('Chiều 18:00'), findsOneWidget);
+      expect(find.text('Tối 21:00'), findsOneWidget);
+      expect(find.text('Xong'), findsOneWidget);
+    });
+
+    testWidgets('a preset sets the time and Done returns it', (tester) async {
+      String? picked;
+      await openSheet(tester, onChanged: (v) => picked = v);
+
+      await tester.tap(find.text('Chiều 18:00'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Xong'));
+      await tester.pumpAndSettle();
+
+      expect(picked, '18:00');
+    });
+
+    testWidgets('Cancel leaves the value untouched', (tester) async {
+      String? picked;
+      await openSheet(tester, onChanged: (v) => picked = v);
+
+      await tester.tap(find.text('Trưa 12:00'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Hủy'));
+      await tester.pumpAndSettle();
+
+      expect(picked, isNull, reason: 'cancelling must not report a change');
+    });
+
+    testWidgets('a malformed stored time does not crash the sheet',
+        (tester) async {
+      await openSheet(tester, value: 'not-a-time', onChanged: (_) {});
+      // Falls back to a sane default rather than throwing.
+      expect(find.text('08:00'), findsWidgets);
+      expect(tester.takeException(), isNull);
     });
   });
 }

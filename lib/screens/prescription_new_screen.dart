@@ -344,6 +344,15 @@ class _MedicationEditorState extends ConsumerState<_MedicationEditor> {
                     Expanded(
                       child: TimeField(
                         value: e.value,
+                        title: t.t('medication.times'),
+                        presetLabels: {
+                          'schedule.morning': t.t('schedule.morning'),
+                          'schedule.noon': t.t('schedule.noon'),
+                          'schedule.evening': t.t('schedule.evening'),
+                          'schedule.night': t.t('schedule.night'),
+                        },
+                        doneLabel: t.t('common.done'),
+                        cancelLabel: t.t('common.cancel'),
                         onChanged: (v) =>
                             setState(() => d.times[e.key] = v),
                       ),

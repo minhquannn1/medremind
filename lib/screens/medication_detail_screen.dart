@@ -185,6 +185,15 @@ class _MedicationDetailScreenState
         SectionHeader(title: t.t('medication.times')),
         ..._times.map((st) => TimeField(
               value: st.time,
+              title: t.t('medication.times'),
+              presetLabels: {
+                'schedule.morning': t.t('schedule.morning'),
+                'schedule.noon': t.t('schedule.noon'),
+                'schedule.evening': t.t('schedule.evening'),
+                'schedule.night': t.t('schedule.night'),
+              },
+              doneLabel: t.t('common.done'),
+              cancelLabel: t.t('common.cancel'),
               onChanged: (v) => _changeTime(st, v),
             )),
         const SizedBox(height: Spacing.md),

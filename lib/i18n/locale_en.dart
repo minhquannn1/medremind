@@ -58,6 +58,8 @@ const Map<String, String> localeEn = {
   'auth.errorMissingFields': 'Please fill in all fields.',
   'auth.errorNetwork':
       'Could not reach the server. Check your connection and try again.',
+  'auth.showPassword': 'Show password',
+  'auth.hidePassword': 'Hide password',
   'auth.deleteAccount': 'Delete account',
   'auth.deleteAccountConfirmTitle': 'Delete account?',
   'auth.deleteAccountConfirmBody':

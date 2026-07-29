@@ -114,6 +114,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           label: t.t('auth.password'),
           icon: Icons.lock_outline,
           obscureText: true,
+          obscureToggle: true,
+          revealLabel: t.t('auth.showPassword'),
+          hideLabel: t.t('auth.hidePassword'),
           error: _error,
         ),
 

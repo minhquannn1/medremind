@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../store/app_state.dart';
 import '../theme/tokens.dart';
@@ -10,33 +9,44 @@ import 'profile_screen.dart';
 import 'schedule_screen.dart';
 
 /// Bottom tab bar. Ported from `app/(tabs)/_layout.tsx`.
-class TabsShell extends ConsumerWidget {
-  const TabsShell({super.key, required this.index});
+///
+/// One route holds all four tabs in an IndexedStack: switching tabs swaps the
+/// visible child instead of pushing a route, so the bar stays put and each tab
+/// keeps its scroll position and already-loaded data. A route per tab would
+/// rebuild the screen — and re-run its queries — on every tap.
+class TabsShell extends ConsumerStatefulWidget {
+  const TabsShell({super.key, this.initialIndex = 0});
 
-  final int index;
-
-  static const _routes = ['/home', '/prescriptions', '/schedule', '/profile'];
+  final int initialIndex;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final t = ref.watch(translationsProvider);
+  ConsumerState<TabsShell> createState() => _TabsShellState();
+}
 
-    final body = switch (index) {
-      1 => const PrescriptionsScreen(),
-      2 => const ScheduleScreen(),
-      3 => const ProfileScreen(),
-      _ => const HomeScreen(),
-    };
+class _TabsShellState extends ConsumerState<TabsShell> {
+  late int _index = widget.initialIndex;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = ref.watch(translationsProvider);
 
     return Scaffold(
       backgroundColor: AppColors.canvas,
-      body: body,
+      body: IndexedStack(
+        index: _index,
+        children: const [
+          HomeScreen(),
+          PrescriptionsScreen(),
+          ScheduleScreen(),
+          ProfileScreen(),
+        ],
+      ),
       bottomNavigationBar: NavigationBar(
-        selectedIndex: index,
+        selectedIndex: _index,
         backgroundColor: AppColors.surface,
         indicatorColor: AppColors.primarySoft,
         onDestinationSelected: (i) {
-          if (i != index) context.go(_routes[i]);
+          if (i != _index) setState(() => _index = i);
         },
         destinations: [
           NavigationDestination(
