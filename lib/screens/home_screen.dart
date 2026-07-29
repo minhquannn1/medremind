@@ -63,6 +63,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Future<void> _mark(TodayDose dose, DoseStatus status) async {
     await _doses.markDose(dose.id, status);
+    ref.read(doseRevisionProvider.notifier).state++;
     final patientId = ref.read(appStateProvider).activePatientId;
     if (patientId != null) {
       ref.read(backupSyncProvider).queueBackup(patientId);
@@ -80,6 +81,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final t = ref.watch(translationsProvider);
+
+    // Reload when a dose was confirmed elsewhere (e.g. from a notification).
+    ref.listen<int>(doseRevisionProvider, (_, _) => _load());
 
     if (_loading) {
       return const AppScreen(

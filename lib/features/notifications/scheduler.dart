@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io' show Platform;
 import 'dart:ui' show Color;
 
@@ -18,6 +19,31 @@ import '../../i18n/app_localizations.dart';
 /// the user travels.
 
 const String androidChannelId = 'medication-reminders';
+
+/// What a tapped dose reminder identifies. The dose log for a given day is
+/// created lazily, so the notification carries the medication and its
+/// scheduled time instead of a log id that may not exist yet.
+class DoseTapPayload {
+  const DoseTapPayload({required this.medicationId, required this.time});
+
+  final int medicationId;
+  final String time; // HH:mm
+
+  String encode() => jsonEncode({'medicationId': medicationId, 'time': time});
+
+  static DoseTapPayload? decode(String? raw) {
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      final map = jsonDecode(raw) as Map<String, Object?>;
+      final id = (map['medicationId'] as num?)?.toInt();
+      final time = map['time'] as String?;
+      if (id == null || time == null) return null;
+      return DoseTapPayload(medicationId: id, time: time);
+    } catch (_) {
+      return null;
+    }
+  }
+}
 
 class ReminderPrefs {
   final bool sound;
@@ -56,6 +82,9 @@ class NotificationScheduler {
     _timezoneReady = true;
   }
 
+  /// Called when the user taps a dose reminder.
+  void Function(DoseTapPayload)? onDoseTapped;
+
   /// Must run before any scheduling. Safe to call more than once.
   Future<void> initialize(Translations t) async {
     await _ensureTimezone();
@@ -70,6 +99,10 @@ class NotificationScheduler {
     );
     await _plugin.initialize(
       const InitializationSettings(android: androidInit, iOS: darwinInit),
+      onDidReceiveNotificationResponse: (response) {
+        final payload = DoseTapPayload.decode(response.payload);
+        if (payload != null) onDoseTapped?.call(payload);
+      },
     );
 
     await configureAndroidChannel(t);
@@ -218,6 +251,8 @@ class NotificationScheduler {
           }),
           _nextInstanceOf(hour, minute),
           details,
+          payload: DoseTapPayload(medicationId: med.id, time: time.time)
+              .encode(),
           androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
           // Wall-clock, not absolute: an 08:00 dose stays 08:00 across DST
           // and timezone changes.
@@ -254,4 +289,12 @@ class NotificationScheduler {
   Future<void> cancel(int id) => _plugin.cancel(id);
 
   Future<void> cancelAll() => _plugin.cancelAll();
+
+  /// The reminder that launched the app from a cold start, if any. Tapping a
+  /// notification while the app is closed does not fire the tap callback.
+  Future<DoseTapPayload?> launchPayload() async {
+    final details = await _plugin.getNotificationAppLaunchDetails();
+    if (details?.didNotificationLaunchApp != true) return null;
+    return DoseTapPayload.decode(details?.notificationResponse?.payload);
+  }
 }

@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'db/database.dart';
+import 'features/notifications/scheduler.dart';
 import 'router.dart';
 import 'store/app_state.dart';
 import 'theme/tokens.dart';
@@ -31,11 +32,30 @@ class _MedRemindAppState extends ConsumerState<MedRemindApp> {
       if (!mounted) return;
       final t = ref.read(translationsProvider);
       try {
-        await ref.read(notificationSchedulerProvider).initialize(t);
+        final scheduler = ref.read(notificationSchedulerProvider);
+        scheduler.onDoseTapped = _openDose;
+        await scheduler.initialize(t);
+
+        // A tap that launched the app from closed does not fire the callback.
+        final launched = await scheduler.launchPayload();
+        if (launched != null) _openDose(launched);
       } catch (_) {
         // A notification-init failure must never block app start; the user is
         // warned in context when a reminder actually needs permission.
       }
+    });
+  }
+
+  /// Opens the confirmation screen for a tapped reminder. Deferred until the
+  /// session has loaded, or the redirect would bounce it back to the splash.
+  void _openDose(DoseTapPayload payload) {
+    Future.microtask(() {
+      if (!mounted) return;
+      if (!ref.read(appStateProvider).authed) return;
+      ref.read(routerProvider).push(
+            '/dose?med=${payload.medicationId}'
+            '&time=${Uri.encodeComponent(payload.time)}',
+          );
     });
   }
 

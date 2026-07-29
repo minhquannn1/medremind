@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import 'screens/auth_screen.dart';
 import 'screens/onboarding_screen.dart';
+import 'screens/dose_confirm_screen.dart';
 import 'screens/tabs_shell.dart';
 import 'store/app_state.dart';
 import 'theme/tokens.dart';
@@ -60,6 +61,14 @@ final routerProvider = Provider<GoRouter>((ref) {
       // One route for all four tabs: TabsShell owns the selected index, so a
       // tab tap never pushes a route and never rebuilds the other tabs.
       GoRoute(path: '/home', builder: (_, _) => const TabsShell()),
+      GoRoute(
+        path: '/dose',
+        builder: (_, state) => DoseConfirmScreen(
+          medicationId:
+              int.tryParse(state.uri.queryParameters['med'] ?? '') ?? 0,
+          time: state.uri.queryParameters['time'] ?? '',
+        ),
+      ),
     ],
   );
 });

@@ -275,6 +275,11 @@ final appStateProvider =
   );
 });
 
+/// Bumped whenever dose data changes somewhere other than the screen showing
+/// it. The home tab stays alive in the tab stack, so without this its figures
+/// would still show the numbers from before a dose was confirmed.
+final doseRevisionProvider = StateProvider<int>((_) => 0);
+
 /// Convenience for widgets: the translator for the active language.
 final translationsProvider = Provider<Translations>(
   (ref) => Translations(ref.watch(appStateProvider).language),
