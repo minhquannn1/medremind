@@ -34,7 +34,7 @@ const Map<String, String> localeVi = {
   // tabs
   'tabs.home': 'Trang chủ',
   'tabs.prescriptions': 'Đơn thuốc',
-  'tabs.schedule': 'Lịch uống',
+  'tabs.schedule': 'Lịch',
   'tabs.profile': 'Hồ sơ',
 
   // auth
@@ -173,7 +173,7 @@ const Map<String, String> localeVi = {
   'medication.addPhoto': 'Thêm ảnh thuốc',
 
   // schedule
-  'schedule.title': 'Lịch uống',
+  'schedule.title': 'Lịch',
   'schedule.reviewTitle': 'Kiểm tra giờ uống',
   'schedule.reviewHint':
       'Điều chỉnh giờ uống cho phù hợp với sinh hoạt của bạn.',
