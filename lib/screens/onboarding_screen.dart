@@ -7,6 +7,7 @@ import '../components/app_text.dart';
 import '../components/controls.dart';
 import '../components/fields.dart';
 import '../components/layout.dart';
+import '../features/sync/doctor_sync.dart';
 import '../store/app_state.dart';
 import '../theme/tokens.dart';
 
@@ -22,11 +23,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final _name = TextEditingController();
   final _height = TextEditingController();
   final _weight = TextEditingController();
+  final _pairCode = TextEditingController();
 
   String? _dob;
   String? _gender;
   bool _busy = false;
   String? _error;
+  String? _pairError;
 
   @override
   void initState() {
@@ -41,6 +44,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     _name.dispose();
     _height.dispose();
     _weight.dispose();
+    _pairCode.dispose();
     super.dispose();
   }
 
@@ -53,7 +57,29 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     setState(() {
       _busy = true;
       _error = null;
+      _pairError = null;
     });
+
+    // Check the doctor code before creating anything: a typo should be fixable
+    // here rather than silently dropped, leaving the user think they are
+    // linked when they are not.
+    const doctors = DoctorSyncApi();
+    var paired = false;
+    final code = _pairCode.text.trim();
+    if (code.isNotEmpty) {
+      final res = await doctors.pairWithDoctor(code);
+      if (!res.ok) {
+        if (!mounted) return;
+        setState(() {
+          _busy = false;
+          _pairError = res.error == PairError.invalidCode
+              ? t.t('doctor.invalidCode')
+              : t.t('doctor.networkError');
+        });
+        return;
+      }
+      paired = true;
+    }
 
     final app = ref.read(appStateProvider);
     final patientId = await ref.read(patientsRepositoryProvider).createPatient(
@@ -67,6 +93,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         );
 
     await ref.read(appStateProvider.notifier).completeOnboarding(patientId);
+    // Push straight away so the doctor sees a real profile, not an empty one.
+    if (paired) await doctors.syncToDoctor(patientId);
     if (mounted) setState(() => _busy = false);
   }
 
@@ -147,6 +175,20 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               ),
             ),
           ],
+        ),
+
+        // Optional: most users pair later from Settings, but entering the
+        // code here saves a step for anyone handed one at the clinic.
+        SectionHeader(title: t.t('doctor.title')),
+        AppText('${t.t('doctor.enterCodeHint')} (${t.t('common.optional')})',
+            variant: TextVariant.caption, color: TextColorKey.textFaint),
+        const SizedBox(height: Spacing.md),
+        AppInput(
+          controller: _pairCode,
+          placeholder: 'MED-XXXXXX',
+          icon: Icons.qr_code,
+          autocorrect: false,
+          error: _pairError,
         ),
 
         AppButton(
