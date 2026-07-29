@@ -1,78 +1,82 @@
 # MedRemind — project notes for Claude
 
-Medication adherence app. Expo (React Native, SDK 54) → iOS + Android.
-Local-first (SQLite), bilingual (vi/en). See `README.md` for full overview.
+Medication adherence app. **Flutter** (iOS + Android) plus a Node/Express
+backend. Local-first (SQLite), bilingual (vi/en). See `README.md` for the app
+overview.
 
-## Conventions
+This repo holds two independent things:
 
-- **Path alias:** import from `@/...` (maps to `src/`). Resolved by
-  `babel-plugin-module-resolver` in `babel.config.js` and `tsconfig.json` paths.
-- **Styling:** never hardcode colors/spacing/type — use tokens from `@/theme`
-  (`colors`, `spacing`, `radius`, `fontSize`, `shadow`). Design direction is
-  "soft clinical" (teal primary, warm coral accent).
-- **UI primitives** live in `src/components/ui` (barrel: `@/components/ui`).
-  Prefer composing these over raw RN views.
-- **Text:** use the `<Text variant=… color=…>` component, not RN `Text`.
-- **i18n:** every user-facing string goes in `src/i18n/locales/{vi,en}.ts`
-  (keep both in sync — `en.ts` is typed against `vi`). Use `useTranslation()`.
-- **Data access:** only through `src/db/repositories/*`. Never query the db
-  client directly from screens. Repositories return typed rows from
-  `src/db/schema.ts`.
-- **Dates:** use helpers in `@/lib/date` (dayjs), ISO strings in the db.
-- **Immutability:** update state with new objects (see drafts in
-  `src/features/prescription/draft.ts`).
+| Path | What it is |
+|---|---|
+| `lib/`, `test/`, `ios/`, `android/`, `pubspec.yaml` | the Flutter app |
+| `server/`, `Dockerfile`, `railway.json` | the backend Railway deploys |
 
-## After changing prescriptions/medications/times
+## Backend — do not break it
 
-Call `syncReminders(patientId)` (from `@/features/notifications/scheduler`) so
-scheduled local notifications stay in sync. The repositories don't do this
-automatically.
+Railway builds **only** `server/`, via the root `Dockerfile`, and serves the
+doctor dashboard, the AI scan proxy, patient auth, cloud backup and the
+`/privacy` + `/support` pages that App Store Connect points at.
+
+- Never delete or move `server/`, `Dockerfile` or `railway.json`.
+- The SQLite file is on a Railway volume at `/data/doctor.db`
+  (`DOCTOR_DB_PATH`). It is gitignored; the filesystem is otherwise ephemeral,
+  so anything written outside the volume is lost on deploy.
+- `OPENAI_API_KEY` lives only in Railway's env vars, never in the app.
+- Deploys are health-gated on `/health`, so a broken build cannot replace a
+  working one.
+- The dashboard is a single self-contained HTML file with inline `onclick`
+  handlers; the CSP in `server/security.js` must keep
+  `scriptSrcAttr: ["'unsafe-inline'"]` or every button silently stops working.
+
+## Flutter app conventions
+
+- **Theme:** never hardcode colours or spacing — use `lib/theme/tokens.dart`
+  (`AppColors`, `Spacing`, `Radii`, `FontSizes`). Direction is "soft clinical"
+  (teal primary, warm coral accent).
+- **Widgets:** compose the primitives in `lib/components/` (`AppText`,
+  `AppCard`, `AppButton`, `AppInput`, `AppScreen`, …) rather than raw Material
+  widgets, so screens stay visually consistent.
+- **i18n:** every user-facing string goes in `lib/i18n/locale_vi.dart` **and**
+  `locale_en.dart`. A test asserts the two stay key-for-key identical and that
+  their `{{placeholders}}` match — add to both or it fails.
+- **Data access:** only through `lib/db/repositories/*`. Screens never touch
+  the database directly.
+- **State:** Riverpod. Session and language live in `lib/store/app_state.dart`.
+
+## After changing prescriptions, medications or times
+
+Call `NotificationScheduler.syncReminders(patientId, t)`. Repositories do not
+do it automatically, and `syncReminders` returns **false** when notifications
+are not permitted — tell the user rather than leaving them with medications and
+no alerts.
 
 ## Schema changes
 
-Tables are created via raw DDL in `src/db/init.ts` (no migration runner). If you
-add/alter a table, update **both** `src/db/schema.ts` (Drizzle types) **and** the
-DDL in `init.ts`.
+There is no migration runner. Tables are created by the DDL in
+`lib/db/database.dart`; new columns go in the idempotent `_migrations` list
+there. Column names are byte-identical to the old React Native app so cloud
+backups restore across both — changing one breaks existing users' backups.
+
+## Verifying
+
+```bash
+flutter analyze                  # must be 0 issues
+flutter test                     # unit + widget
+flutter test test_live/          # hits the real backend
+flutter build ios --simulator    # catches native/plugin breakage
+flutter build apk --debug
+```
 
 ## Gotchas
 
-- **Prescription scan uses OpenAI GPT-4o vision via a backend proxy** (not
-  on-device OCR — ML Kit was removed). Flow: `app/prescription/scan.tsx`
-  captures a photo with `base64: true` → `scanPrescriptionImage()` in
-  `src/features/scan/aiScanner.ts` POSTs it to the backend → `server/index.js`
-  calls GPT-4o vision + function calling → returns structured medications →
-  mapped to `MedicationDraft` and pre-filled in `prescription/new`. Plain HTTP
-  fetch (no native module), so scan changes only need a JS reload, not a native
-  rebuild.
-  - Backend URL: `EXPO_PUBLIC_SCAN_API_URL` in `.env` (Metro inlines it at
-    bundle time; restart Metro with `--clear` after changing). Falls back to the
-    LAN IP default in `aiScanner.ts`.
-  - The OpenAI API key lives ONLY in `server/.env` (gitignored). Never put it in
-    the app. For production, deploy `server/` and point the env var at it.
-  - Model is `OPENAI_MODEL` in `server/.env` (default `gpt-4o`).
-  - `aiScanner.ts` is provider-agnostic — it just hits the proxy. Swapping the
-    AI provider only touches `server/index.js`.
-- **`ios/` is committed, so app.json native settings do NOT reach the build.**
-  This is a non-CNG (no-prebuild) project: `expo run:ios` compiles `ios/` as-is.
-  Anything under `expo.ios`, `expo.android`, `splash`, `icon`, `scheme`,
-  `orientation` or `plugins` in `app.json` only takes effect after
-  `npx expo prebuild`, which would overwrite manual native edits. Until then,
-  change the native project directly:
-  - Info.plist keys (e.g. `ITSAppUsesNonExemptEncryption`) →
-    `ios/MedRemind/Info.plist`
-  - iPad support → `TARGETED_DEVICE_FAMILY` in
-    `ios/MedRemind.xcodeproj/project.pbxproj` (`"1,2"` = iPhone + iPad,
-    `"1"` = iPhone only). `expo.ios.supportsTablet` in app.json is ignored.
-  - Run `npx expo-doctor` to list config that is out of sync.
-- **No EAS.** There is no `eas.json`; store builds are made locally in Xcode
-  (`open ios/MedRemind.xcworkspace` → Archive). Never add
-  `@react-native-ml-kit/*` — it was removed and desyncs `ios/Podfile.lock`,
-  which breaks `expo run:ios`.
-- **Hermes + private class fields:** `babel.config.js` force-transforms
-  `#private` fields (loose) because a transitive dep ships them and this Hermes
-  build rejects them. Don't remove those plugins.
-- **Tooling:** run bash commands ONE AT A TIME, not in parallel — parallel
-  Bash calls in this harness corrupt/cancel each other's output.
-- Verify changes with `npm run typecheck` and
-  `npx expo export --platform ios` / `--platform android` (catches
-  bundling/import errors without a simulator; both must exit 0).
+- `flutter_local_notifications` needs core library desugaring on Android; it is
+  enabled in `android/app/build.gradle.kts` and removing it fails the build.
+- Android release currently signs with the **debug** key — set a real signing
+  config before shipping to Play.
+- Reminders are scheduled in the device timezone (wall-clock), so an 08:00 dose
+  stays 08:00 across travel and DST.
+- Whether reminders actually fire can only be confirmed on a physical device:
+  the OS queues nothing until notifications are allowed, and that prompt cannot
+  be scripted.
+- The backend URL defaults to the Railway instance; override with
+  `--dart-define=SCAN_API_URL=…`.

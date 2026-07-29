@@ -1,0 +1,15 @@
+#!/bin/sh
+# This is a generated file; do not edit or check into version control.
+export "FLUTTER_ROOT=/opt/homebrew/share/flutter"
+export "FLUTTER_APPLICATION_PATH=/Users/minhquan/Documents/MedRemindFlutter"
+export "FLUTTER_FRAMEWORK_SWIFT_PACKAGE_PATH=/Users/minhquan/Documents/MedRemindFlutter/ios/Flutter/ephemeral/Packages/.packages/FlutterFramework"
+export "COCOAPODS_PARALLEL_CODE_SIGN=true"
+export "FLUTTER_TARGET=/var/folders/z5/sg9yv2x94zx49l_6dqjsfqdc0000gn/T/flutter_tools.AbgQPx/flutter_test_listener.WMPDxC/listener.dart"
+export "FLUTTER_BUILD_DIR=build"
+export "FLUTTER_BUILD_NAME=1.0.0"
+export "FLUTTER_BUILD_NUMBER=1"
+export "DART_DEFINES=RkxVVFRFUl9WRVJTSU9OPTMuNDQuOA==,RkxVVFRFUl9DSEFOTkVMPXN0YWJsZQ==,RkxVVFRFUl9HSVRfVVJMPWh0dHBzOi8vZ2l0aHViLmNvbS9mbHV0dGVyL2ZsdXR0ZXIuZ2l0,RkxVVFRFUl9GUkFNRVdPUktfUkVWSVNJT049MDU4ZTBhZjJjMg==,RkxVVFRFUl9FTkdJTkVfUkVWSVNJT049MGNkNjEwNzE3Yg==,RkxVVFRFUl9EQVJUX1ZFUlNJT049My4xMi4y,SU5URUdSQVRJT05fVEVTVF9TSE9VTERfUkVQT1JUX1JFU1VMVFNfVE9fTkFUSVZFPWZhbHNl"
+export "DART_OBFUSCATION=false"
+export "TRACK_WIDGET_CREATION=true"
+export "TREE_SHAKE_ICONS=false"
+export "PACKAGE_CONFIG=/Users/minhquan/Documents/MedRemindFlutter/.dart_tool/package_config.json"

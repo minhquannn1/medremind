@@ -1,13 +1,28 @@
+# The image only ever builds server/ — keep the Flutter app and its build
+# artifacts out of the build context so deploys stay small and fast.
+.git
 node_modules
 server/node_modules
 server/doctor.db
 server/doctor.db-shm
 server/doctor.db-wal
 server/.env
+
+# Flutter app
+lib
+test
+test_live
+integration_test
 ios
 android
 assets
-app
-src
-.git
-.expo
+build
+.dart_tool
+pubspec.yaml
+pubspec.lock
+analysis_options.yaml
+*.iml
+
+# Docs and store assets
+docs
+appstore

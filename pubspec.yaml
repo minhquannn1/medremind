@@ -1,0 +1,69 @@
+name: medremind
+description: "MedRemind — medication adherence app (Flutter port)."
+publish_to: 'none'
+
+# Matches the React Native app's marketing version so store builds line up.
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # State management — replaces zustand.
+  flutter_riverpod: ^2.6.1
+
+  # Navigation — replaces expo-router's file-based routes.
+  go_router: ^14.6.2
+
+  # Local database — replaces expo-sqlite + drizzle-orm.
+  sqflite: ^2.4.1
+  path: ^1.9.0
+
+  # Dates + i18n formatting — replaces dayjs.
+  intl: ^0.20.2
+
+  # Local notifications — replaces expo-notifications.
+  flutter_local_notifications: ^18.0.1
+  timezone: ^0.10.0
+  flutter_timezone: ^4.1.1
+
+  # Camera + gallery — replaces expo-camera / expo-image-picker.
+  image_picker: ^1.1.2
+
+  # Runtime permissions — replaces the expo permission APIs.
+  permission_handler: ^11.3.1
+
+  # Real-device check — replaces expo-device (simulators cannot show alerts).
+  device_info_plus: ^11.2.0
+
+  # HTTP to the scan / auth / sync backend.
+  http: ^1.2.2
+
+  # Opens the privacy and support pages in the browser.
+  url_launcher: ^6.3.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+  # Runs real SQLite on the host so repository tests exercise actual SQL
+  # instead of a mock that could drift from the schema.
+  sqflite_common_ffi: ^2.3.4
+
+  # Drives the real app on a simulator/device for end-to-end checks.
+  integration_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/
