@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../components/app_card.dart';
 import '../components/app_text.dart';
 import '../components/layout.dart';
+import '../db/models.dart';
+import '../db/repositories/appointments_repository.dart';
 import '../db/repositories/doses_repository.dart';
 import '../lib_date.dart';
 import '../store/app_state.dart';
@@ -21,8 +23,10 @@ class ScheduleScreen extends ConsumerStatefulWidget {
 
 class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
   static const _doses = DosesRepository();
+  static const _appointments = AppointmentsRepository();
 
   List<TodayDose> _items = const [];
+  List<Appointment> _upcoming = const [];
   bool _loading = true;
 
   @override
@@ -38,9 +42,11 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
       return;
     }
     final items = await _doses.getDosesForDay(patientId);
+    final upcoming = await _appointments.listUpcomingAppointments(patientId);
     if (!mounted) return;
     setState(() {
       _items = items;
+      _upcoming = upcoming;
       _loading = false;
     });
   }
@@ -87,13 +93,65 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
         ),
         const SizedBox(height: Spacing.lg),
 
-        if (_items.isEmpty)
+        // Appointments were saveable but had nowhere to appear, so a booked
+        // revisit simply vanished.
+        if (_upcoming.isNotEmpty) ...[
+          SectionHeader(title: t.t('appointments.upcoming')),
+          ..._upcoming.map((a) => Padding(
+                padding: const EdgeInsets.only(bottom: Spacing.sm),
+                child: AppCard(
+                  tone: CardTone.primary,
+                  child: Row(
+                    children: [
+                      Icon(
+                        a.type == 'refill'
+                            ? Icons.local_pharmacy_outlined
+                            : Icons.event_outlined,
+                        color: AppColors.primary,
+                        size: 20,
+                      ),
+                      const SizedBox(width: Spacing.md),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            AppText(t.t('appointments.${a.type}'),
+                                variant: TextVariant.bodyStrong),
+                            AppText(
+                              [
+                                formatDateTime(a.date),
+                                if (a.note != null && a.note!.isNotEmpty)
+                                  a.note!,
+                              ].join(' · '),
+                              variant: TextVariant.caption,
+                              color: TextColorKey.textMuted,
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline,
+                            size: 20, color: AppColors.textFaint),
+                        tooltip: t.t('common.delete'),
+                        onPressed: () async {
+                          await _appointments.deleteAppointment(a.id);
+                          await _load();
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              )),
+          const SizedBox(height: Spacing.lg),
+        ],
+
+        if (_items.isEmpty && _upcoming.isEmpty)
           EmptyState(
             icon: Icons.schedule_outlined,
             title: t.t('schedule.noSchedule'),
             body: t.t('home.noDosesTodayBody'),
           )
-        else
+        else if (_items.isNotEmpty)
           ...order.where((p) => groups.containsKey(p)).expand((part) => [
                 SectionHeader(title: t.t('schedule.${part.name}')),
                 ...groups[part]!.map((d) => Padding(

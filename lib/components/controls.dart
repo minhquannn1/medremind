@@ -233,17 +233,30 @@ class ProgressRing extends StatelessWidget {
               trackColor: trackColor,
             ),
           ),
-          Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (label != null)
-                AppText(label!,
-                    variant: TextVariant.title, color: TextColorKey.primary),
-              if (caption != null)
-                AppText(caption!,
-                    variant: TextVariant.caption,
-                    color: TextColorKey.textMuted),
-            ],
+          // Clamp the centre content to the square that fits inside the ring
+          // (side = inner diameter / sqrt2). Without this a long caption runs
+          // out over the stroke and past the circle.
+          SizedBox(
+            width: (size - stroke * 2) / math.sqrt2,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (label != null)
+                  AppText(label!,
+                      variant: TextVariant.title,
+                      color: TextColorKey.primary,
+                      center: true,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis),
+                if (caption != null)
+                  AppText(caption!,
+                      variant: TextVariant.caption,
+                      color: TextColorKey.textMuted,
+                      center: true,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis),
+              ],
+            ),
           ),
         ],
       ),

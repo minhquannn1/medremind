@@ -112,9 +112,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               ProgressRing(
                 progress: _adherence.ratio,
                 label: ratioLabel,
-                caption: '${_adherence.taken}/${_adherence.total} '
-                    '${t.t('home.adherenceCaption')}',
+                // Only the short count sits inside the ring; the wording goes
+                // below, where it has the full card width to breathe.
+                caption: '${_adherence.taken}/${_adherence.total}',
               ),
+              const SizedBox(height: Spacing.sm),
+              AppText(t.t('home.adherenceCaption'),
+                  variant: TextVariant.caption,
+                  color: TextColorKey.textMuted,
+                  center: true),
             ],
           ),
         ),

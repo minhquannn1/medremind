@@ -258,6 +258,32 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
+    testWidgets('ProgressRing keeps a long caption inside the circle',
+        (tester) async {
+      const size = 132.0;
+      const stroke = 12.0;
+      await tester.pumpWidget(_host(const Center(
+        child: ProgressRing(
+          progress: 0.8,
+          size: size,
+          stroke: stroke,
+          label: '100%',
+          caption: '10/10 doses taken this week',
+        ),
+      )));
+
+      // The text must fit the square inscribed in the ring's inner circle,
+      // otherwise it runs out over the stroke and past the circle.
+      final ringBox = tester.getRect(find.byType(ProgressRing));
+      final captionBox = tester.getRect(find.text('10/10 doses taken this week'));
+      final maxInner = (size - stroke * 2) / 1.4142;
+
+      expect(captionBox.width, lessThanOrEqualTo(maxInner + 0.5));
+      expect(ringBox.contains(captionBox.topLeft), isTrue);
+      expect(ringBox.contains(captionBox.bottomRight), isTrue);
+      expect(tester.takeException(), isNull, reason: 'must not overflow');
+    });
+
     testWidgets('ProgressRing survives out-of-range progress', (tester) async {
       await tester.pumpWidget(_host(const ProgressRing(progress: 5)));
       expect(tester.takeException(), isNull);
