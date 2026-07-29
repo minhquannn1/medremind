@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../components/app_card.dart';
+import '../components/app_input.dart';
 import '../components/app_text.dart';
+import '../components/controls.dart';
+import '../components/fields.dart';
 import '../components/layout.dart';
 import '../db/models.dart';
 import '../db/repositories/patients_repository.dart';
@@ -29,6 +32,35 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   List<Allergy> _allergies = const [];
   bool _loading = true;
 
+  // Onboarding lets these be skipped, so they have to be fillable later.
+  bool _editing = false;
+  final _height = TextEditingController();
+  final _weight = TextEditingController();
+  String? _dob;
+  String? _gender;
+
+  @override
+  void dispose() {
+    _height.dispose();
+    _weight.dispose();
+    super.dispose();
+  }
+
+  Future<void> _saveMetrics() async {
+    final patientId = ref.read(appStateProvider).activePatientId;
+    if (patientId == null) return;
+
+    await _repo.updatePatient(patientId, {
+      'height_cm': double.tryParse(_height.text.trim()),
+      'weight_kg': double.tryParse(_weight.text.trim()),
+      'dob': _dob,
+      'gender': _gender,
+    });
+    ref.read(backupSyncProvider).queueBackup(patientId);
+    if (mounted) setState(() => _editing = false);
+    await _load();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -49,6 +81,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
       _patient = patient;
       _conditions = conditions;
       _allergies = allergies;
+      _height.text = patient?.heightCm?.toStringAsFixed(0) ?? '';
+      _weight.text = patient?.weightKg?.toStringAsFixed(0) ?? '';
+      _dob = patient?.dob;
+      _gender = patient?.gender;
       _loading = false;
     });
   }
@@ -139,25 +175,84 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ),
         const SizedBox(height: Spacing.lg),
 
-        SectionHeader(title: t.t('profile.anthropometry')),
-        Row(
-          children: [
-            _Metric(
-                label: t.t('profile.height'),
-                value: p.heightCm?.toStringAsFixed(0) ?? '—',
-                unit: 'cm'),
-            const SizedBox(width: Spacing.md),
-            _Metric(
-                label: t.t('profile.weight'),
-                value: p.weightKg?.toStringAsFixed(0) ?? '—',
-                unit: 'kg'),
-            const SizedBox(width: Spacing.md),
-            _Metric(
-                label: t.t('profile.bmi'),
-                value: bmi?.toStringAsFixed(1) ?? '—',
-                unit: ''),
-          ],
+        SectionHeader(
+          title: t.t('profile.anthropometry'),
+          actionLabel: _editing ? t.t('common.save') : t.t('common.edit'),
+          onAction: () {
+            if (_editing) {
+              _saveMetrics();
+            } else {
+              setState(() => _editing = true);
+            }
+          },
         ),
+        if (_editing)
+          AppCard(
+            child: Column(
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: AppInput(
+                        controller: _height,
+                        label: t.t('profile.height'),
+                        keyboardType: TextInputType.number,
+                        suffix: 'cm',
+                      ),
+                    ),
+                    const SizedBox(width: Spacing.md),
+                    Expanded(
+                      child: AppInput(
+                        controller: _weight,
+                        label: t.t('profile.weight'),
+                        keyboardType: TextInputType.number,
+                        suffix: 'kg',
+                      ),
+                    ),
+                  ],
+                ),
+                DateField(
+                  label: t.t('profile.dob'),
+                  value: _dob,
+                  maximumDate: DateTime.now(),
+                  onChanged: (v) => setState(() => _dob = v),
+                ),
+                ChipSelect<String>(
+                  label: t.t('profile.gender'),
+                  value: _gender,
+                  options: [
+                    ChipOption(
+                        value: 'male', label: t.t('profile.genders.male')),
+                    ChipOption(
+                        value: 'female', label: t.t('profile.genders.female')),
+                    ChipOption(
+                        value: 'other', label: t.t('profile.genders.other')),
+                  ],
+                  onChanged: (v) => setState(() => _gender = v),
+                ),
+              ],
+            ),
+          )
+        else
+          Row(
+            children: [
+              _Metric(
+                  label: t.t('profile.height'),
+                  value: p.heightCm?.toStringAsFixed(0) ?? '—',
+                  unit: 'cm'),
+              const SizedBox(width: Spacing.md),
+              _Metric(
+                  label: t.t('profile.weight'),
+                  value: p.weightKg?.toStringAsFixed(0) ?? '—',
+                  unit: 'kg'),
+              const SizedBox(width: Spacing.md),
+              _Metric(
+                  label: t.t('profile.bmi'),
+                  value: bmi?.toStringAsFixed(1) ?? '—',
+                  unit: ''),
+            ],
+          ),
         const SizedBox(height: Spacing.lg),
 
         SectionHeader(title: t.t('profile.medicalHistory')),

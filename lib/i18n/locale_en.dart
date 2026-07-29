@@ -129,6 +129,11 @@ const Map<String, String> localeEn = {
   'prescriptions.medications': 'Medications',
   'prescriptions.addMedication': 'Add medication',
   'prescriptions.savePrescription': 'Save prescription',
+  'prescriptions.errorNoMedication':
+      'Add at least one medication — enter its name, then save.',
+  'prescriptions.errorMissingName': 'Medication {{index}}: name is missing.',
+  'prescriptions.errorMissingTime':
+      'Medication {{index}} ({{name}}): needs at least one intake time.',
 
   // medication
   'medication.name': 'Medication name',

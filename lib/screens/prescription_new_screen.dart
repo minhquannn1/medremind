@@ -10,6 +10,7 @@ import '../components/fields.dart';
 import '../components/layout.dart';
 import '../db/repositories/prescriptions_repository.dart';
 import '../features/prescription/draft.dart';
+import '../i18n/app_localizations.dart';
 import '../store/app_state.dart';
 import '../theme/tokens.dart';
 
@@ -46,6 +47,10 @@ class _PrescriptionNewScreenState
   late List<MedicationDraft> _drafts;
   bool _saving = false;
 
+  /// Inline "what's missing" message keyed by draft, so the problem is shown
+  /// on the offending medication instead of only in a passing snackbar.
+  final Map<String, String> _fieldErrors = {};
+
   bool get _fromScan =>
       (widget.prefillMedications?.isNotEmpty ?? false) ||
       (widget.rawText?.isNotEmpty ?? false);
@@ -69,16 +74,59 @@ class _PrescriptionNewScreenState
     super.dispose();
   }
 
+  /// Returns the first problem found, or null when the form is complete.
+  /// Also fills [_fieldErrors] so every bad row is marked at once.
+  String? _validate(Translations t) {
+    _fieldErrors.clear();
+    String? first;
+
+    for (var i = 0; i < _drafts.length; i++) {
+      final d = _drafts[i];
+      final position = i + 1;
+
+      // A row left entirely blank is just an unused slot, not an error.
+      final isBlankRow = d.name.trim().isEmpty &&
+          d.dosage.trim().isEmpty &&
+          d.notes.trim().isEmpty;
+      if (isBlankRow && _drafts.length > 1) continue;
+
+      if (d.name.trim().isEmpty) {
+        final msg = t.t('prescriptions.errorMissingName',
+            params: {'index': position});
+        _fieldErrors[d.key] = t.t('common.required');
+        first ??= msg;
+        continue;
+      }
+      if (d.times.isEmpty) {
+        final msg = t.t('prescriptions.errorMissingTime',
+            params: {'index': position, 'name': d.name.trim()});
+        _fieldErrors[d.key] = t.t('common.required');
+        first ??= msg;
+      }
+    }
+
+    final anyNamed = _drafts.any((d) => d.name.trim().isNotEmpty);
+    if (!anyNamed) first ??= t.t('prescriptions.errorNoMedication');
+    return first;
+  }
+
   Future<void> _save() async {
     final t = ref.read(translationsProvider);
-    final named = _drafts.where((d) => d.name.trim().isNotEmpty).toList();
-    if (named.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('${t.t('medication.name')} — ${t.t('common.required')}'),
-      ));
+
+    final problem = _validate(t);
+    if (problem != null) {
+      setState(() {});
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(SnackBar(
+          content: Text(problem),
+          backgroundColor: AppColors.danger,
+          duration: const Duration(seconds: 4),
+        ));
       return;
     }
 
+    final named = _drafts.where((d) => d.name.trim().isNotEmpty).toList();
     setState(() => _saving = true);
     final patientId = ref.read(appStateProvider).activePatientId;
     if (patientId == null) return;
@@ -189,6 +237,7 @@ class _PrescriptionNewScreenState
               key: ValueKey(e.value.key),
               draft: e.value,
               index: e.key,
+              nameError: _fieldErrors[e.value.key],
               removable: _drafts.length > 1,
               onRemove: () => setState(() => _drafts.removeAt(e.key)),
               onChanged: () => setState(() {}),
@@ -226,6 +275,7 @@ class _MedicationEditor extends ConsumerStatefulWidget {
     super.key,
     required this.draft,
     required this.index,
+    required this.nameError,
     required this.removable,
     required this.onRemove,
     required this.onChanged,
@@ -233,6 +283,7 @@ class _MedicationEditor extends ConsumerStatefulWidget {
 
   final MedicationDraft draft;
   final int index;
+  final String? nameError;
   final bool removable;
   final VoidCallback onRemove;
   final VoidCallback onChanged;
@@ -296,6 +347,7 @@ class _MedicationEditorState extends ConsumerState<_MedicationEditor> {
             AppInput(
               controller: _name,
               placeholder: t.t('medication.namePlaceholder'),
+              error: widget.nameError,
               onChanged: (v) {
                 d.name = v;
                 widget.onChanged();

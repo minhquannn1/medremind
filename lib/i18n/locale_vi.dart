@@ -129,6 +129,11 @@ const Map<String, String> localeVi = {
   'prescriptions.medications': 'Danh sách thuốc',
   'prescriptions.addMedication': 'Thêm thuốc',
   'prescriptions.savePrescription': 'Lưu đơn thuốc',
+  'prescriptions.errorNoMedication':
+      'Cần ít nhất một loại thuốc. Nhập tên thuốc rồi lưu lại.',
+  'prescriptions.errorMissingName': 'Thuốc {{index}}: chưa nhập tên thuốc.',
+  'prescriptions.errorMissingTime':
+      'Thuốc {{index}} ({{name}}): cần ít nhất một giờ uống.',
 
   // medication
   'medication.name': 'Tên thuốc',

@@ -178,21 +178,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     variant: TextVariant.bodyStrong),
               ]),
               const AppDivider(),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                activeThumbColor: AppColors.primary,
+              // Plain rows rather than SwitchListTile: the tile wants a Material
+              // ancestor for its ink, which the card's plain container does not
+              // provide, and Flutter warns about it on every build.
+              _ToggleRow(
+                label: t.t('settings.reminderSound'),
                 value: _sound,
-                title: AppText(t.t('settings.reminderSound')),
                 onChanged: (v) {
                   setState(() => _sound = v);
                   _setPref(SettingsKeys.reminderSound, v);
                 },
               ),
-              SwitchListTile(
-                contentPadding: EdgeInsets.zero,
-                activeThumbColor: AppColors.primary,
+              _ToggleRow(
+                label: t.t('settings.reminderVibration'),
                 value: _vibration,
-                title: AppText(t.t('settings.reminderVibration')),
                 onChanged: (v) {
                   setState(() => _vibration = v);
                   _setPref(SettingsKeys.reminderVibration, v);
@@ -287,6 +286,36 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             color: TextColorKey.textFaint,
             center: true),
       ],
+    );
+  }
+}
+
+class _ToggleRow extends StatelessWidget {
+  const _ToggleRow({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final String label;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: Spacing.xs),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Expanded(child: AppText(label)),
+          Switch(
+            value: value,
+            activeThumbColor: AppColors.primary,
+            onChanged: onChanged,
+          ),
+        ],
+      ),
     );
   }
 }
