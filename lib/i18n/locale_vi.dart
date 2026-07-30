@@ -40,7 +40,10 @@ const Map<String, String> localeVi = {
   // auth
   'auth.account': 'Tài khoản',
   'auth.email': 'Email',
+  'auth.emailPlaceholder': 'ban@example.com',
+  'auth.namePlaceholder': 'Nguyễn Văn A',
   'auth.password': 'Mật khẩu',
+  'auth.passwordPlaceholder': 'Nhập mật khẩu',
   'auth.login': 'Đăng nhập',
   'auth.signup': 'Đăng ký',
   'auth.logout': 'Đăng xuất',

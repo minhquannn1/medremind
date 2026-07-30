@@ -39,7 +39,10 @@ const Map<String, String> localeEn = {
   // auth
   'auth.account': 'Account',
   'auth.email': 'Email',
+  'auth.emailPlaceholder': 'you@example.com',
+  'auth.namePlaceholder': 'John Doe',
   'auth.password': 'Password',
+  'auth.passwordPlaceholder': 'Enter your password',
   'auth.login': 'Log in',
   'auth.signup': 'Sign up',
   'auth.logout': 'Log out',

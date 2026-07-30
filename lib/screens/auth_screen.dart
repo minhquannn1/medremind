@@ -99,11 +99,13 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           AppInput(
             controller: _name,
             label: t.t('profile.fullName'),
+            placeholder: t.t('auth.namePlaceholder'),
             icon: Icons.person_outline,
           ),
         AppInput(
           controller: _email,
           label: t.t('auth.email'),
+          placeholder: t.t('auth.emailPlaceholder'),
           icon: Icons.mail_outline,
           keyboardType: TextInputType.emailAddress,
           autocorrect: false,
@@ -112,6 +114,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
         AppInput(
           controller: _password,
           label: t.t('auth.password'),
+          placeholder: t.t('auth.passwordPlaceholder'),
           icon: Icons.lock_outline,
           obscureText: true,
           obscureToggle: true,
