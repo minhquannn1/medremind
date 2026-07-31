@@ -1,3 +1,6 @@
+// Only for CupertinoPageTransitionsBuilder — no Cupertino *widgets* are used,
+// so the primitives in lib/components stay single-platform.
+import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 
 import 'tokens.dart';
@@ -11,6 +14,11 @@ import 'tokens.dart';
 /// clinical" design system shows through instead of Material's, on both
 /// platforms — without Cupertino widgets or any Platform branching, which
 /// would double the primitives to maintain.
+///
+/// Page transitions are the one thing left per-platform, using Flutter's own
+/// builders. That is not a branch in the design system: PageTransitionsTheme
+/// is keyed by platform by design, and iOS's builder is what supplies the
+/// edge-swipe-back gesture.
 abstract final class AppTheme {
   static ThemeData get light {
     final colorScheme = ColorScheme.fromSeed(
@@ -36,12 +44,17 @@ abstract final class AppTheme {
       highlightColor: Colors.transparent,
       hoverColor: Colors.transparent,
 
-      // One neutral transition everywhere, replacing Android's zoom.
+      // Flutter's own builders, one per platform. iOS keeps Cupertino's,
+      // because it carries the edge-swipe-back gesture as well as the slide —
+      // a custom transition silently removes swiping back, which iOS users
+      // reach for before they look for the button. Android gets M3's current
+      // fade-forwards instead of the older zoom, which is the transition that
+      // reads most distinctly as "Android".
       pageTransitionsTheme: const PageTransitionsTheme(
         builders: {
-          TargetPlatform.android: _FadeSlidePageTransitionsBuilder(),
-          TargetPlatform.iOS: _FadeSlidePageTransitionsBuilder(),
-          TargetPlatform.macOS: _FadeSlidePageTransitionsBuilder(),
+          TargetPlatform.android: FadeForwardsPageTransitionsBuilder(),
+          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
         },
       ),
 
@@ -170,34 +183,6 @@ abstract final class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(Radii.lg),
         ),
-      ),
-    );
-  }
-}
-
-/// A short fade with a small upward slide. Neutral on both platforms: Android's
-/// default zoom and iOS's edge-swipe push each announce their OS.
-class _FadeSlidePageTransitionsBuilder extends PageTransitionsBuilder {
-  const _FadeSlidePageTransitionsBuilder();
-
-  @override
-  Widget buildTransitions<T>(
-    PageRoute<T> route,
-    BuildContext context,
-    Animation<double> animation,
-    Animation<double> secondaryAnimation,
-    Widget child,
-  ) {
-    final curved =
-        CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
-    return FadeTransition(
-      opacity: curved,
-      child: SlideTransition(
-        position: Tween<Offset>(
-          begin: const Offset(0, 0.02),
-          end: Offset.zero,
-        ).animate(curved),
-        child: child,
       ),
     );
   }

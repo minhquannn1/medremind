@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -43,20 +44,22 @@ void main() {
   });
 
   group('page transitions', () {
-    test('every platform uses the same neutral builder', () {
-      final builders = theme.pageTransitionsTheme.builders;
-      expect(builders[TargetPlatform.android], isNotNull);
-      expect(builders[TargetPlatform.iOS], isNotNull);
+    test('iOS keeps Cupertino, which is what carries swipe-back', () {
       expect(
-        builders[TargetPlatform.android].runtimeType,
-        builders[TargetPlatform.iOS].runtimeType,
-        reason: 'a per-platform transition announces the OS',
+        theme.pageTransitionsTheme.builders[TargetPlatform.iOS],
+        isA<CupertinoPageTransitionsBuilder>(),
+        reason: 'a custom builder silently removes the edge-swipe-back '
+            'gesture, so iOS users lose the way they normally go back',
       );
-      expect(
-        builders[TargetPlatform.android],
-        isNot(isA<ZoomPageTransitionsBuilder>()),
-        reason: 'zoom is the Android default',
-      );
+    });
+
+    test('Android drops the zoom transition', () {
+      final android =
+          theme.pageTransitionsTheme.builders[TargetPlatform.android];
+      expect(android, isNotNull);
+      expect(android, isNot(isA<ZoomPageTransitionsBuilder>()),
+          reason: 'zoom is the Android default and reads as Android');
+      expect(android, isA<FadeForwardsPageTransitionsBuilder>());
     });
   });
 
