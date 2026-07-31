@@ -57,6 +57,24 @@ There is no migration runner. Tables are created by the DDL in
 there. Column names are byte-identical to the old React Native app so cloud
 backups restore across both — changing one breaks existing users' backups.
 
+## Agent skills
+
+`.agents/skills/` holds the official Flutter and Dart agent skills
+(github.com/flutter/skills, github.com/dart-lang/skills) — task recipes for
+things like adding a widget test, setting up localization, collecting
+coverage or migrating to pattern matching. `.claude/skills` is a symlink to
+that directory so Claude Code finds them without a second copy.
+
+Refresh them with:
+
+```bash
+npx skills add flutter/skills --skill '*' --agent universal
+npx skills add dart-lang/skills --skill '*' --agent universal
+```
+
+They are instructions only — plain markdown, no scripts — but they run with
+full agent permissions, so read a skill before relying on it.
+
 ## Verifying
 
 ```bash
