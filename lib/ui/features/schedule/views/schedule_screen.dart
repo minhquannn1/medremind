@@ -4,11 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:medremind/ui/core/components/app_card.dart';
 import 'package:medremind/ui/core/components/app_text.dart';
 import 'package:medremind/ui/core/components/layout.dart';
-import 'package:medremind/domain/models/models.dart';
-import 'package:medremind/data/repositories/appointments_repository.dart';
-import 'package:medremind/data/repositories/doses_repository.dart';
+import 'package:medremind/ui/features/schedule/view_models/schedule_view_model.dart';
 import 'package:medremind/ui/core/date_format.dart';
 import 'package:medremind/ui/core/app_state.dart';
+import 'package:medremind/ui/core/i18n/app_localizations.dart';
 import 'package:medremind/ui/features/schedule/views/appointment_new_screen.dart';
 import 'package:medremind/ui/core/theme/tokens.dart';
 
@@ -22,58 +21,41 @@ class ScheduleScreen extends ConsumerStatefulWidget {
 }
 
 class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
-  static const _doses = DosesRepository();
-  static const _appointments = AppointmentsRepository();
-
-  List<TodayDose> _items = const [];
-  List<Appointment> _upcoming = const [];
-  bool _loading = true;
+  late final ScheduleViewModel _vm = ScheduleViewModel(
+    patientId: ref.read(appStateProvider).activePatientId,
+  );
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _vm.load();
   }
 
-  Future<void> _load() async {
-    final patientId = ref.read(appStateProvider).activePatientId;
-    if (patientId == null) {
-      if (mounted) setState(() => _loading = false);
-      return;
-    }
-    final items = await _doses.getDosesForDay(patientId);
-    final upcoming = await _appointments.listUpcomingAppointments(patientId);
-    if (!mounted) return;
-    setState(() {
-      _items = items;
-      _upcoming = upcoming;
-      _loading = false;
-    });
+  @override
+  void dispose() {
+    _vm.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final t = ref.watch(translationsProvider);
+    return ListenableBuilder(
+      listenable: _vm,
+      builder: (context, _) => _build(t),
+    );
+  }
 
-    if (_loading) {
+  Widget _build(Translations t) {
+    if (_vm.loading) {
       return const AppScreen(
           children: [Center(child: CircularProgressIndicator())]);
     }
 
-    final groups = <PartOfDay, List<TodayDose>>{};
-    for (final d in _items) {
-      groups.putIfAbsent(partOfDay(d.time), () => []).add(d);
-    }
-
-    const order = [
-      PartOfDay.morning,
-      PartOfDay.noon,
-      PartOfDay.evening,
-      PartOfDay.night,
-    ];
+    final groups = _vm.groupedDoses;
 
     return AppScreen(
-      onRefresh: _load,
+      onRefresh: _vm.load,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -86,7 +68,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
               onPressed: () async {
                 await Navigator.of(context).push(MaterialPageRoute(
                     builder: (_) => const AppointmentNewScreen()));
-                if (mounted) _load();
+                if (mounted) _vm.load();
               },
             ),
           ],
@@ -95,9 +77,9 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
 
         // Appointments were saveable but had nowhere to appear, so a booked
         // revisit simply vanished.
-        if (_upcoming.isNotEmpty) ...[
+        if (_vm.upcoming.isNotEmpty) ...[
           SectionHeader(title: t.t('appointments.upcoming')),
-          ..._upcoming.map((a) => Padding(
+          ..._vm.upcoming.map((a) => Padding(
                 padding: const EdgeInsets.only(bottom: Spacing.sm),
                 child: AppCard(
                   tone: CardTone.primary,
@@ -134,8 +116,7 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
                             size: 20, color: AppColors.textFaint),
                         tooltip: t.t('common.delete'),
                         onPressed: () async {
-                          await _appointments.deleteAppointment(a.id);
-                          await _load();
+                          await _vm.deleteAppointment(a.id);
                         },
                       ),
                     ],
@@ -145,14 +126,14 @@ class _ScheduleScreenState extends ConsumerState<ScheduleScreen> {
           const SizedBox(height: Spacing.lg),
         ],
 
-        if (_items.isEmpty && _upcoming.isEmpty)
+        if (_vm.isEmpty)
           EmptyState(
             icon: Icons.schedule_outlined,
             title: t.t('schedule.noSchedule'),
             body: t.t('home.noDosesTodayBody'),
           )
-        else if (_items.isNotEmpty)
-          ...order.where((p) => groups.containsKey(p)).expand((part) => [
+        else if (groups.isNotEmpty)
+          ...groups.keys.expand((part) => [
                 SectionHeader(title: t.t('schedule.${part.name}')),
                 ...groups[part]!.map((d) => Padding(
                       padding: const EdgeInsets.only(bottom: Spacing.sm),
