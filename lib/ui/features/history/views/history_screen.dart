@@ -6,7 +6,9 @@ import 'package:medremind/ui/core/components/app_text.dart';
 import 'package:medremind/ui/core/components/controls.dart';
 import 'package:medremind/ui/core/components/layout.dart';
 import 'package:medremind/data/repositories/doses_repository.dart';
+import 'package:medremind/ui/features/history/view_models/history_view_model.dart';
 import 'package:medremind/ui/core/app_state.dart';
+import 'package:medremind/ui/core/i18n/app_localizations.dart';
 import 'package:medremind/ui/core/theme/tokens.dart';
 
 /// 30-day dose log grouped by day. Ported from `app/history.tsx`.
@@ -18,52 +20,50 @@ class HistoryScreen extends ConsumerStatefulWidget {
 }
 
 class _HistoryScreenState extends ConsumerState<HistoryScreen> {
-  List<HistoryDay> _days = const [];
-  bool _loading = true;
+  late final HistoryViewModel _vm = HistoryViewModel(
+    patientId: ref.read(appStateProvider).activePatientId,
+  );
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _vm.load();
   }
 
-  Future<void> _load() async {
-    final patientId = ref.read(appStateProvider).activePatientId;
-    if (patientId == null) {
-      if (mounted) setState(() => _loading = false);
-      return;
-    }
-    final days =
-        await const DosesRepository().getDoseHistory(patientId, days: 30);
-    if (!mounted) return;
-    setState(() {
-      _days = days;
-      _loading = false;
-    });
+  @override
+  void dispose() {
+    _vm.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final t = ref.watch(translationsProvider);
+    return ListenableBuilder(
+      listenable: _vm,
+      builder: (context, _) => _build(t),
+    );
+  }
 
+  Widget _build(Translations t) {
     return AppScreen(
-      onRefresh: _load,
+      onRefresh: _vm.load,
       children: [
         AppHeader(title: t.t('history.title')),
         AppText(t.t('history.subtitle'), color: TextColorKey.textMuted),
         const SizedBox(height: Spacing.lg),
 
-        if (_loading)
+        if (_vm.loading)
           const Center(child: CircularProgressIndicator())
-        else if (_days.isEmpty)
+        else if (_vm.history.isEmpty)
           EmptyState(
             icon: Icons.history,
             title: t.t('history.empty'),
             body: t.t('history.emptyBody'),
           )
         else
-          ..._days.map((day) {
-            final ratio = day.total == 0 ? null : day.taken / day.total;
+          ..._vm.history.map((day) {
+            final ratio = _vm.ratioFor(day);
             return Padding(
               padding: const EdgeInsets.only(bottom: Spacing.md),
               child: AppCard(

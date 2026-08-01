@@ -6,7 +6,9 @@ import 'package:medremind/ui/core/components/app_card.dart';
 import 'package:medremind/ui/core/components/app_text.dart';
 import 'package:medremind/ui/core/components/layout.dart';
 import 'package:medremind/data/repositories/doses_repository.dart';
+import 'package:medremind/ui/features/dose_confirm/view_models/dose_confirm_view_model.dart';
 import 'package:medremind/ui/core/app_state.dart';
+import 'package:medremind/ui/core/i18n/app_localizations.dart';
 import 'package:medremind/ui/core/theme/tokens.dart';
 
 /// Opened by tapping a dose reminder: confirm the dose in one tap, then land
@@ -26,69 +28,50 @@ class DoseConfirmScreen extends ConsumerStatefulWidget {
 }
 
 class _DoseConfirmScreenState extends ConsumerState<DoseConfirmScreen> {
-  static const _doses = DosesRepository();
-
-  TodayDose? _dose;
-  bool _loading = true;
-  bool _saving = false;
+  late final DoseConfirmViewModel _vm = DoseConfirmViewModel(
+    patientId: ref.read(appStateProvider).activePatientId,
+    medicationId: widget.medicationId,
+    time: widget.time,
+    backupSync: ref.read(backupSyncProvider),
+  );
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _vm.load();
   }
 
-  Future<void> _load() async {
-    final patientId = ref.read(appStateProvider).activePatientId;
-    if (patientId == null) {
-      if (mounted) setState(() => _loading = false);
-      return;
-    }
-
-    final today = await _doses.getDosesForDay(patientId);
-    TodayDose? match;
-    for (final d in today) {
-      if (d.medicationId == widget.medicationId && d.time == widget.time) {
-        match = d;
-        break;
-      }
-    }
-
-    if (!mounted) return;
-    setState(() {
-      _dose = match;
-      _loading = false;
-    });
+  @override
+  void dispose() {
+    _vm.dispose();
+    super.dispose();
   }
 
   Future<void> _mark(DoseStatus status) async {
-    final dose = _dose;
-    if (dose == null) return;
-
-    setState(() => _saving = true);
-    await _doses.markDose(dose.id, status);
-
-    final patientId = ref.read(appStateProvider).activePatientId;
-    if (patientId != null) {
-      ref.read(backupSyncProvider).queueBackup(patientId);
-    }
-    // Tell the already-built home screen its figures are stale.
+    final recorded = await _vm.mark(status);
+    if (!recorded || !mounted) return;
+    // Tell the home tab its figures are stale before returning to it.
     ref.read(doseRevisionProvider.notifier).state++;
-
-    if (mounted) Navigator.of(context).pop();
+    Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
     final t = ref.watch(translationsProvider);
+    return ListenableBuilder(
+      listenable: _vm,
+      builder: (context, _) => _build(t),
+    );
+  }
 
-    if (_loading) {
+  Widget _build(Translations t) {
+    if (_vm.loading) {
       return const AppScreen(
         children: [Center(child: CircularProgressIndicator())],
       );
     }
 
-    final dose = _dose;
+    final dose = _vm.dose;
 
     // The reminder can outlive its dose — a finished course, or a prescription
     // deleted after the alert was scheduled.
@@ -105,7 +88,7 @@ class _DoseConfirmScreenState extends ConsumerState<DoseConfirmScreen> {
       );
     }
 
-    final alreadyDone = dose.status != DoseStatus.pending;
+    final alreadyDone = _vm.alreadyResolved;
 
     return AppScreen(
       children: [
@@ -192,14 +175,14 @@ class _DoseConfirmScreenState extends ConsumerState<DoseConfirmScreen> {
             label: t.t('dose.take'),
             icon: Icons.check,
             size: ButtonSize.lg,
-            loading: _saving,
+            loading: _vm.saving,
             onPressed: () => _mark(DoseStatus.taken),
           ),
           const SizedBox(height: Spacing.md),
           AppButton(
             label: t.t('dose.skip'),
             variant: ButtonVariant.ghost,
-            disabled: _saving,
+            disabled: _vm.saving,
             onPressed: () => _mark(DoseStatus.skipped),
           ),
         ],

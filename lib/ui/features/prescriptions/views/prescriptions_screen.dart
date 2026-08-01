@@ -6,10 +6,10 @@ import 'package:medremind/ui/core/components/app_card.dart';
 import 'package:medremind/ui/core/components/app_text.dart';
 import 'package:medremind/ui/core/components/controls.dart';
 import 'package:medremind/ui/core/components/layout.dart';
-import 'package:medremind/domain/models/models.dart';
-import 'package:medremind/data/repositories/prescriptions_repository.dart';
+import 'package:medremind/ui/features/prescriptions/view_models/prescriptions_view_model.dart';
 import 'package:medremind/ui/core/date_format.dart';
 import 'package:medremind/ui/core/app_state.dart';
+import 'package:medremind/ui/core/i18n/app_localizations.dart';
 import 'package:medremind/ui/features/prescriptions/views/prescription_detail_screen.dart';
 import 'package:medremind/ui/features/prescriptions/views/prescription_new_screen.dart';
 import 'package:medremind/ui/features/prescriptions/views/scan_screen.dart';
@@ -25,62 +25,51 @@ class PrescriptionsScreen extends ConsumerStatefulWidget {
 }
 
 class _PrescriptionsScreenState extends ConsumerState<PrescriptionsScreen> {
-  static const _repo = PrescriptionsRepository();
-
-  List<Prescription> _items = const [];
-  final Map<int, int> _medCounts = {};
-  bool _loading = true;
+  late final PrescriptionsViewModel _vm = PrescriptionsViewModel(
+    patientId: ref.read(appStateProvider).activePatientId,
+  );
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _vm.load();
   }
 
-  Future<void> _load() async {
-    final patientId = ref.read(appStateProvider).activePatientId;
-    if (patientId == null) {
-      if (mounted) setState(() => _loading = false);
-      return;
-    }
-    final items = await _repo.listPrescriptions(patientId);
-    final counts = <int, int>{};
-    for (final p in items) {
-      counts[p.id] = (await _repo.listMedications(p.id)).length;
-    }
-    if (!mounted) return;
-    setState(() {
-      _items = items;
-      _medCounts
-        ..clear()
-        ..addAll(counts);
-      _loading = false;
-    });
+  @override
+  void dispose() {
+    _vm.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final t = ref.watch(translationsProvider);
+    return ListenableBuilder(
+      listenable: _vm,
+      builder: (context, _) => _build(t),
+    );
+  }
 
-    if (_loading) {
+  Widget _build(Translations t) {
+    if (_vm.loading) {
       return const AppScreen(
           children: [Center(child: CircularProgressIndicator())]);
     }
 
     return AppScreen(
-      onRefresh: _load,
+      onRefresh: _vm.load,
       children: [
         AppText(t.t('prescriptions.title'), variant: TextVariant.title),
         const SizedBox(height: Spacing.lg),
 
-        if (_items.isEmpty)
+        if (_vm.items.isEmpty)
           EmptyState(
             icon: Icons.description_outlined,
             title: t.t('prescriptions.empty'),
             body: t.t('prescriptions.emptyBody'),
           )
         else
-          ..._items.map((p) => Padding(
+          ..._vm.items.map((p) => Padding(
                 padding: const EdgeInsets.only(bottom: Spacing.md),
                 child: AppCard(
                   onPress: () async {
@@ -88,7 +77,7 @@ class _PrescriptionsScreenState extends ConsumerState<PrescriptionsScreen> {
                       builder: (_) =>
                           PrescriptionDetailScreen(prescriptionId: p.id),
                     ));
-                    if (mounted) _load();
+                    if (mounted) _vm.load();
                   },
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -97,24 +86,17 @@ class _PrescriptionsScreenState extends ConsumerState<PrescriptionsScreen> {
                         children: [
                           Expanded(
                             child: AppText(
-                              [p.doctorName, p.clinic]
-                                      .where((s) => s != null && s.isNotEmpty)
-                                      .join(' · ')
-                                      .isEmpty
-                                  ? t.t('prescriptions.new')
-                                  : [p.doctorName, p.clinic]
-                                      .where((s) => s != null && s.isNotEmpty)
-                                      .join(' · '),
+                              _vm.titleFor(p) ?? t.t('prescriptions.new'),
                               variant: TextVariant.bodyStrong,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
                           AppBadge(
-                            label: p.status == 'completed'
+                            label: _vm.isCompleted(p)
                                 ? t.t('prescriptions.completed')
                                 : t.t('prescriptions.active'),
-                            tone: p.status == 'completed'
+                            tone: _vm.isCompleted(p)
                                 ? BadgeTone.neutral
                                 : BadgeTone.success,
                           ),
@@ -126,7 +108,7 @@ class _PrescriptionsScreenState extends ConsumerState<PrescriptionsScreen> {
                           if (p.issuedDate != null && p.issuedDate!.isNotEmpty)
                             formatDate(p.issuedDate),
                           t.t('prescriptions.medicineCount',
-                              params: {'count': _medCounts[p.id] ?? 0}),
+                              params: {'count': _vm.medicationCount(p.id)}),
                         ].join(' · '),
                         variant: TextVariant.caption,
                         color: TextColorKey.textMuted,
@@ -144,7 +126,7 @@ class _PrescriptionsScreenState extends ConsumerState<PrescriptionsScreen> {
           onPressed: () async {
             await Navigator.of(context)
                 .push(MaterialPageRoute(builder: (_) => const ScanScreen()));
-            if (mounted) _load();
+            if (mounted) _vm.load();
           },
         ),
         const SizedBox(height: Spacing.md),
@@ -155,7 +137,7 @@ class _PrescriptionsScreenState extends ConsumerState<PrescriptionsScreen> {
           onPressed: () async {
             await Navigator.of(context).push(MaterialPageRoute(
                 builder: (_) => const PrescriptionNewScreen()));
-            if (mounted) _load();
+            if (mounted) _vm.load();
           },
         ),
       ],
