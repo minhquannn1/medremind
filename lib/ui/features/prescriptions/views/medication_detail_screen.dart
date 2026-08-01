@@ -8,9 +8,9 @@ import 'package:medremind/ui/core/components/controls.dart';
 import 'package:medremind/ui/core/components/fields.dart';
 import 'package:medremind/ui/core/components/layout.dart';
 import 'package:medremind/domain/models/models.dart';
-import 'package:medremind/data/repositories/prescriptions_repository.dart';
-import 'package:medremind/data/services/ai_scanner_service.dart';
+import 'package:medremind/ui/features/prescriptions/view_models/medication_detail_view_model.dart';
 import 'package:medremind/ui/core/app_state.dart';
+import 'package:medremind/ui/core/i18n/app_localizations.dart';
 import 'package:medremind/ui/core/theme/tokens.dart';
 
 /// One medication: schedule, stock and the AI explanation.
@@ -27,85 +27,53 @@ class MedicationDetailScreen extends ConsumerStatefulWidget {
 
 class _MedicationDetailScreenState
     extends ConsumerState<MedicationDetailScreen> {
-  static const _repo = PrescriptionsRepository();
-
-  Medication? _medication;
-  List<ScheduleTime> _times = const [];
-  bool _loading = true;
-  bool _explaining = false;
-  String? _explainError;
+  late final MedicationDetailViewModel _vm = MedicationDetailViewModel(
+    medicationId: widget.medicationId,
+    language: ref.read(appStateProvider).language.name,
+  );
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _vm.load();
   }
 
-  Future<void> _load() async {
-    final m = await _repo.getMedication(widget.medicationId);
-    final times = await _repo.listScheduleTimes(widget.medicationId);
-    if (!mounted) return;
-    setState(() {
-      _medication = m;
-      _times = times..sort((a, b) => a.time.compareTo(b.time));
-      _loading = false;
-    });
+  @override
+  void dispose() {
+    _vm.dispose();
+    super.dispose();
   }
 
   Future<void> _changeTime(ScheduleTime st, String value) async {
-    await _repo.updateScheduleTime(st.id, value);
+    await _vm.changeTime(st, value);
     final t = ref.read(translationsProvider);
     final patientId = ref.read(appStateProvider).activePatientId;
     if (patientId != null) {
-      // The alarm must move with the schedule, or the reminder still fires
-      // at the old hour.
+      // The alarm must move with the schedule, or the reminder still fires at
+      // the old hour.
       await ref
           .read(notificationSchedulerProvider)
           .syncReminders(patientId, t);
       ref.read(backupSyncProvider).queueBackup(patientId);
     }
-    await _load();
-  }
-
-  Future<void> _explain() async {
-    final m = _medication;
-    if (m == null) return;
-    final t = ref.read(translationsProvider);
-    final lang = ref.read(appStateProvider).language.name;
-
-    setState(() {
-      _explaining = true;
-      _explainError = null;
-    });
-
-    final text =
-        await const AiScannerApi().explainMedication(m.name, lang: lang);
-
-    if (!mounted) return;
-    if (text == null) {
-      setState(() {
-        _explaining = false;
-        _explainError = t.t('medication.explainError');
-      });
-      return;
-    }
-
-    await _repo.updateMedicationExplanation(m.id, text, lang);
-    if (!mounted) return;
-    setState(() => _explaining = false);
-    await _load();
   }
 
   @override
   Widget build(BuildContext context) {
     final t = ref.watch(translationsProvider);
+    return ListenableBuilder(
+      listenable: _vm,
+      builder: (context, _) => _build(t),
+    );
+  }
 
-    if (_loading) {
+  Widget _build(Translations t) {
+    if (_vm.loading) {
       return const AppScreen(
           children: [Center(child: CircularProgressIndicator())]);
     }
 
-    final m = _medication;
+    final m = _vm.medication;
     if (m == null) {
       return AppScreen(children: [
         AppHeader(title: t.t('medication.info')),
@@ -113,13 +81,10 @@ class _MedicationDetailScreenState
       ]);
     }
 
-    final low = m.quantityRemaining != null &&
-        m.quantityTotal != null &&
-        m.quantityTotal! > 0 &&
-        m.quantityRemaining! <= m.quantityTotal! * 0.2;
+    final low = _vm.isLowStock;
 
     return AppScreen(
-      onRefresh: _load,
+      onRefresh: _vm.load,
       children: [
         AppHeader(title: t.t('medication.info')),
 
@@ -183,7 +148,7 @@ class _MedicationDetailScreenState
         ],
 
         SectionHeader(title: t.t('medication.times')),
-        ..._times.map((st) => TimeField(
+        ..._vm.times.map((st) => TimeField(
               value: st.time,
               title: t.t('medication.times'),
               presetLabels: {
@@ -199,7 +164,7 @@ class _MedicationDetailScreenState
         const SizedBox(height: Spacing.md),
 
         SectionHeader(title: t.t('medication.whatIsItFor')),
-        if (m.explanation != null && m.explanation!.isNotEmpty)
+        if (_vm.hasExplanation)
           AppCard(
             tone: CardTone.primary,
             child: Column(
@@ -221,19 +186,19 @@ class _MedicationDetailScreenState
           AppText(t.t('medication.explainPrompt'),
               color: TextColorKey.textMuted),
           const SizedBox(height: Spacing.md),
-          if (_explainError != null) ...[
-            AppText(_explainError!, color: TextColorKey.danger,
+          if (_vm.explainFailed) ...[
+            AppText(t.t('medication.explainError'), color: TextColorKey.danger,
                 variant: TextVariant.caption),
             const SizedBox(height: Spacing.sm),
           ],
           AppButton(
-            label: _explaining
+            label: _vm.explaining
                 ? t.t('medication.explaining')
                 : t.t('medication.explainAction'),
             variant: ButtonVariant.secondary,
             icon: Icons.auto_awesome,
-            loading: _explaining,
-            onPressed: _explain,
+            loading: _vm.explaining,
+            onPressed: _vm.explain,
           ),
         ],
       ],

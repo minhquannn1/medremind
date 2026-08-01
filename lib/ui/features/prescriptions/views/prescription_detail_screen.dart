@@ -6,10 +6,10 @@ import 'package:medremind/ui/core/components/app_card.dart';
 import 'package:medremind/ui/core/components/app_text.dart';
 import 'package:medremind/ui/core/components/controls.dart';
 import 'package:medremind/ui/core/components/layout.dart';
-import 'package:medremind/domain/models/models.dart';
-import 'package:medremind/data/repositories/prescriptions_repository.dart';
+import 'package:medremind/ui/features/prescriptions/view_models/prescription_detail_view_model.dart';
 import 'package:medremind/ui/core/date_format.dart';
 import 'package:medremind/ui/core/app_state.dart';
+import 'package:medremind/ui/core/i18n/app_localizations.dart';
 import 'package:medremind/ui/core/theme/tokens.dart';
 import 'package:medremind/ui/features/prescriptions/views/medication_detail_screen.dart';
 
@@ -26,35 +26,20 @@ class PrescriptionDetailScreen extends ConsumerStatefulWidget {
 
 class _PrescriptionDetailScreenState
     extends ConsumerState<PrescriptionDetailScreen> {
-  static const _repo = PrescriptionsRepository();
-
-  Prescription? _prescription;
-  List<Medication> _medications = const [];
-  final Map<int, List<ScheduleTime>> _times = {};
-  bool _loading = true;
+  late final PrescriptionDetailViewModel _vm = PrescriptionDetailViewModel(
+    prescriptionId: widget.prescriptionId,
+  );
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _vm.load();
   }
 
-  Future<void> _load() async {
-    final p = await _repo.getPrescription(widget.prescriptionId);
-    final meds = await _repo.listMedications(widget.prescriptionId);
-    final times = <int, List<ScheduleTime>>{};
-    for (final m in meds) {
-      times[m.id] = await _repo.listScheduleTimes(m.id);
-    }
-    if (!mounted) return;
-    setState(() {
-      _prescription = p;
-      _medications = meds;
-      _times
-        ..clear()
-        ..addAll(times);
-      _loading = false;
-    });
+  @override
+  void dispose() {
+    _vm.dispose();
+    super.dispose();
   }
 
   Future<void> _delete() async {
@@ -78,7 +63,7 @@ class _PrescriptionDetailScreenState
     );
     if (ok != true) return;
 
-    await _repo.deletePrescription(widget.prescriptionId);
+    await _vm.delete();
 
     // Reminders referenced the deleted medications — rebuild the schedule.
     final patientId = ref.read(appStateProvider).activePatientId;
@@ -91,26 +76,22 @@ class _PrescriptionDetailScreenState
     if (mounted) Navigator.of(context).pop(true);
   }
 
-  Future<void> _toggleStatus() async {
-    final p = _prescription;
-    if (p == null) return;
-    await _repo.updatePrescriptionStatus(
-      p.id,
-      p.status == 'active' ? 'completed' : 'active',
-    );
-    await _load();
-  }
-
   @override
   Widget build(BuildContext context) {
     final t = ref.watch(translationsProvider);
+    return ListenableBuilder(
+      listenable: _vm,
+      builder: (context, _) => _build(t),
+    );
+  }
 
-    if (_loading) {
+  Widget _build(Translations t) {
+    if (_vm.loading) {
       return const AppScreen(
           children: [Center(child: CircularProgressIndicator())]);
     }
 
-    final p = _prescription;
+    final p = _vm.prescription;
     if (p == null) {
       return AppScreen(children: [
         AppHeader(title: t.t('prescriptions.title')),
@@ -118,12 +99,8 @@ class _PrescriptionDetailScreenState
       ]);
     }
 
-    final title = [p.doctorName, p.clinic]
-        .where((s) => s != null && s.isNotEmpty)
-        .join(' · ');
-
     return AppScreen(
-      onRefresh: _load,
+      onRefresh: _vm.load,
       children: [
         AppHeader(title: t.t('prescriptions.title')),
 
@@ -135,15 +112,15 @@ class _PrescriptionDetailScreenState
                 children: [
                   Expanded(
                     child: AppText(
-                      title.isEmpty ? t.t('prescriptions.title') : title,
+                      _vm.title ?? t.t('prescriptions.title'),
                       variant: TextVariant.subheading,
                     ),
                   ),
                   AppBadge(
-                    label: p.status == 'completed'
+                    label: _vm.isCompleted
                         ? t.t('prescriptions.completed')
                         : t.t('prescriptions.active'),
-                    tone: p.status == 'completed'
+                    tone: _vm.isCompleted
                         ? BadgeTone.neutral
                         : BadgeTone.success,
                   ),
@@ -169,11 +146,8 @@ class _PrescriptionDetailScreenState
         const SizedBox(height: Spacing.lg),
 
         SectionHeader(title: t.t('prescriptions.medications')),
-        ..._medications.map((m) {
-          final times = (_times[m.id] ?? const <ScheduleTime>[])
-              .map((s) => s.time)
-              .toList()
-            ..sort();
+        ..._vm.medications.map((m) {
+          final times = _vm.timesFor(m.id);
           return Padding(
             padding: const EdgeInsets.only(bottom: Spacing.md),
             child: AppCard(
@@ -181,7 +155,7 @@ class _PrescriptionDetailScreenState
                 await Navigator.of(context).push(MaterialPageRoute(
                   builder: (_) => MedicationDetailScreen(medicationId: m.id),
                 ));
-                if (mounted) _load();
+                if (mounted) _vm.load();
               },
               child: Row(
                 children: [
@@ -213,12 +187,12 @@ class _PrescriptionDetailScreenState
 
         const SizedBox(height: Spacing.lg),
         AppButton(
-          label: p.status == 'completed'
+          label: _vm.isCompleted
               ? t.t('prescriptions.active')
               : t.t('prescriptions.completed'),
           variant: ButtonVariant.secondary,
           icon: Icons.check_circle_outline,
-          onPressed: _toggleStatus,
+          onPressed: _vm.toggleStatus,
         ),
         const SizedBox(height: Spacing.md),
         AppButton(
