@@ -28,6 +28,37 @@ doctor dashboard, the AI scan proxy, patient auth, cloud backup and the
   handlers; the CSP in `server/security.js` must keep
   `scriptSrcAttr: ["'unsafe-inline'"]` or every button silently stops working.
 
+## Architecture
+
+Flutter's recommended layering (see the `flutter-apply-architecture-best-practices`
+skill in `.agents/skills/`):
+
+```
+lib/data/services/       database, auth, scan, backup, doctor sync, notifications
+lib/data/repositories/   the six repositories — the only place SQL lives
+lib/domain/models/       row models and the medication draft
+lib/ui/core/             components, theme, i18n, app state, tab shell
+lib/ui/features/<x>/
+  ├── view_models/       ChangeNotifier holding the screen's state and rules
+  └── views/             widgets that lay out and forward taps, nothing more
+```
+
+Every screen with logic has a ViewModel. Put a rule in the ViewModel, not the
+widget: anything in a `build()` method can only be tested by pumping a widget
+tree, which is why the rules that used to live there had no tests and shipped
+bugs — BMI dividing by a zero height, evening rendering above morning, a
+reminder deducting stock twice.
+
+ViewModels take their dependencies through the constructor (repositories,
+callbacks, and the clock where behaviour depends on the time), so tests choose
+the situation instead of waiting for it. Views hold only `TextEditingController`s
+and `ListenableBuilder`.
+
+Riverpod stays for session state (`ui/core/app_state.dart`) and for handing
+services to screens. It is not used inside ViewModels.
+
+Cross-layer imports are `package:medremind/...`, never relative.
+
 ## Flutter app conventions
 
 - **Theme:** never hardcode colours or spacing — use `lib/theme/tokens.dart`
