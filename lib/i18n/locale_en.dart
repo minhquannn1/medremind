@@ -327,5 +327,6 @@ const Map<String, String> localeEn = {
   'settings.reminderVibration': 'Reminder vibration',
   'settings.about': 'About',
   'settings.privacyPolicy': 'Privacy policy',
+  'settings.terms': 'Terms of service',
   'settings.support': 'Support & contact',
 };

@@ -66,6 +66,9 @@ app.get('/privacy', (_req, res) => {
 app.get('/support', (_req, res) => {
   res.sendFile(join(__dirname, 'support.html'));
 });
+app.get('/terms', (_req, res) => {
+  res.sendFile(join(__dirname, 'terms.html'));
+});
 app.get('/about', (_req, res) => {
   res.sendFile(join(__dirname, 'about.html'));
 });

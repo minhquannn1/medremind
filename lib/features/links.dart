@@ -9,6 +9,7 @@ final String _siteBase = apiBase.replaceFirst(RegExp(r'/api/?$'), '');
 
 String get privacyPolicyUrl => '$_siteBase/privacy';
 String get supportUrl => '$_siteBase/support';
+String get termsUrl => '$_siteBase/terms';
 
 /// Opens [url] in the system browser. Returns false when the platform refuses,
 /// so callers can tell the user instead of appearing to do nothing.

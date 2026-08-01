@@ -3,6 +3,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'db/database.dart';
+import 'db/repositories/settings_repository.dart';
 import 'features/notifications/scheduler.dart';
 import 'router.dart';
 import 'store/app_state.dart';
@@ -36,6 +37,8 @@ class _MedRemindAppState extends ConsumerState<MedRemindApp> {
         scheduler.onDoseTapped = _openDose;
         await scheduler.initialize(t);
 
+        await _askForNotificationsOnce(scheduler);
+
         // A tap that launched the app from closed does not fire the callback.
         final launched = await scheduler.launchPayload();
         if (launched != null) _openDose(launched);
@@ -44,6 +47,23 @@ class _MedRemindAppState extends ConsumerState<MedRemindApp> {
         // warned in context when a reminder actually needs permission.
       }
     });
+  }
+
+  /// Asks for notification permission on the first launch of a signed-in
+  /// session. Reminders are the whole point of the app, and the old flow only
+  /// asked when a prescription was saved — so anyone who restored a backup, or
+  /// simply browsed first, had medications and no alerts without being told.
+  ///
+  /// Asked once and remembered: iOS only ever shows the system prompt once
+  /// anyway, and re-asking a user who declined just runs a no-op.
+  Future<void> _askForNotificationsOnce(NotificationScheduler scheduler) async {
+    if (!ref.read(appStateProvider).authed) return;
+
+    final settings = ref.read(settingsRepositoryProvider);
+    if (await settings.getBool(SettingsKeys.askedNotifications, false)) return;
+
+    await scheduler.requestPermission();
+    await settings.set(SettingsKeys.askedNotifications, 'true');
   }
 
   /// Opens the confirmation screen for a tapped reminder. Deferred until the

@@ -270,6 +270,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
         const SizedBox(height: Spacing.md),
         AppCard(
+          onPress: () => openExternalUrl(termsUrl),
+          child: Row(children: [
+            const Icon(Icons.gavel_outlined,
+                color: AppColors.primary, size: 20),
+            const SizedBox(width: Spacing.md),
+            Expanded(child: AppText(t.t('settings.terms'))),
+            const Icon(Icons.open_in_new,
+                size: 18, color: AppColors.textMuted),
+          ]),
+        ),
+        const SizedBox(height: Spacing.md),
+        AppCard(
           onPress: () => openExternalUrl(supportUrl),
           child: Row(children: [
             const Icon(Icons.help_outline, color: AppColors.primary, size: 20),

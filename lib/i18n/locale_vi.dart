@@ -325,5 +325,6 @@ const Map<String, String> localeVi = {
   'settings.reminderVibration': 'Rung khi nhắc',
   'settings.about': 'Giới thiệu',
   'settings.privacyPolicy': 'Chính sách quyền riêng tư',
+  'settings.terms': 'Điều khoản sử dụng',
   'settings.support': 'Hỗ trợ & liên hệ',
 };

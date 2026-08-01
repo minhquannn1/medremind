@@ -17,6 +17,7 @@ class SettingsKeys {
   static const accountUserId = 'account_user_id';
   static const accountEmail = 'account_email';
   static const accountName = 'account_name';
+  static const askedNotifications = 'asked_notifications';
 }
 
 class SettingsRepository {
