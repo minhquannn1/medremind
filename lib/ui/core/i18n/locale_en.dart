@@ -63,6 +63,14 @@ const Map<String, String> localeEn = {
       'Could not reach the server. Check your connection and try again.',
   'auth.showPassword': 'Show password',
   'auth.hidePassword': 'Hide password',
+  'auth.confirmPassword': 'Confirm password',
+  'auth.errorPasswordMismatch': 'The passwords do not match.',
+  'auth.acceptPrefix': 'I have read and agree to the',
+  'auth.acceptTerms': 'Terms of Service',
+  'auth.acceptAnd': 'and',
+  'auth.acceptPrivacy': 'Privacy Policy',
+  'auth.errorMustAccept':
+      'You must accept the Terms and Privacy Policy before signing up.',
   'auth.deleteAccount': 'Delete account',
   'auth.deleteAccountConfirmTitle': 'Delete account?',
   'auth.deleteAccountConfirmBody':

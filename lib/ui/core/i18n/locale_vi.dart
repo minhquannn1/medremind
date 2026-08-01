@@ -62,6 +62,14 @@ const Map<String, String> localeVi = {
   'auth.errorNetwork': 'Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.',
   'auth.showPassword': 'Hiện mật khẩu',
   'auth.hidePassword': 'Ẩn mật khẩu',
+  'auth.confirmPassword': 'Nhập lại mật khẩu',
+  'auth.errorPasswordMismatch': 'Mật khẩu nhập lại không khớp.',
+  'auth.acceptPrefix': 'Tôi đã đọc và đồng ý với',
+  'auth.acceptTerms': 'Điều khoản sử dụng',
+  'auth.acceptAnd': 'và',
+  'auth.acceptPrivacy': 'Chính sách quyền riêng tư',
+  'auth.errorMustAccept':
+      'Bạn cần đồng ý với Điều khoản và Chính sách quyền riêng tư trước khi đăng ký.',
   'auth.deleteAccount': 'Xóa tài khoản',
   'auth.deleteAccountConfirmTitle': 'Xóa tài khoản?',
   'auth.deleteAccountConfirmBody':
