@@ -6,8 +6,9 @@ import 'package:medremind/ui/core/components/app_card.dart';
 import 'package:medremind/ui/core/components/app_input.dart';
 import 'package:medremind/ui/core/components/app_text.dart';
 import 'package:medremind/ui/core/components/layout.dart';
-import 'package:medremind/data/services/doctor_sync_service.dart';
+import 'package:medremind/ui/features/doctor/view_models/doctor_view_model.dart';
 import 'package:medremind/ui/core/app_state.dart';
+import 'package:medremind/ui/core/i18n/app_localizations.dart';
 import 'package:medremind/ui/core/theme/tokens.dart';
 
 /// Pair with a doctor and push adherence snapshots.
@@ -20,68 +21,30 @@ class DoctorScreen extends ConsumerStatefulWidget {
 }
 
 class _DoctorScreenState extends ConsumerState<DoctorScreen> {
-  static const _api = DoctorSyncApi();
-
+  late final DoctorViewModel _vm = DoctorViewModel(
+    patientId: ref.read(appStateProvider).activePatientId,
+  );
   final _code = TextEditingController();
-  DoctorLink? _link;
-  bool _busy = false;
-  String? _error;
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _vm.load();
   }
 
   @override
   void dispose() {
     _code.dispose();
+    _vm.dispose();
     super.dispose();
   }
 
-  Future<void> _load() async {
-    final link = await _api.getDoctorLink();
-    if (mounted) setState(() => _link = link);
-  }
-
-  Future<void> _connect() async {
-    final t = ref.read(translationsProvider);
-    if (_code.text.trim().isEmpty) return;
-
-    setState(() {
-      _busy = true;
-      _error = null;
-    });
-    final res = await _api.pairWithDoctor(_code.text);
-    if (!mounted) return;
-
-    if (!res.ok) {
-      setState(() {
-        _busy = false;
-        _error = res.error == PairError.invalidCode
-            ? t.t('doctor.invalidCode')
-            : t.t('doctor.networkError');
-      });
-      return;
-    }
-
-    // Push straight away so the doctor sees data instead of an empty profile.
-    final patientId = ref.read(appStateProvider).activePatientId;
-    if (patientId != null) await _api.syncToDoctor(patientId);
-
-    await _load();
-    if (mounted) setState(() => _busy = false);
-  }
+  Future<void> _connect() => _vm.connect(_code.text);
 
   Future<void> _syncNow() async {
     final t = ref.read(translationsProvider);
-    final patientId = ref.read(appStateProvider).activePatientId;
-    if (patientId == null) return;
-
-    setState(() => _busy = true);
-    final ok = await _api.syncToDoctor(patientId);
+    final ok = await _vm.syncNow();
     if (!mounted) return;
-    setState(() => _busy = false);
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
       content: Text(ok ? t.t('doctor.syncDone') : t.t('doctor.networkError')),
     ));
@@ -105,14 +68,20 @@ class _DoctorScreenState extends ConsumerState<DoctorScreen> {
       ),
     );
     if (ok != true) return;
-    await _api.unlinkDoctor();
-    if (mounted) setState(() => _link = null);
+    await _vm.disconnect();
   }
 
   @override
   Widget build(BuildContext context) {
     final t = ref.watch(translationsProvider);
-    final link = _link;
+    return ListenableBuilder(
+      listenable: _vm,
+      builder: (context, _) => _build(t),
+    );
+  }
+
+  Widget _build(Translations t) {
+    final link = _vm.link;
 
     return AppScreen(
       children: [
@@ -137,12 +106,12 @@ class _DoctorScreenState extends ConsumerState<DoctorScreen> {
                   placeholder: 'MED-XXXXXX',
                   icon: Icons.qr_code,
                   autocorrect: false,
-                  error: _error,
+                  error: _vm.errorKey == null ? null : t.t(_vm.errorKey!),
                 ),
                 AppButton(
                   label: t.t('doctor.connect'),
                   icon: Icons.link,
-                  loading: _busy,
+                  loading: _vm.busy,
                   onPressed: _connect,
                 ),
               ],
@@ -174,7 +143,7 @@ class _DoctorScreenState extends ConsumerState<DoctorScreen> {
           AppButton(
             label: t.t('doctor.syncNow'),
             icon: Icons.sync,
-            loading: _busy,
+            loading: _vm.busy,
             onPressed: _syncNow,
           ),
           const SizedBox(height: Spacing.md),

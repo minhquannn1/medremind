@@ -5,7 +5,7 @@ import 'package:medremind/ui/core/components/app_card.dart';
 import 'package:medremind/ui/core/components/app_text.dart';
 import 'package:medremind/ui/core/components/controls.dart';
 import 'package:medremind/ui/core/components/layout.dart';
-import 'package:medremind/data/repositories/settings_repository.dart';
+import 'package:medremind/ui/features/settings/view_models/settings_view_model.dart';
 import 'package:medremind/data/services/links.dart';
 import 'package:medremind/ui/core/i18n/app_localizations.dart';
 import 'package:medremind/ui/core/app_state.dart';
@@ -22,34 +22,27 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  bool _sound = true;
-  bool _vibration = true;
-  bool _deleting = false;
+  late final SettingsViewModel _vm = SettingsViewModel(
+    applyReminderPrefs: () {
+      final app = ref.read(appStateProvider);
+      return ref
+          .read(notificationSchedulerProvider)
+          .applyReminderPrefs(app.activePatientId, app.t);
+    },
+    deleteAccount: ref.read(appStateProvider.notifier).deleteAccount,
+    signOut: ref.read(appStateProvider.notifier).signOut,
+  );
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _vm.load();
   }
 
-  Future<void> _load() async {
-    final settings = ref.read(settingsRepositoryProvider);
-    final sound = await settings.getBool(SettingsKeys.reminderSound, true);
-    final vibration =
-        await settings.getBool(SettingsKeys.reminderVibration, true);
-    if (!mounted) return;
-    setState(() {
-      _sound = sound;
-      _vibration = vibration;
-    });
-  }
-
-  Future<void> _setPref(String key, bool value) async {
-    await ref.read(settingsRepositoryProvider).set(key, '$value');
-    final app = ref.read(appStateProvider);
-    await ref
-        .read(notificationSchedulerProvider)
-        .applyReminderPrefs(app.activePatientId, app.t);
+  @override
+  void dispose() {
+    _vm.dispose();
+    super.dispose();
   }
 
   Future<void> _confirmDeleteAccount() async {
@@ -94,10 +87,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
     if (second != true || !mounted) return;
 
-    setState(() => _deleting = true);
-    final ok = await ref.read(appStateProvider.notifier).deleteAccount();
+    final ok = await _vm.confirmDelete();
     if (!mounted) return;
-    setState(() => _deleting = false);
 
     if (ok) {
       Navigator.of(context).popUntil((r) => r.isFirst);
@@ -126,7 +117,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ),
     );
     if (ok != true || !mounted) return;
-    await ref.read(appStateProvider.notifier).signOut();
+    await _vm.signOut();
     if (mounted) Navigator.of(context).popUntil((r) => r.isFirst);
   }
 
@@ -134,7 +125,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   Widget build(BuildContext context) {
     final t = ref.watch(translationsProvider);
     final app = ref.watch(appStateProvider);
+    return ListenableBuilder(
+      listenable: _vm,
+      builder: (context, _) => _build(t, app),
+    );
+  }
 
+  Widget _build(Translations t, AppState app) {
     return AppScreen(
       children: [
         AppHeader(title: t.t('settings.title')),
@@ -183,19 +180,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               // provide, and Flutter warns about it on every build.
               _ToggleRow(
                 label: t.t('settings.reminderSound'),
-                value: _sound,
-                onChanged: (v) {
-                  setState(() => _sound = v);
-                  _setPref(SettingsKeys.reminderSound, v);
-                },
+                value: _vm.sound,
+                onChanged: _vm.setSound,
               ),
               _ToggleRow(
                 label: t.t('settings.reminderVibration'),
-                value: _vibration,
-                onChanged: (v) {
-                  setState(() => _vibration = v);
-                  _setPref(SettingsKeys.reminderVibration, v);
-                },
+                value: _vm.vibration,
+                onChanged: _vm.setVibration,
               ),
             ],
           ),
@@ -230,12 +221,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               // App Store Guideline 5.1.1(v): account deletion must be
               // reachable from inside the app.
               AppButton(
-                label: _deleting
+                label: _vm.deleting
                     ? t.t('common.loading')
                     : t.t('auth.deleteAccount'),
                 variant: ButtonVariant.danger,
                 icon: Icons.delete_outline,
-                disabled: _deleting,
+                disabled: _vm.deleting,
                 onPressed: _confirmDeleteAccount,
               ),
             ],
