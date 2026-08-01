@@ -7,8 +7,9 @@ import 'package:medremind/ui/core/components/app_text.dart';
 import 'package:medremind/ui/core/components/controls.dart';
 import 'package:medremind/ui/core/components/fields.dart';
 import 'package:medremind/ui/core/components/layout.dart';
-import 'package:medremind/data/services/doctor_sync_service.dart';
+import 'package:medremind/ui/features/onboarding/view_models/onboarding_view_model.dart';
 import 'package:medremind/ui/core/app_state.dart';
+import 'package:medremind/ui/core/i18n/app_localizations.dart';
 import 'package:medremind/ui/core/theme/tokens.dart';
 
 /// First-run profile creation. Ported from `app/onboarding.tsx`.
@@ -25,11 +26,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final _weight = TextEditingController();
   final _pairCode = TextEditingController();
 
-  String? _dob;
-  String? _gender;
-  bool _busy = false;
-  String? _error;
-  String? _pairError;
+  late final OnboardingViewModel _vm = OnboardingViewModel(
+    accountUserId: ref.read(appStateProvider).account?.userId,
+    accountEmail: ref.read(appStateProvider).account?.email,
+  );
 
   @override
   void initState() {
@@ -45,63 +45,31 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     _height.dispose();
     _weight.dispose();
     _pairCode.dispose();
+    _vm.dispose();
     super.dispose();
   }
 
   Future<void> _start() async {
-    final t = ref.read(translationsProvider);
-    if (_name.text.trim().isEmpty) {
-      setState(() => _error = t.t('auth.errorMissingFields'));
-      return;
-    }
-    setState(() {
-      _busy = true;
-      _error = null;
-      _pairError = null;
-    });
-
-    // Check the doctor code before creating anything: a typo should be fixable
-    // here rather than silently dropped, leaving the user think they are
-    // linked when they are not.
-    const doctors = DoctorSyncApi();
-    var paired = false;
-    final code = _pairCode.text.trim();
-    if (code.isNotEmpty) {
-      final res = await doctors.pairWithDoctor(code);
-      if (!res.ok) {
-        if (!mounted) return;
-        setState(() {
-          _busy = false;
-          _pairError = res.error == PairError.invalidCode
-              ? t.t('doctor.invalidCode')
-              : t.t('doctor.networkError');
-        });
-        return;
-      }
-      paired = true;
-    }
-
-    final app = ref.read(appStateProvider);
-    final patientId = await ref.read(patientsRepositoryProvider).createPatient(
-          fullName: _name.text.trim(),
-          dob: _dob,
-          gender: _gender,
-          heightCm: double.tryParse(_height.text.trim()),
-          weightKg: double.tryParse(_weight.text.trim()),
-          accountUserId: app.account?.userId,
-          accountEmail: app.account?.email,
-        );
-
+    final patientId = await _vm.start(
+      fullName: _name.text,
+      heightCm: _height.text,
+      weightKg: _weight.text,
+      pairCode: _pairCode.text,
+    );
+    if (patientId == null || !mounted) return;
     await ref.read(appStateProvider.notifier).completeOnboarding(patientId);
-    // Push straight away so the doctor sees a real profile, not an empty one.
-    if (paired) await doctors.syncToDoctor(patientId);
-    if (mounted) setState(() => _busy = false);
   }
 
   @override
   Widget build(BuildContext context) {
     final t = ref.watch(translationsProvider);
+    return ListenableBuilder(
+      listenable: _vm,
+      builder: (context, _) => _build(t),
+    );
+  }
 
+  Widget _build(Translations t) {
     return AppScreen(
       children: [
         const SizedBox(height: Spacing.xl),
@@ -136,23 +104,23 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           controller: _name,
           label: t.t('profile.fullName'),
           icon: Icons.person_outline,
-          error: _error,
+          error: _vm.nameErrorKey == null ? null : t.t(_vm.nameErrorKey!),
         ),
         DateField(
           label: t.t('profile.dob'),
-          value: _dob,
+          value: _vm.dob,
           maximumDate: DateTime.now(),
-          onChanged: (v) => setState(() => _dob = v),
+          onChanged: _vm.setDob,
         ),
         ChipSelect<String>(
           label: t.t('profile.gender'),
-          value: _gender,
+          value: _vm.gender,
           options: [
             ChipOption(value: 'male', label: t.t('profile.genders.male')),
             ChipOption(value: 'female', label: t.t('profile.genders.female')),
             ChipOption(value: 'other', label: t.t('profile.genders.other')),
           ],
-          onChanged: (v) => setState(() => _gender = v),
+          onChanged: _vm.setGender,
         ),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -188,13 +156,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           placeholder: 'MED-XXXXXX',
           icon: Icons.qr_code,
           autocorrect: false,
-          error: _pairError,
+          error: _vm.pairErrorKey == null ? null : t.t(_vm.pairErrorKey!),
         ),
 
         AppButton(
           label: t.t('onboarding.start'),
           size: ButtonSize.lg,
-          loading: _busy,
+          loading: _vm.busy,
           onPressed: _start,
         ),
       ],
