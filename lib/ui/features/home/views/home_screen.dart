@@ -5,10 +5,8 @@ import 'package:medremind/ui/core/components/app_card.dart';
 import 'package:medremind/ui/core/components/app_text.dart';
 import 'package:medremind/ui/core/components/controls.dart';
 import 'package:medremind/ui/core/components/layout.dart';
-import 'package:medremind/data/repositories/appointments_repository.dart';
 import 'package:medremind/data/repositories/doses_repository.dart';
-import 'package:medremind/data/repositories/patients_repository.dart';
-import 'package:medremind/domain/models/models.dart';
+import 'package:medremind/ui/features/home/view_models/home_view_model.dart';
 import 'package:medremind/ui/core/i18n/app_localizations.dart';
 import 'package:medremind/ui/core/date_format.dart';
 import 'package:medremind/ui/core/app_state.dart';
@@ -23,85 +21,60 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  static const _doses = DosesRepository();
-  static const _patients = PatientsRepository();
-  static const _appointments = AppointmentsRepository();
-
-  List<TodayDose> _today = const [];
-  AdherenceStat _adherence = const AdherenceStat(taken: 0, total: 0, ratio: 1);
-  Patient? _patient;
-  Appointment? _nextAppointment;
-  bool _loading = true;
+  late final HomeViewModel _vm = HomeViewModel(
+    patientId: ref.read(appStateProvider).activePatientId,
+    backupSync: ref.read(backupSyncProvider),
+  );
 
   @override
   void initState() {
     super.initState();
-    _load();
+    _vm.load();
   }
 
-  Future<void> _load() async {
-    final patientId = ref.read(appStateProvider).activePatientId;
-    if (patientId == null) {
-      if (mounted) setState(() => _loading = false);
-      return;
-    }
-
-    final today = await _doses.getDosesForDay(patientId);
-    final adherence = await _doses.getAdherence(patientId, days: 7);
-    final patient = await _patients.getPatient(patientId);
-    final upcoming = await _appointments.listUpcomingAppointments(patientId);
-
-    if (!mounted) return;
-    setState(() {
-      _today = today;
-      _adherence = adherence;
-      _patient = patient;
-      _nextAppointment = upcoming.isEmpty ? null : upcoming.first;
-      _loading = false;
-    });
+  @override
+  void dispose() {
+    _vm.dispose();
+    super.dispose();
   }
 
   Future<void> _mark(TodayDose dose, DoseStatus status) async {
-    await _doses.markDose(dose.id, status);
+    await _vm.mark(dose, status);
     ref.read(doseRevisionProvider.notifier).state++;
-    final patientId = ref.read(appStateProvider).activePatientId;
-    if (patientId != null) {
-      ref.read(backupSyncProvider).queueBackup(patientId);
-    }
-    await _load();
   }
 
-  String _greeting(Translations t) {
-    final hour = DateTime.now().hour;
-    if (hour < 11) return t.t('home.greetingMorning');
-    if (hour < 18) return t.t('home.greetingAfternoon');
-    return t.t('home.greetingEvening');
-  }
+  String _greetingText(Translations t) => switch (_vm.greeting) {
+        GreetingSlot.morning => t.t('home.greetingMorning'),
+        GreetingSlot.afternoon => t.t('home.greetingAfternoon'),
+        GreetingSlot.evening => t.t('home.greetingEvening'),
+      };
 
   @override
   Widget build(BuildContext context) {
     final t = ref.watch(translationsProvider);
 
     // Reload when a dose was confirmed elsewhere (e.g. from a notification).
-    ref.listen<int>(doseRevisionProvider, (_, _) => _load());
+    ref.listen<int>(doseRevisionProvider, (_, _) => _vm.load());
 
-    if (_loading) {
+    return ListenableBuilder(
+      listenable: _vm,
+      builder: (context, _) => _build(t),
+    );
+  }
+
+  Widget _build(Translations t) {
+    if (_vm.loading) {
       return const AppScreen(
         children: [Center(child: CircularProgressIndicator())],
       );
     }
 
-    final pending = _today.where((d) => d.status == DoseStatus.pending).toList();
-    final ratioLabel = _adherence.total == 0
-        ? '—'
-        : '${(_adherence.ratio * 100).round()}%';
-
     return AppScreen(
-      onRefresh: _load,
+      onRefresh: _vm.load,
       children: [
-        AppText(_greeting(t), color: TextColorKey.textMuted),
+        AppText(_greetingText(t), color: TextColorKey.textMuted),
         AppText(
-          _patient?.fullName ?? t.t('common.appName'),
+          _vm.patient?.fullName ?? t.t('common.appName'),
           variant: TextVariant.title,
         ),
         const SizedBox(height: Spacing.xl),
@@ -114,11 +87,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   variant: TextVariant.label, color: TextColorKey.textMuted),
               const SizedBox(height: Spacing.lg),
               ProgressRing(
-                progress: _adherence.ratio,
-                label: ratioLabel,
+                progress: _vm.adherence.ratio,
+                label: _vm.adherenceLabel,
                 // Only the short count sits inside the ring; the wording goes
                 // below, where it has the full card width to breathe.
-                caption: '${_adherence.taken}/${_adherence.total}',
+                caption: _vm.adherenceCount,
               ),
               const SizedBox(height: Spacing.sm),
               AppText(t.t('home.adherenceCaption'),
@@ -130,7 +103,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ),
         const SizedBox(height: Spacing.xl),
 
-        if (_nextAppointment != null) ...[
+        if (_vm.nextAppointment != null) ...[
           AppCard(
             tone: CardTone.primary,
             child: Row(
@@ -144,8 +117,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                       AppText(t.t('home.upcomingAppointment'),
                           variant: TextVariant.label),
                       AppText(
-                        '${t.t('appointments.${_nextAppointment!.type}')} · '
-                        '${formatDateTime(_nextAppointment!.date)}',
+                        '${t.t('appointments.${_vm.nextAppointment!.type}')} · '
+                        '${formatDateTime(_vm.nextAppointment!.date)}',
                         variant: TextVariant.caption,
                         color: TextColorKey.textMuted,
                       ),
@@ -160,13 +133,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
         SectionHeader(title: t.t('home.todayDoses')),
 
-        if (_today.isEmpty)
+        if (_vm.today.isEmpty)
           EmptyState(
             icon: Icons.medication_outlined,
             title: t.t('home.noDosesToday'),
             body: t.t('home.noDosesTodayBody'),
           )
-        else if (pending.isEmpty)
+        else if (_vm.allDone)
           AppCard(
             tone: CardTone.success,
             child: Row(
@@ -178,7 +151,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           )
         else
-          ..._today.map((dose) => Padding(
+          ..._vm.today.map((dose) => Padding(
                 padding: const EdgeInsets.only(bottom: Spacing.md),
                 child: _DoseCard(
                   dose: dose,
