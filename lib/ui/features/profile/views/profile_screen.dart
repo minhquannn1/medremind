@@ -7,10 +7,9 @@ import 'package:medremind/ui/core/components/app_text.dart';
 import 'package:medremind/ui/core/components/controls.dart';
 import 'package:medremind/ui/core/components/fields.dart';
 import 'package:medremind/ui/core/components/layout.dart';
-import 'package:medremind/domain/models/models.dart';
-import 'package:medremind/data/repositories/patients_repository.dart';
-import 'package:medremind/ui/core/date_format.dart';
+import 'package:medremind/ui/features/profile/view_models/profile_view_model.dart';
 import 'package:medremind/ui/core/app_state.dart';
+import 'package:medremind/ui/core/i18n/app_localizations.dart';
 import 'package:medremind/ui/core/theme/tokens.dart';
 import 'package:medremind/ui/features/history/views/history_screen.dart';
 import 'package:medremind/ui/features/settings/views/settings_screen.dart';
@@ -25,102 +24,64 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
-  static const _repo = PatientsRepository();
+  late final ProfileViewModel _vm = ProfileViewModel(
+    patientId: ref.read(appStateProvider).activePatientId,
+    backupSync: ref.read(backupSyncProvider),
+  );
 
-  Patient? _patient;
-  List<MedicalCondition> _conditions = const [];
-  List<Allergy> _allergies = const [];
-  bool _loading = true;
-
-  // Onboarding lets these be skipped, so they have to be fillable later.
-  bool _editing = false;
   final _height = TextEditingController();
   final _weight = TextEditingController();
-  String? _dob;
-  String? _gender;
+
+  @override
+  void initState() {
+    super.initState();
+    _vm.load();
+  }
 
   @override
   void dispose() {
     _height.dispose();
     _weight.dispose();
+    _vm.dispose();
     super.dispose();
   }
 
-  Future<void> _saveMetrics() async {
-    final patientId = ref.read(appStateProvider).activePatientId;
-    if (patientId == null) return;
-
-    await _repo.updatePatient(patientId, {
-      'height_cm': double.tryParse(_height.text.trim()),
-      'weight_kg': double.tryParse(_weight.text.trim()),
-      'dob': _dob,
-      'gender': _gender,
-    });
-    ref.read(backupSyncProvider).queueBackup(patientId);
-    if (mounted) setState(() => _editing = false);
-    await _load();
+  void _beginEdit() {
+    _vm.startEditing();
+    _height.text = _vm.heightDraft;
+    _weight.text = _vm.weightDraft;
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _load();
-  }
-
-  Future<void> _load() async {
-    final patientId = ref.read(appStateProvider).activePatientId;
-    if (patientId == null) {
-      if (mounted) setState(() => _loading = false);
-      return;
-    }
-    final patient = await _repo.getPatient(patientId);
-    final conditions = await _repo.listConditions(patientId);
-    final allergies = await _repo.listAllergies(patientId);
-    if (!mounted) return;
-    setState(() {
-      _patient = patient;
-      _conditions = conditions;
-      _allergies = allergies;
-      _height.text = patient?.heightCm?.toStringAsFixed(0) ?? '';
-      _weight.text = patient?.weightKg?.toStringAsFixed(0) ?? '';
-      _dob = patient?.dob;
-      _gender = patient?.gender;
-      _loading = false;
-    });
-  }
-
-  String _initials(String name) {
-    final parts = name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty);
-    if (parts.isEmpty) return '?';
-    final last = parts.length == 1
-        ? [parts.first]
-        : parts.toList().sublist(parts.length - 2);
-    return last.map((p) => p[0]).join().toUpperCase();
+  Future<void> _save() async {
+    _vm.heightDraft = _height.text;
+    _vm.weightDraft = _weight.text;
+    await _vm.saveMetrics();
   }
 
   @override
   Widget build(BuildContext context) {
     final t = ref.watch(translationsProvider);
+    return ListenableBuilder(
+      listenable: _vm,
+      builder: (context, _) => _build(t),
+    );
+  }
 
-    if (_loading) {
+  Widget _build(Translations t) {
+    if (_vm.loading) {
       return const AppScreen(
           children: [Center(child: CircularProgressIndicator())]);
     }
 
-    final p = _patient;
+    final p = _vm.patient;
     if (p == null) {
       return AppScreen(children: [
         AppText(t.t('profile.title'), variant: TextVariant.title),
       ]);
     }
 
-    final age = ageFromDob(p.dob);
-    final bmi = (p.heightCm != null && p.weightKg != null && p.heightCm! > 0)
-        ? p.weightKg! / ((p.heightCm! / 100) * (p.heightCm! / 100))
-        : null;
-
     return AppScreen(
-      onRefresh: _load,
+      onRefresh: _vm.load,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -148,7 +109,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   color: AppColors.primary,
                   shape: BoxShape.circle,
                 ),
-                child: AppText(_initials(p.fullName),
+                child: AppText(_vm.initials,
                     variant: TextVariant.heading,
                     color: TextColorKey.textInverse),
               ),
@@ -160,8 +121,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     AppText(p.fullName, variant: TextVariant.subheading),
                     AppText(
                       [
-                        if (age != null)
-                          '$age ${t.t('profile.age').toLowerCase()}',
+                        if (_vm.age != null)
+                          '${_vm.age} ${t.t('profile.age').toLowerCase()}',
                         if (p.gender != null)
                           t.t('profile.genders.${p.gender}'),
                       ].join(' · '),
@@ -177,16 +138,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
         SectionHeader(
           title: t.t('profile.anthropometry'),
-          actionLabel: _editing ? t.t('common.save') : t.t('common.edit'),
+          actionLabel: _vm.editing ? t.t('common.save') : t.t('common.edit'),
           onAction: () {
-            if (_editing) {
-              _saveMetrics();
+            if (_vm.editing) {
+              _save();
             } else {
-              setState(() => _editing = true);
+              _beginEdit();
             }
           },
         ),
-        if (_editing)
+        if (_vm.editing)
           AppCard(
             child: Column(
               children: [
@@ -214,13 +175,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
                 DateField(
                   label: t.t('profile.dob'),
-                  value: _dob,
+                  value: _vm.dobDraft,
                   maximumDate: DateTime.now(),
-                  onChanged: (v) => setState(() => _dob = v),
+                  onChanged: _vm.setDob,
                 ),
                 ChipSelect<String>(
                   label: t.t('profile.gender'),
-                  value: _gender,
+                  value: _vm.genderDraft,
                   options: [
                     ChipOption(
                         value: 'male', label: t.t('profile.genders.male')),
@@ -229,7 +190,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     ChipOption(
                         value: 'other', label: t.t('profile.genders.other')),
                   ],
-                  onChanged: (v) => setState(() => _gender = v),
+                  onChanged: _vm.setGender,
                 ),
               ],
             ),
@@ -249,17 +210,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               const SizedBox(width: Spacing.md),
               _Metric(
                   label: t.t('profile.bmi'),
-                  value: bmi?.toStringAsFixed(1) ?? '—',
+                  value: _vm.bmi?.toStringAsFixed(1) ?? '—',
                   unit: ''),
             ],
           ),
         const SizedBox(height: Spacing.lg),
 
         SectionHeader(title: t.t('profile.medicalHistory')),
-        if (_conditions.isEmpty)
+        if (_vm.conditions.isEmpty)
           AppText(t.t('common.none'), color: TextColorKey.textFaint)
         else
-          ..._conditions.map((c) => Padding(
+          ..._vm.conditions.map((c) => Padding(
                 padding: const EdgeInsets.only(bottom: Spacing.sm),
                 child: AppCard(
                   child: Row(children: [
@@ -287,10 +248,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         const SizedBox(height: Spacing.lg),
 
         SectionHeader(title: t.t('profile.allergies')),
-        if (_allergies.isEmpty)
+        if (_vm.allergies.isEmpty)
           AppText(t.t('common.none'), color: TextColorKey.textFaint)
         else
-          ..._allergies.map((a) => Padding(
+          ..._vm.allergies.map((a) => Padding(
                 padding: const EdgeInsets.only(bottom: Spacing.sm),
                 child: AppCard(
                   child: Row(children: [
