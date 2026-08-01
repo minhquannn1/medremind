@@ -8,7 +8,7 @@ import 'package:medremind/ui/core/components/app_text.dart';
 import 'package:medremind/ui/core/components/controls.dart';
 import 'package:medremind/ui/core/components/fields.dart';
 import 'package:medremind/ui/core/components/layout.dart';
-import 'package:medremind/data/repositories/prescriptions_repository.dart';
+import 'package:medremind/ui/features/prescriptions/view_models/prescription_form_view_model.dart';
 import 'package:medremind/domain/models/medication_draft.dart';
 import 'package:medremind/ui/core/i18n/app_localizations.dart';
 import 'package:medremind/ui/core/app_state.dart';
@@ -43,13 +43,10 @@ class _PrescriptionNewScreenState
   final _clinic = TextEditingController();
   final _notes = TextEditingController();
 
-  String? _issuedDate;
-  late List<MedicationDraft> _drafts;
-  bool _saving = false;
-
-  /// Inline "what's missing" message keyed by draft, so the problem is shown
-  /// on the offending medication instead of only in a passing snackbar.
-  final Map<String, String> _fieldErrors = {};
+  late final PrescriptionFormViewModel _vm = PrescriptionFormViewModel(
+    patientId: ref.read(appStateProvider).activePatientId,
+    initialDrafts: widget.prefillMedications,
+  );
 
   bool get _fromScan =>
       (widget.prefillMedications?.isNotEmpty ?? false) ||
@@ -60,10 +57,7 @@ class _PrescriptionNewScreenState
     super.initState();
     _doctor.text = widget.prefillDoctor ?? '';
     _clinic.text = widget.prefillClinic ?? '';
-    _issuedDate = widget.prefillIssuedDate;
-    _drafts = (widget.prefillMedications?.isNotEmpty ?? false)
-        ? List.of(widget.prefillMedications!)
-        : [MedicationDraft.empty()];
+    _vm.issuedDate = widget.prefillIssuedDate;
   }
 
   @override
@@ -71,87 +65,46 @@ class _PrescriptionNewScreenState
     _doctor.dispose();
     _clinic.dispose();
     _notes.dispose();
+    _vm.dispose();
     super.dispose();
-  }
-
-  /// Returns the first problem found, or null when the form is complete.
-  /// Also fills [_fieldErrors] so every bad row is marked at once.
-  String? _validate(Translations t) {
-    _fieldErrors.clear();
-    String? first;
-
-    for (var i = 0; i < _drafts.length; i++) {
-      final d = _drafts[i];
-      final position = i + 1;
-
-      // A row left entirely blank is just an unused slot, not an error.
-      final isBlankRow = d.name.trim().isEmpty &&
-          d.dosage.trim().isEmpty &&
-          d.notes.trim().isEmpty;
-      if (isBlankRow && _drafts.length > 1) continue;
-
-      if (d.name.trim().isEmpty) {
-        final msg = t.t('prescriptions.errorMissingName',
-            params: {'index': position});
-        _fieldErrors[d.key] = t.t('common.required');
-        first ??= msg;
-        continue;
-      }
-      if (d.times.isEmpty) {
-        final msg = t.t('prescriptions.errorMissingTime',
-            params: {'index': position, 'name': d.name.trim()});
-        _fieldErrors[d.key] = t.t('common.required');
-        first ??= msg;
-      }
-    }
-
-    final anyNamed = _drafts.any((d) => d.name.trim().isNotEmpty);
-    if (!anyNamed) first ??= t.t('prescriptions.errorNoMedication');
-    return first;
   }
 
   Future<void> _save() async {
     final t = ref.read(translationsProvider);
+    final id = await _vm.save(
+      doctorName: _doctor.text,
+      clinic: _clinic.text,
+      notes: _notes.text,
+    );
 
-    final problem = _validate(t);
-    if (problem != null) {
-      setState(() {});
-      ScaffoldMessenger.of(context)
-        ..clearSnackBars()
-        ..showSnackBar(SnackBar(
-          content: Text(problem),
-          backgroundColor: AppColors.danger,
-          duration: const Duration(seconds: 4),
-        ));
+    if (!mounted) return;
+    if (id == null) {
+      final e = _vm.error;
+      if (e != null) {
+        ScaffoldMessenger.of(context)
+          ..clearSnackBars()
+          ..showSnackBar(SnackBar(
+            content: Text(t.t(e.messageKey, params: e.params)),
+            backgroundColor: AppColors.danger,
+            duration: const Duration(seconds: 4),
+          ));
+      }
       return;
     }
 
-    final named = _drafts.where((d) => d.name.trim().isNotEmpty).toList();
-    setState(() => _saving = true);
+    // New doses need reminders, and the cloud copy needs refreshing.
     final patientId = ref.read(appStateProvider).activePatientId;
-    if (patientId == null) return;
-
-    await const PrescriptionsRepository().createPrescription(
-      PrescriptionInput(
-        patientId: patientId,
-        doctorName: _doctor.text.trim().isEmpty ? null : _doctor.text.trim(),
-        clinic: _clinic.text.trim().isEmpty ? null : _clinic.text.trim(),
-        issuedDate: _issuedDate,
-        notes: _notes.text.trim().isEmpty ? null : _notes.text.trim(),
-        medications: named.map((d) => d.toInput()).toList(),
-      ),
-    );
-
-    // New doses need reminders, and the doctor/cloud copies need refreshing.
     final scheduler = ref.read(notificationSchedulerProvider);
     final granted = await scheduler.requestPermission();
-    if (granted) await scheduler.syncReminders(patientId, t);
-    ref.read(backupSyncProvider).queueBackup(patientId);
+    if (granted && patientId != null) {
+      await scheduler.syncReminders(patientId, t);
+    }
+    if (patientId != null) ref.read(backupSyncProvider).queueBackup(patientId);
 
     if (!mounted) return;
     if (!granted) {
-      // Saving succeeded but alerts will not fire — say so rather than
-      // letting the user assume they are covered.
+      // Saved, but alerts will not fire — say so rather than letting the user
+      // assume they are covered.
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(t.t('permissions.notificationsBody')),
         duration: const Duration(seconds: 6),
@@ -163,7 +116,13 @@ class _PrescriptionNewScreenState
   @override
   Widget build(BuildContext context) {
     final t = ref.watch(translationsProvider);
+    return ListenableBuilder(
+      listenable: _vm,
+      builder: (context, _) => _build(t),
+    );
+  }
 
+  Widget _build(Translations t) {
     return AppScreen(
       children: [
         AppHeader(title: t.t('prescriptions.new')),
@@ -202,9 +161,9 @@ class _PrescriptionNewScreenState
               ),
               DateField(
                 label: t.t('prescriptions.issuedDate'),
-                value: _issuedDate,
+                value: _vm.issuedDate,
                 maximumDate: DateTime.now(),
-                onChanged: (v) => setState(() => _issuedDate = v),
+                onChanged: _vm.setIssuedDate,
               ),
             ],
           ),
@@ -233,13 +192,14 @@ class _PrescriptionNewScreenState
         ],
 
         SectionHeader(title: t.t('prescriptions.medications')),
-        ..._drafts.asMap().entries.map((e) => _MedicationEditor(
+        ..._vm.drafts.asMap().entries.map((e) => _MedicationEditor(
               key: ValueKey(e.value.key),
               draft: e.value,
               index: e.key,
-              nameError: _fieldErrors[e.value.key],
-              removable: _drafts.length > 1,
-              onRemove: () => setState(() => _drafts.removeAt(e.key)),
+              nameError:
+                  _vm.isIncomplete(e.value) ? t.t('common.required') : null,
+              removable: _vm.drafts.length > 1,
+              onRemove: () => _vm.removeDraft(e.value),
               onChanged: () => setState(() {}),
             )),
 
@@ -247,8 +207,7 @@ class _PrescriptionNewScreenState
           label: t.t('prescriptions.addMedication'),
           variant: ButtonVariant.ghost,
           icon: Icons.add,
-          onPressed: () =>
-              setState(() => _drafts.add(MedicationDraft.empty())),
+          onPressed: _vm.addDraft,
         ),
         const SizedBox(height: Spacing.lg),
 
@@ -262,7 +221,7 @@ class _PrescriptionNewScreenState
           label: t.t('prescriptions.savePrescription'),
           size: ButtonSize.lg,
           icon: Icons.check,
-          loading: _saving,
+          loading: _vm.saving,
           onPressed: _save,
         ),
       ],
