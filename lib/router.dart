@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'screens/auth_screen.dart';
-import 'screens/onboarding_screen.dart';
-import 'screens/dose_confirm_screen.dart';
-import 'screens/tabs_shell.dart';
-import 'store/app_state.dart';
-import 'theme/tokens.dart';
+import 'package:medremind/ui/features/auth/views/auth_screen.dart';
+import 'package:medremind/ui/features/onboarding/views/onboarding_screen.dart';
+import 'package:medremind/ui/features/dose_confirm/views/dose_confirm_screen.dart';
+import 'package:medremind/ui/core/tabs_shell.dart';
+import 'package:medremind/ui/core/app_state.dart';
+import 'package:medremind/ui/core/theme/tokens.dart';
 
 /// Navigation. Ported from the expo-router file tree in `app/`:
 /// `app/auth.tsx` → /auth, `app/(tabs)/index.tsx` → /home, and so on.

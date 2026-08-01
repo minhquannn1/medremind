@@ -3,13 +3,13 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-import 'package:medremind/db/database.dart';
-import 'package:medremind/db/repositories/appointments_repository.dart';
-import 'package:medremind/db/repositories/backup_repository.dart';
-import 'package:medremind/db/repositories/doses_repository.dart';
-import 'package:medremind/db/repositories/patients_repository.dart';
-import 'package:medremind/db/repositories/prescriptions_repository.dart';
-import 'package:medremind/db/repositories/settings_repository.dart';
+import 'package:medremind/data/services/database.dart';
+import 'package:medremind/data/repositories/appointments_repository.dart';
+import 'package:medremind/data/repositories/backup_repository.dart';
+import 'package:medremind/data/repositories/doses_repository.dart';
+import 'package:medremind/data/repositories/patients_repository.dart';
+import 'package:medremind/data/repositories/prescriptions_repository.dart';
+import 'package:medremind/data/repositories/settings_repository.dart';
 
 void main() {
   setUpAll(() {

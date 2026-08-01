@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:medremind/components/app_button.dart';
-import 'package:medremind/components/app_card.dart';
-import 'package:medremind/components/app_input.dart';
-import 'package:medremind/components/app_text.dart';
-import 'package:medremind/components/controls.dart';
-import 'package:medremind/components/layout.dart';
-import 'package:medremind/components/fields.dart';
-import 'package:medremind/screens/tabs_shell.dart';
-import 'package:medremind/theme/tokens.dart';
+import 'package:medremind/ui/core/components/app_button.dart';
+import 'package:medremind/ui/core/components/app_card.dart';
+import 'package:medremind/ui/core/components/app_input.dart';
+import 'package:medremind/ui/core/components/app_text.dart';
+import 'package:medremind/ui/core/components/controls.dart';
+import 'package:medremind/ui/core/components/layout.dart';
+import 'package:medremind/ui/core/components/fields.dart';
+import 'package:medremind/ui/core/tabs_shell.dart';
+import 'package:medremind/ui/core/theme/tokens.dart';
 
 Widget _host(Widget child) => MaterialApp(home: Scaffold(body: child));
 

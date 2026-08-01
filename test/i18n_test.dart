@@ -2,9 +2,9 @@ import 'dart:ui' show Locale;
 
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:medremind/i18n/app_localizations.dart';
-import 'package:medremind/i18n/locale_en.dart';
-import 'package:medremind/i18n/locale_vi.dart';
+import 'package:medremind/ui/core/i18n/app_localizations.dart';
+import 'package:medremind/ui/core/i18n/locale_en.dart';
+import 'package:medremind/ui/core/i18n/locale_vi.dart';
 
 void main() {
   group('locale coverage', () {

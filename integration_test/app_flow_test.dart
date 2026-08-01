@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
-import 'package:medremind/db/database.dart';
-import 'package:medremind/db/repositories/settings_repository.dart';
-import 'package:medremind/features/auth/patient_auth.dart';
+import 'package:medremind/data/services/database.dart';
+import 'package:medremind/data/repositories/settings_repository.dart';
+import 'package:medremind/data/services/patient_auth_service.dart';
 import 'package:medremind/main.dart' as app;
 
 /// End-to-end run of the real app on a simulator or device.

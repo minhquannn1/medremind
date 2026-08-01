@@ -2,8 +2,8 @@ import 'package:flutter/cupertino.dart' show CupertinoPageTransitionsBuilder;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:medremind/theme/app_theme.dart';
-import 'package:medremind/theme/tokens.dart';
+import 'package:medremind/ui/core/theme/app_theme.dart';
+import 'package:medremind/ui/core/theme/tokens.dart';
 
 /// These lock in the settings that stop Material 3 from reading as "Android".
 /// Each one has a visible symptom if it regresses, noted in the reason.

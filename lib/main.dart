@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'db/database.dart';
-import 'db/repositories/settings_repository.dart';
-import 'features/notifications/scheduler.dart';
-import 'router.dart';
-import 'store/app_state.dart';
-import 'theme/app_theme.dart';
+import 'package:medremind/data/services/database.dart';
+import 'package:medremind/data/repositories/settings_repository.dart';
+import 'package:medremind/data/services/notification_service.dart';
+import 'package:medremind/router.dart';
+import 'package:medremind/ui/core/app_state.dart';
+import 'package:medremind/ui/core/theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

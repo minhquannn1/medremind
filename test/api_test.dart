@@ -4,9 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
-import 'package:medremind/features/api_config.dart';
-import 'package:medremind/features/auth/patient_auth.dart';
-import 'package:medremind/features/scan/ai_scanner.dart';
+import 'package:medremind/data/services/api_config.dart';
+import 'package:medremind/data/services/patient_auth_service.dart';
+import 'package:medremind/data/services/ai_scanner_service.dart';
 
 /// Network-layer tests use a stub client so they are deterministic and offline.
 /// They assert the exact response shapes the live Railway backend returns.

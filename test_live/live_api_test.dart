@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:medremind/features/api_config.dart';
-import 'package:medremind/features/auth/patient_auth.dart';
-import 'package:medremind/features/scan/ai_scanner.dart';
-import 'package:medremind/features/sync/doctor_sync.dart';
+import 'package:medremind/data/services/api_config.dart';
+import 'package:medremind/data/services/patient_auth_service.dart';
+import 'package:medremind/data/services/ai_scanner_service.dart';
+import 'package:medremind/data/services/doctor_sync_service.dart';
 
 /// Live checks against the real Railway backend.
 ///

@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:medremind/features/notifications/scheduler.dart';
+import 'package:medremind/data/services/notification_service.dart';
 
 void main() {
   group('DoseTapPayload', () {
