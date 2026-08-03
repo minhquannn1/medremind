@@ -242,12 +242,16 @@ class ProgressRing extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (label != null)
-                  AppText(label!,
-                      variant: TextVariant.title,
-                      color: TextColorKey.primary,
-                      center: true,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis),
+                  // Shrink to fit rather than ellipsize: clamping the width
+                  // stopped the overflow but turned "30%" into "3…".
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: AppText(label!,
+                        variant: TextVariant.title,
+                        color: TextColorKey.primary,
+                        center: true,
+                        maxLines: 1),
+                  ),
                 if (caption != null)
                   AppText(caption!,
                       variant: TextVariant.caption,

@@ -279,6 +279,10 @@ void main() {
       final maxInner = (size - stroke * 2) / 1.4142;
 
       expect(captionBox.width, lessThanOrEqualTo(maxInner + 0.5));
+
+      // The percentage must be readable, not truncated to "3…".
+      expect(find.text('100%'), findsOneWidget);
+      expect(find.textContaining('…'), findsNothing);
       expect(ringBox.contains(captionBox.topLeft), isTrue);
       expect(ringBox.contains(captionBox.bottomRight), isTrue);
       expect(tester.takeException(), isNull, reason: 'must not overflow');
