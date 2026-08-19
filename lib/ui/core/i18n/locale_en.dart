@@ -224,6 +224,7 @@ const Map<String, String> localeEn = {
   'profile.history': 'Medication & visit history',
   'profile.noHistory': 'No history yet',
   'profile.bmi': 'BMI',
+  'profile.bmiSource': 'BMI categories per the World Health Organization — tap to read the source.',
 
   // appointments
   'appointments.title': 'Appointments & refills',

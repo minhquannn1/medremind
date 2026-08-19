@@ -10,6 +10,7 @@ import 'package:medremind/ui/core/components/layout.dart';
 import 'package:medremind/ui/features/profile/view_models/profile_view_model.dart';
 import 'package:medremind/ui/core/app_state.dart';
 import 'package:medremind/ui/core/i18n/app_localizations.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:medremind/ui/core/theme/tokens.dart';
 import 'package:medremind/ui/features/history/views/history_screen.dart';
 import 'package:medremind/ui/features/settings/views/settings_screen.dart';
@@ -213,6 +214,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   value: _vm.bmi?.toStringAsFixed(1) ?? '—',
                   unit: ''),
             ],
+          ),
+        if (_vm.bmi != null)
+          Padding(
+            padding: const EdgeInsets.only(top: Spacing.sm),
+            child: GestureDetector(
+              onTap: () => launchUrl(
+                Uri.parse(
+                    'https://www.who.int/news-room/fact-sheets/detail/obesity-and-overweight'),
+                mode: LaunchMode.externalApplication,
+              ),
+              child: AppText(t.t('profile.bmiSource'),
+                  color: TextColorKey.textFaint),
+            ),
           ),
         const SizedBox(height: Spacing.lg),
 

@@ -225,6 +225,7 @@ const Map<String, String> localeVi = {
   'profile.history': 'Lịch sử dùng thuốc & tái khám',
   'profile.noHistory': 'Chưa có lịch sử',
   'profile.bmi': 'BMI',
+  'profile.bmiSource': 'Phân loại BMI theo Tổ chức Y tế Thế giới (WHO) — chạm để xem nguồn.',
 
   // appointments
   'appointments.title': 'Tái khám & mua thuốc',

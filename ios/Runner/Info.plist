@@ -7,7 +7,7 @@
 		<key>CFBundleDevelopmentRegion</key>
 		<string>$(DEVELOPMENT_LANGUAGE)</string>
 		<key>CFBundleDisplayName</key>
-		<string>MedRemind</string>
+		<string>Medoly</string>
 		<key>CFBundleExecutable</key>
 		<string>$(EXECUTABLE_NAME)</string>
 		<key>CFBundleIdentifier</key>
@@ -15,7 +15,12 @@
 		<key>CFBundleInfoDictionaryVersion</key>
 		<string>6.0</string>
 		<key>CFBundleName</key>
-		<string>MedRemind</string>
+		<string>Medoly</string>
+		<key>CFBundleLocalizations</key>
+		<array>
+			<string>en</string>
+			<string>vi</string>
+		</array>
 		<key>CFBundlePackageType</key>
 		<string>APPL</string>
 		<key>CFBundleShortVersionString</key>
@@ -60,9 +65,9 @@
 			<string>UIInterfaceOrientationLandscapeRight</string>
 		</array>
 		<key>NSCameraUsageDescription</key>
-		<string>Cho phép truy cập camera để chụp và quét đơn thuốc.</string>
+		<string>Allow camera access to take and scan photos of your prescriptions.</string>
 		<key>NSPhotoLibraryUsageDescription</key>
-		<string>Cho phép truy cập thư viện ảnh để chọn ảnh đơn thuốc.</string>
+		<string>Allow access to your photo library to choose prescription photos.</string>
 		<key>ITSAppUsesNonExemptEncryption</key>
 		<false/>
 		<key>UIStatusBarHidden</key>

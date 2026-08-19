@@ -10,7 +10,6 @@ import 'package:medremind/data/services/links.dart';
 import 'package:medremind/ui/core/i18n/app_localizations.dart';
 import 'package:medremind/ui/core/app_state.dart';
 import 'package:medremind/ui/core/theme/tokens.dart';
-import 'package:medremind/ui/features/doctor/views/doctor_screen.dart';
 
 /// Language, reminder preferences, account actions and legal links.
 /// Ported from `app/settings.tsx`.
@@ -235,20 +234,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         const SizedBox(height: Spacing.lg),
 
         AppCard(
-          onPress: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const DoctorScreen()),
-          ),
-          child: Row(children: [
-            const Icon(Icons.medical_information_outlined,
-                color: AppColors.primary, size: 20),
-            const SizedBox(width: Spacing.md),
-            Expanded(child: AppText(t.t('doctor.title'))),
-            const Icon(Icons.chevron_right, color: AppColors.textMuted),
-          ]),
-        ),
-        const SizedBox(height: Spacing.md),
-
-        AppCard(
           onPress: () => openExternalUrl(privacyPolicyUrl),
           child: Row(children: [
             const Icon(Icons.shield_outlined,
@@ -284,7 +269,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
 
         const SizedBox(height: Spacing.xxl),
-        AppText('MedRemind · v1.0.0',
+        AppText('Medoly · v1.0.0',
             variant: TextVariant.caption,
             color: TextColorKey.textFaint,
             center: true),

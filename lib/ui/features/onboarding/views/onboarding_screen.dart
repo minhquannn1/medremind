@@ -24,7 +24,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   final _name = TextEditingController();
   final _height = TextEditingController();
   final _weight = TextEditingController();
-  final _pairCode = TextEditingController();
 
   late final OnboardingViewModel _vm = OnboardingViewModel(
     accountUserId: ref.read(appStateProvider).account?.userId,
@@ -44,7 +43,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     _name.dispose();
     _height.dispose();
     _weight.dispose();
-    _pairCode.dispose();
     _vm.dispose();
     super.dispose();
   }
@@ -54,7 +52,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       fullName: _name.text,
       heightCm: _height.text,
       weightKg: _weight.text,
-      pairCode: _pairCode.text,
+      pairCode: '',
     );
     if (patientId == null || !mounted) return;
     await ref.read(appStateProvider.notifier).completeOnboarding(patientId);
@@ -143,20 +141,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               ),
             ),
           ],
-        ),
-
-        // Optional: most users pair later from Settings, but entering the
-        // code here saves a step for anyone handed one at the clinic.
-        SectionHeader(title: t.t('doctor.title')),
-        AppText('${t.t('doctor.enterCodeHint')} (${t.t('common.optional')})',
-            variant: TextVariant.caption, color: TextColorKey.textFaint),
-        const SizedBox(height: Spacing.md),
-        AppInput(
-          controller: _pairCode,
-          placeholder: 'MED-XXXXXX',
-          icon: Icons.qr_code,
-          autocorrect: false,
-          error: _vm.pairErrorKey == null ? null : t.t(_vm.pairErrorKey!),
         ),
 
         AppButton(
