@@ -52,7 +52,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       fullName: _name.text,
       heightCm: _height.text,
       weightKg: _weight.text,
-      pairCode: '',
     );
     if (patientId == null || !mounted) return;
     await ref.read(appStateProvider.notifier).completeOnboarding(patientId);
