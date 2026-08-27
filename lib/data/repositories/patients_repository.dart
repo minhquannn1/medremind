@@ -54,8 +54,24 @@ class PatientsRepository {
     return Patient.fromMap(rows.first);
   }
 
-  /// A patient profile created before accounts existed (no owner). Used once,
-  /// at first sign-up, to let the new account adopt existing on-device data.
+  /// The on-device profile that belongs to no account. This is what a user
+  /// gets when they use the app without signing in, which the App Store
+  /// requires us to allow (Guideline 5.1.1(v)): reminders are local, so an
+  /// account is only needed for cloud backup.
+  Future<Patient?> getLocalPatient() async {
+    final database = await AppDatabase.instance.db;
+    final rows = await database.query(
+      'patients',
+      where: 'account_user_id IS NULL',
+      limit: 1,
+    );
+    if (rows.isEmpty) return null;
+    return Patient.fromMap(rows.first);
+  }
+
+  /// A patient profile that belongs to no account. Used when an account signs
+  /// in or signs up on a device already used without one, so existing
+  /// on-device data carries over instead of being stranded.
   Future<Patient?> claimOrphanPatient(
     int accountUserId,
     String accountEmail,

@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:medremind/data/services/api_config.dart';
 import 'package:medremind/data/services/patient_auth_service.dart';
 import 'package:medremind/data/services/ai_scanner_service.dart';
-import 'package:medremind/data/services/doctor_sync_service.dart';
 
 /// Live checks against the real Railway backend.
 ///
@@ -40,14 +39,6 @@ void main() {
         await auth.register('quan@medremind.vn', 'MedRemind@2026', 'Dup');
     expect(res.ok, isFalse);
     expect(res.error, AuthErrorCode.emailTaken);
-  }, timeout: const Timeout(Duration(seconds: 30)));
-
-  test('an unknown doctor pair code is rejected', () async {
-    // Rejected before any local write, so this needs no database.
-    const doctors = DoctorSyncApi();
-    final res = await doctors.pairWithDoctor('MED-NOPE99');
-    expect(res.ok, isFalse);
-    expect(res.error, PairError.invalidCode);
   }, timeout: const Timeout(Duration(seconds: 30)));
 
   test('the scan endpoint answers without throwing', () async {

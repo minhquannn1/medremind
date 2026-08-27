@@ -52,6 +52,12 @@ const Map<String, String> localeEn = {
   'auth.signupSubtitle':
       'Create an account to save and sync your medication profile.',
   'auth.noAccount': "Don't have an account?",
+  'auth.continueWithoutAccount': 'Continue without an account',
+  'auth.accountOptionalNote':
+      'Reminders work on this device on their own. An account is only needed for cloud backup.',
+  'auth.signIn': 'Sign in or create an account',
+  'auth.localOnlyNote':
+      'You are using MedRemind without an account. Your data stays on this device only.',
   'auth.haveAccount': 'Already have an account?',
   'auth.errorEmailTaken': 'This email is already registered.',
   'auth.errorInvalidCredentials': 'Wrong email or password.',

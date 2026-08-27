@@ -45,10 +45,15 @@ final routerProvider = Provider<GoRouter>((ref) {
       // a signed-in user is briefly bounced to the login screen.
       if (!app.ready) return loc == '/' ? null : '/';
 
-      if (!app.authed) return loc == '/auth' ? null : '/auth';
+      // Signing in is optional. Reminders, prescriptions and history all live
+      // on the device, so requiring an account to reach them fails App Store
+      // Guideline 5.1.1(v). An account only adds cloud backup, and is asked
+      // for at the point it is actually used.
+      if (loc == '/auth') return app.authed ? '/home' : null;
+
       if (!app.onboarded) return loc == '/onboarding' ? null : '/onboarding';
 
-      if (loc == '/' || loc == '/auth' || loc == '/onboarding') return '/home';
+      if (loc == '/' || loc == '/onboarding') return '/home';
       return null;
     },
     routes: [

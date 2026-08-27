@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:medremind/data/services/links.dart';
@@ -173,6 +174,24 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
               ),
             ),
           ],
+        ),
+        const SizedBox(height: Spacing.xxl),
+
+        // The account is optional: App Store Guideline 5.1.1(v) forbids gating
+        // on-device features behind a sign-in, and everything except cloud
+        // backup works without one.
+        AppText(
+          t.t('auth.accountOptionalNote'),
+          variant: TextVariant.caption,
+          color: TextColorKey.textMuted,
+          center: true,
+        ),
+        const SizedBox(height: Spacing.md),
+        AppButton(
+          label: t.t('auth.continueWithoutAccount'),
+          variant: ButtonVariant.ghost,
+          disabled: _vm.busy,
+          onPressed: () => context.go('/home'),
         ),
       ],
     );

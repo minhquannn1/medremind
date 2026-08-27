@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io' show Platform;
 import 'dart:ui' show Color;
 
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
@@ -66,15 +67,17 @@ class NotificationScheduler {
   bool _timezoneReady = false;
 
   Future<ReminderPrefs> getReminderPrefs() async => ReminderPrefs(
-        sound: await settings.getBool(SettingsKeys.reminderSound, true),
-        vibration: await settings.getBool(SettingsKeys.reminderVibration, true),
-      );
+    sound: await settings.getBool(SettingsKeys.reminderSound, true),
+    vibration: await settings.getBool(SettingsKeys.reminderVibration, true),
+  );
 
   Future<void> _ensureTimezone() async {
     if (_timezoneReady) return;
     tzdata.initializeTimeZones();
     try {
-      tz.setLocalLocation(tz.getLocation(await FlutterTimezone.getLocalTimezone()));
+      tz.setLocalLocation(
+        tz.getLocation(await FlutterTimezone.getLocalTimezone()),
+      );
     } catch (_) {
       // Falling back to UTC would shift every reminder; keep the package
       // default local zone instead of guessing.
@@ -111,8 +114,10 @@ class NotificationScheduler {
   Future<void> configureAndroidChannel(Translations t) async {
     if (!Platform.isAndroid) return;
     final prefs = await getReminderPrefs();
-    final android = _plugin.resolvePlatformSpecificImplementation<
-        AndroidFlutterLocalNotificationsPlugin>();
+    final android = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
     await android?.createNotificationChannel(
       AndroidNotificationChannel(
         androidChannelId,
@@ -130,8 +135,10 @@ class NotificationScheduler {
   /// rescheduled so queued notifications pick up the new sound setting.
   Future<void> applyReminderPrefs(int? patientId, Translations t) async {
     if (Platform.isAndroid) {
-      final android = _plugin.resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>();
+      final android = _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
       try {
         await android?.deleteNotificationChannel(androidChannelId);
       } catch (_) {
@@ -142,10 +149,19 @@ class NotificationScheduler {
     if (patientId != null) await syncReminders(patientId, t);
   }
 
+  /// Set by the App Store screenshot walk only. The system permission alert
+  /// covers every frame and nothing in a Flutter integration test can dismiss
+  /// it, so the capture run turns the prompt off and takes "denied".
+  @visibleForTesting
+  static bool suppressPermissionPrompt = false;
+
   Future<bool> requestPermission() async {
+    if (suppressPermissionPrompt) return false;
     if (Platform.isIOS) {
-      final ios = _plugin.resolvePlatformSpecificImplementation<
-          IOSFlutterLocalNotificationsPlugin>();
+      final ios = _plugin
+          .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin
+          >();
       final granted = await ios?.requestPermissions(
         alert: true,
         badge: true,
@@ -154,8 +170,10 @@ class NotificationScheduler {
       return granted ?? false;
     }
     if (Platform.isAndroid) {
-      final android = _plugin.resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>();
+      final android = _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
       final granted = await android?.requestNotificationsPermission();
       return granted ?? false;
     }
@@ -164,13 +182,17 @@ class NotificationScheduler {
 
   Future<bool> hasPermission() async {
     if (Platform.isAndroid) {
-      final android = _plugin.resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>();
+      final android = _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
       return await android?.areNotificationsEnabled() ?? false;
     }
     if (Platform.isIOS) {
-      final ios = _plugin.resolvePlatformSpecificImplementation<
-          IOSFlutterLocalNotificationsPlugin>();
+      final ios = _plugin
+          .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin
+          >();
       final settings = await ios?.checkPermissions();
       return settings?.isAlertEnabled ?? false;
     }
@@ -198,8 +220,14 @@ class NotificationScheduler {
 
   tz.TZDateTime _nextInstanceOf(int hour, int minute) {
     final now = tz.TZDateTime.now(tz.local);
-    var scheduled =
-        tz.TZDateTime(tz.local, now.year, now.month, now.day, hour, minute);
+    var scheduled = tz.TZDateTime(
+      tz.local,
+      now.year,
+      now.month,
+      now.day,
+      hour,
+      minute,
+    );
     if (!scheduled.isAfter(now)) {
       scheduled = scheduled.add(const Duration(days: 1));
     }
@@ -219,7 +247,9 @@ class NotificationScheduler {
 
     final prefs = await getReminderPrefs();
     final details = _details(prefs, t.t('reminders.channelName'));
-    final meds = await prescriptions.listActiveMedicationsWithSchedule(patientId);
+    final meds = await prescriptions.listActiveMedicationsWithSchedule(
+      patientId,
+    );
     final today = DateTime.now();
 
     for (final entry in meds) {
@@ -245,14 +275,16 @@ class NotificationScheduler {
         await _plugin.zonedSchedule(
           notificationId(med.id, hour, minute),
           t.t('reminders.doseTitle'),
-          t.t('reminders.doseBody', params: {
-            'medication': med.name,
-            'dosage': med.dosage ?? '',
-          }),
+          t.t(
+            'reminders.doseBody',
+            params: {'medication': med.name, 'dosage': med.dosage ?? ''},
+          ),
           _nextInstanceOf(hour, minute),
           details,
-          payload: DoseTapPayload(medicationId: med.id, time: time.time)
-              .encode(),
+          payload: DoseTapPayload(
+            medicationId: med.id,
+            time: time.time,
+          ).encode(),
           androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
           // Wall-clock, not absolute: an 08:00 dose stays 08:00 across DST
           // and timezone changes.

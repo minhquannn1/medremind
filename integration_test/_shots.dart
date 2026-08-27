@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 
+import 'package:medremind/data/services/notification_service.dart';
 import 'package:medremind/main.dart' as app;
 
 /// Screenshot walk-through: signs in, then rests on each tab long enough for
@@ -16,6 +17,7 @@ void main() {
   }
 
   testWidgets('walk the tabs', (tester) async {
+    NotificationScheduler.suppressPermissionPrompt = true;
     app.main();
     await tester.pumpAndSettle(const Duration(seconds: 5));
 

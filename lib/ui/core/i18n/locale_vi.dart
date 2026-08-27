@@ -52,6 +52,12 @@ const Map<String, String> localeVi = {
   'auth.loginSubtitle': 'Đăng nhập để tiếp tục theo dõi thuốc của bạn.',
   'auth.signupSubtitle': 'Tạo tài khoản để lưu và đồng bộ hồ sơ thuốc của bạn.',
   'auth.noAccount': 'Chưa có tài khoản?',
+  'auth.continueWithoutAccount': 'Dùng không cần tài khoản',
+  'auth.accountOptionalNote':
+      'Nhắc uống thuốc hoạt động ngay trên máy. Tài khoản chỉ cần khi bạn muốn sao lưu lên đám mây.',
+  'auth.signIn': 'Đăng nhập hoặc tạo tài khoản',
+  'auth.localOnlyNote':
+      'Bạn đang dùng không cần tài khoản. Dữ liệu chỉ nằm trên máy này.',
   'auth.haveAccount': 'Đã có tài khoản?',
   'auth.errorEmailTaken': 'Email này đã được đăng ký.',
   'auth.errorInvalidCredentials': 'Sai email hoặc mật khẩu.',

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:medremind/ui/core/components/app_button.dart';
 import 'package:medremind/ui/core/components/app_card.dart';
@@ -208,26 +209,39 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 AppText(app.account!.email,
                     variant: TextVariant.caption,
                     color: TextColorKey.textFaint),
+                const AppDivider(),
+                AppButton(
+                  label: t.t('auth.logout'),
+                  variant: ButtonVariant.ghost,
+                  icon: Icons.logout,
+                  onPressed: _confirmLogout,
+                ),
+                const SizedBox(height: Spacing.sm),
+                // App Store Guideline 5.1.1(v): account deletion must be
+                // reachable from inside the app.
+                AppButton(
+                  label: _vm.deleting
+                      ? t.t('common.loading')
+                      : t.t('auth.deleteAccount'),
+                  variant: ButtonVariant.danger,
+                  icon: Icons.delete_outline,
+                  disabled: _vm.deleting,
+                  onPressed: _confirmDeleteAccount,
+                ),
+              ] else ...[
+                // Used without an account. This is the only way in to signing
+                // in, now that the app no longer forces it at launch.
+                const SizedBox(height: Spacing.sm),
+                AppText(t.t('auth.localOnlyNote'),
+                    variant: TextVariant.caption,
+                    color: TextColorKey.textMuted),
+                const AppDivider(),
+                AppButton(
+                  label: t.t('auth.signIn'),
+                  icon: Icons.login,
+                  onPressed: () => context.push('/auth'),
+                ),
               ],
-              const AppDivider(),
-              AppButton(
-                label: t.t('auth.logout'),
-                variant: ButtonVariant.ghost,
-                icon: Icons.logout,
-                onPressed: _confirmLogout,
-              ),
-              const SizedBox(height: Spacing.sm),
-              // App Store Guideline 5.1.1(v): account deletion must be
-              // reachable from inside the app.
-              AppButton(
-                label: _vm.deleting
-                    ? t.t('common.loading')
-                    : t.t('auth.deleteAccount'),
-                variant: ButtonVariant.danger,
-                icon: Icons.delete_outline,
-                disabled: _vm.deleting,
-                onPressed: _confirmDeleteAccount,
-              ),
             ],
           ),
         ),

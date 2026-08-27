@@ -49,15 +49,18 @@ class _MedRemindAppState extends ConsumerState<MedRemindApp> {
     });
   }
 
-  /// Asks for notification permission on the first launch of a signed-in
-  /// session. Reminders are the whole point of the app, and the old flow only
-  /// asked when a prescription was saved — so anyone who restored a backup, or
-  /// simply browsed first, had medications and no alerts without being told.
+  /// Asks for notification permission once the user has a profile. Reminders
+  /// are the whole point of the app, and the old flow only asked when a
+  /// prescription was saved — so anyone who restored a backup, or simply
+  /// browsed first, had medications and no alerts without being told.
+  ///
+  /// Keyed on having a profile rather than on being signed in: most users now
+  /// never create an account, and they need reminders just as much.
   ///
   /// Asked once and remembered: iOS only ever shows the system prompt once
   /// anyway, and re-asking a user who declined just runs a no-op.
   Future<void> _askForNotificationsOnce(NotificationScheduler scheduler) async {
-    if (!ref.read(appStateProvider).authed) return;
+    if (!ref.read(appStateProvider).onboarded) return;
 
     final settings = ref.read(settingsRepositoryProvider);
     if (await settings.getBool(SettingsKeys.askedNotifications, false)) return;
@@ -71,8 +74,11 @@ class _MedRemindAppState extends ConsumerState<MedRemindApp> {
   void _openDose(DoseTapPayload payload) {
     Future.microtask(() {
       if (!mounted) return;
-      if (!ref.read(appStateProvider).authed) return;
-      ref.read(routerProvider).push(
+      // A profile, not an account: reminders fire for signed-out users too.
+      if (!ref.read(appStateProvider).onboarded) return;
+      ref
+          .read(routerProvider)
+          .push(
             '/dose?med=${payload.medicationId}'
             '&time=${Uri.encodeComponent(payload.time)}',
           );

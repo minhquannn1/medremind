@@ -93,7 +93,16 @@ class AppStateNotifier extends StateNotifier<AppState> {
 
     final token = await settings.get(SettingsKeys.authToken);
     if (token == null || token.isEmpty) {
-      state = AppState(ready: true, language: language);
+      // No account: the app still runs on the local profile if there is one.
+      // Signing in only adds cloud backup, so a signed-out user must not be
+      // locked out of their reminders.
+      final local = await patients.getLocalPatient();
+      state = AppState(
+        ready: true,
+        onboarded: local != null,
+        activePatientId: local?.id,
+        language: language,
+      );
       return;
     }
 
@@ -151,6 +160,14 @@ class AppStateNotifier extends StateNotifier<AppState> {
         }
       }
     }
+
+    // Nothing in the cloud, but this device may already have been used without
+    // an account. Adopt that profile rather than sending the user through
+    // onboarding again and abandoning the medications they already entered.
+    patient ??= await patients.claimOrphanPatient(
+      res.account!.userId,
+      res.account!.email,
+    );
 
     state = state.copyWith(
       authed: true,
