@@ -30,6 +30,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     backupSync: ref.read(backupSyncProvider),
   );
 
+  final _name = TextEditingController();
   final _height = TextEditingController();
   final _weight = TextEditingController();
 
@@ -41,6 +42,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   @override
   void dispose() {
+    _name.dispose();
     _height.dispose();
     _weight.dispose();
     _vm.dispose();
@@ -49,11 +51,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   void _beginEdit() {
     _vm.startEditing();
+    _name.text = _vm.nameDraft;
     _height.text = _vm.heightDraft;
     _weight.text = _vm.weightDraft;
   }
 
   Future<void> _save() async {
+    _vm.nameDraft = _name.text;
     _vm.heightDraft = _height.text;
     _vm.weightDraft = _weight.text;
     await _vm.saveMetrics();
@@ -119,7 +123,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    AppText(p.fullName, variant: TextVariant.subheading),
+                    AppText(_vm.displayName ?? t.t('profile.noName'),
+                        variant: TextVariant.subheading),
                     AppText(
                       [
                         if (_vm.age != null)
@@ -152,6 +157,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           AppCard(
             child: Column(
               children: [
+                // Editable here because onboarding can be skipped: this is the
+                // only place a user who skipped it can add their name.
+                AppInput(
+                  controller: _name,
+                  label: t.t('profile.fullName'),
+                  icon: Icons.person_outline,
+                ),
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [

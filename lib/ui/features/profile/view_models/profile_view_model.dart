@@ -33,6 +33,7 @@ class ProfileViewModel extends ChangeNotifier {
   bool get editing => _editing;
 
   // Draft values while editing, so cancelling leaves the record untouched.
+  String nameDraft = '';
   String heightDraft = '';
   String weightDraft = '';
   String? dobDraft;
@@ -41,6 +42,13 @@ class ProfileViewModel extends ChangeNotifier {
   bool _disposed = false;
 
   int? get age => ageFromDob(_patient?.dob);
+
+  /// The name to show, or null when the user skipped onboarding and never
+  /// filled one in. Blank is a normal state, not an error.
+  String? get displayName {
+    final name = _patient?.fullName.trim() ?? '';
+    return name.isEmpty ? null : name;
+  }
 
   /// Body mass index, or null when either measurement is missing. Guards a
   /// zero height, which would otherwise divide by zero and render "Infinity".
@@ -92,6 +100,7 @@ class ProfileViewModel extends ChangeNotifier {
   }
 
   void _resetDrafts() {
+    nameDraft = _patient?.fullName ?? '';
     heightDraft = _patient?.heightCm?.toStringAsFixed(0) ?? '';
     weightDraft = _patient?.weightKg?.toStringAsFixed(0) ?? '';
     dobDraft = _patient?.dob;
@@ -125,6 +134,7 @@ class ProfileViewModel extends ChangeNotifier {
     if (id == null) return;
 
     await patients.updatePatient(id, {
+      'full_name': nameDraft.trim(),
       'height_cm': double.tryParse(heightDraft.trim()),
       'weight_kg': double.tryParse(weightDraft.trim()),
       'dob': dobDraft,

@@ -27,13 +27,25 @@ void main() {
         accountEmail: accountUserId == null ? null : 'a@b.com',
       );
 
-  test('a blank name is rejected before anything is created', () async {
+  // App Store Guideline 5.1.1(v): the app may not demand personal details
+  // before it works, so onboarding creates the profile whatever is filled in.
+  test('a blank form still creates a profile rather than blocking', () async {
     final vm = build();
     final id = await vm.start(fullName: '   ', heightCm: '', weightKg: '');
 
-    expect(id, isNull);
-    expect(vm.nameErrorKey, 'auth.errorMissingFields');
-    expect(await patients.getPatientByAccount(7), isNull);
+    expect(id, isNotNull);
+    final p = await patients.getPatient(id!);
+    expect(p!.fullName, isEmpty);
+    expect(p.heightCm, isNull);
+    expect(p.dob, isNull);
+  });
+
+  test('skipping the form entirely creates a usable profile', () async {
+    final vm = build(accountUserId: null);
+    final id = await vm.start();
+
+    expect(id, isNotNull);
+    expect((await patients.getLocalPatient())!.id, id);
   });
 
   test('creates the profile and attaches it to the account', () async {

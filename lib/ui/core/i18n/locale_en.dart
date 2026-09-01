@@ -92,7 +92,9 @@ const Map<String, String> localeEn = {
   'onboarding.welcomeBody':
       'Track your prescriptions, get reminders on time, and never miss a dose.',
   'onboarding.createProfile': 'Create your profile',
-  'onboarding.profileHint': 'This helps personalize reminders and advice.',
+  'onboarding.profileHint':
+      'All optional — it only personalises the app. You can skip this and fill it in later.',
+  'onboarding.skip': 'Skip for now',
   'onboarding.start': 'Get started',
   'onboarding.disclaimer':
       'MedRemind provides reminders and reference information only — it does not diagnose or replace advice from your doctor or pharmacist.',
@@ -208,6 +210,7 @@ const Map<String, String> localeEn = {
   'profile.title': 'Profile',
   'profile.personal': 'Personal info',
   'profile.fullName': 'Full name',
+  'profile.noName': 'No name set',
   'profile.dob': 'Date of birth',
   'profile.age': 'Age',
   'profile.gender': 'Gender',

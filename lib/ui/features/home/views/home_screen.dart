@@ -74,7 +74,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       children: [
         AppText(_greetingText(t), color: TextColorKey.textMuted),
         AppText(
-          _vm.patient?.fullName ?? t.t('common.appName'),
+          // Onboarding is skippable, so the name is often blank — fall back to
+          // the app's own name rather than greeting nobody.
+          _vm.displayName ?? t.t('common.appName'),
           variant: TextVariant.title,
         ),
         const SizedBox(height: Spacing.xl),

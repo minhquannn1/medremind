@@ -41,6 +41,13 @@ class HomeViewModel extends ChangeNotifier {
   Patient? _patient;
   Patient? get patient => _patient;
 
+  /// The name to greet, or null when there is none. Onboarding can be skipped
+  /// entirely, so a blank name is a normal state rather than an error.
+  String? get displayName {
+    final name = _patient?.fullName.trim() ?? '';
+    return name.isEmpty ? null : name;
+  }
+
   Appointment? _nextAppointment;
   Appointment? get nextAppointment => _nextAppointment;
 

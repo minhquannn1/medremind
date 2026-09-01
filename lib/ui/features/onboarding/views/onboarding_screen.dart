@@ -47,6 +47,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     super.dispose();
   }
 
+  /// Straight into the app with an empty profile. The user can fill any of
+  /// this in later under Profile.
+  Future<void> _skip() async {
+    final patientId = await _vm.start();
+    if (patientId == null || !mounted) return;
+    await ref.read(appStateProvider.notifier).completeOnboarding(patientId);
+  }
+
   Future<void> _start() async {
     final patientId = await _vm.start(
       fullName: _name.text,
@@ -101,7 +109,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           controller: _name,
           label: t.t('profile.fullName'),
           icon: Icons.person_outline,
-          error: _vm.nameErrorKey == null ? null : t.t(_vm.nameErrorKey!),
         ),
         DateField(
           label: t.t('profile.dob'),
@@ -147,6 +154,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           size: ButtonSize.lg,
           loading: _vm.busy,
           onPressed: _start,
+        ),
+        const SizedBox(height: Spacing.md),
+        // Nothing above is required. App Store Guideline 5.1.1(v) forbids
+        // demanding personal details before the app will work, and a reminder
+        // needs none of them.
+        AppButton(
+          label: t.t('onboarding.skip'),
+          variant: ButtonVariant.ghost,
+          disabled: _vm.busy,
+          onPressed: _skip,
         ),
       ],
     );

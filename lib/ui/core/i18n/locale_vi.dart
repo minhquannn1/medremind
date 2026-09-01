@@ -92,7 +92,8 @@ const Map<String, String> localeVi = {
       'Theo dõi đơn thuốc, nhắc bạn uống đúng giờ và không bỏ lỡ liều nào.',
   'onboarding.createProfile': 'Tạo hồ sơ của bạn',
   'onboarding.profileHint':
-      'Thông tin này giúp cá nhân hóa nhắc nhở và lời khuyên.',
+      'Tất cả đều không bắt buộc — chỉ để cá nhân hoá. Bạn có thể bỏ qua và điền sau.',
+  'onboarding.skip': 'Bỏ qua',
   'onboarding.start': 'Bắt đầu',
   'onboarding.disclaimer':
       'MedRemind chỉ hỗ trợ nhắc lịch và cung cấp thông tin tham khảo — không chẩn đoán hay thay thế tư vấn của bác sĩ, dược sĩ.',
@@ -209,6 +210,7 @@ const Map<String, String> localeVi = {
   'profile.title': 'Hồ sơ',
   'profile.personal': 'Thông tin cá nhân',
   'profile.fullName': 'Họ và tên',
+  'profile.noName': 'Chưa đặt tên',
   'profile.dob': 'Ngày sinh',
   'profile.age': 'Tuổi',
   'profile.gender': 'Giới tính',

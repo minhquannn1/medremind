@@ -20,8 +20,6 @@ class OnboardingViewModel extends ChangeNotifier {
   bool _busy = false;
   bool get busy => _busy;
 
-  String? _nameErrorKey;
-  String? get nameErrorKey => _nameErrorKey;
 
   bool _disposed = false;
 
@@ -45,21 +43,19 @@ class OnboardingViewModel extends ChangeNotifier {
     _notify();
   }
 
-  /// Creates the profile and returns the new patient id, or null when a
-  /// required field is missing.
+  /// Creates the profile and returns the new patient id.
+  ///
+  /// Every field is optional, including the name. App Store Guideline
+  /// 5.1.1(v) does not allow an app to demand personal information before it
+  /// will work, and none of this is needed to set a reminder — it only makes
+  /// the profile screen useful. Anything left blank can be filled in later
+  /// under Profile.
   Future<int?> start({
-    required String fullName,
-    required String heightCm,
-    required String weightKg,
+    String fullName = '',
+    String heightCm = '',
+    String weightKg = '',
   }) async {
-    if (fullName.trim().isEmpty) {
-      _nameErrorKey = 'auth.errorMissingFields';
-      _notify();
-      return null;
-    }
-
     _busy = true;
-    _nameErrorKey = null;
     _notify();
 
     final patientId = await patients.createPatient(

@@ -20,12 +20,15 @@ void main() {
 
     // A fresh install opens onboarding, not the login screen.
     expect(find.text('Log in'), findsNothing);
-    expect(find.byType(TextField), findsWidgets);
 
-    await tester.enterText(find.byType(TextField).first, 'Reviewer');
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Get started'));
+    // Nothing on this screen is mandatory: skip it without typing a single
+    // personal detail — no name, date of birth, gender, height or weight.
+    await tester.dragUntilVisible(
+      find.text('Skip for now'),
+      find.byType(Scrollable).first,
+      const Offset(0, -200),
+    );
+    await tester.tap(find.text('Skip for now'));
     await tester.pumpAndSettle(const Duration(seconds: 5));
 
     // Landed in the tab shell with every tab reachable, still signed out.
