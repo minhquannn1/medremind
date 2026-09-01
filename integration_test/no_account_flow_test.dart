@@ -18,18 +18,25 @@ void main() {
     app.main();
     await tester.pumpAndSettle(const Duration(seconds: 5));
 
-    // A fresh install lands straight in the app: no login screen, and no form
-    // asking for a name, date of birth, gender, height or weight.
+    // A fresh install opens on the walkthrough: no login screen, and no form
+    // asking for a name, date of birth, gender, height or weight. It explains
+    // the app and asks for nothing — there is not a single field on it.
     expect(find.text('Log in'), findsNothing);
-    expect(find.text('Create your profile'), findsNothing);
     expect(find.byType(TextField), findsNothing);
+    expect(find.text('Welcome to Medoly'), findsOneWidget);
 
-    // The medical disclaimer is still put in front of the user on first run
-    // (App Review guideline 1.4.1), and is dismissible.
+    // The medical disclaimer is put in front of the user (guideline 1.4.1).
     expect(find.textContaining('does not diagnose'), findsOneWidget);
-    await tester.tap(find.text('Got it'));
-    await tester.pumpAndSettle();
-    expect(find.textContaining('does not diagnose'), findsNothing);
+
+    // It can be left at any point, and walking it through also ends it.
+    expect(find.text('Skip'), findsOneWidget);
+    for (var i = 0; i < 3; i++) {
+      await tester.tap(find.text('Next'));
+      await tester.pumpAndSettle();
+    }
+    await tester.tap(find.text('Start using Medoly'));
+    await tester.pumpAndSettle(const Duration(seconds: 3));
+    expect(find.text('Welcome to Medoly'), findsNothing);
 
     // Landed in the tab shell with every tab reachable, still signed out.
     expect(find.text('Home'), findsWidgets);

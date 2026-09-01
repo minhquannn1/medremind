@@ -13,17 +13,17 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Create the schema before the first screen can query it.
   await AppDatabase.instance.db;
-  runApp(const ProviderScope(child: MedRemindApp()));
+  runApp(const ProviderScope(child: MedolyApp()));
 }
 
-class MedRemindApp extends ConsumerStatefulWidget {
-  const MedRemindApp({super.key});
+class MedolyApp extends ConsumerStatefulWidget {
+  const MedolyApp({super.key});
 
   @override
-  ConsumerState<MedRemindApp> createState() => _MedRemindAppState();
+  ConsumerState<MedolyApp> createState() => _MedolyAppState();
 }
 
-class _MedRemindAppState extends ConsumerState<MedRemindApp> {
+class _MedolyAppState extends ConsumerState<MedolyApp> {
   @override
   void initState() {
     super.initState();
@@ -37,7 +37,12 @@ class _MedRemindAppState extends ConsumerState<MedRemindApp> {
         scheduler.onDoseTapped = _openDose;
         await scheduler.initialize(t);
 
-        await _askForNotificationsOnce(scheduler);
+        // Only for someone who has already been through the walkthrough;
+        // first-run users are asked when it ends, once they know why.
+        final settings = ref.read(settingsRepositoryProvider);
+        if (await settings.getBool(SettingsKeys.seenWelcome, false)) {
+          await askForNotificationsOnce(scheduler, settings);
+        }
 
         // A tap that launched the app from closed does not fire the callback.
         final launched = await scheduler.launchPayload();
@@ -47,26 +52,6 @@ class _MedRemindAppState extends ConsumerState<MedRemindApp> {
         // warned in context when a reminder actually needs permission.
       }
     });
-  }
-
-  /// Asks for notification permission once the user has a profile. Reminders
-  /// are the whole point of the app, and the old flow only asked when a
-  /// prescription was saved — so anyone who restored a backup, or simply
-  /// browsed first, had medications and no alerts without being told.
-  ///
-  /// Keyed on having a profile rather than on being signed in: most users now
-  /// never create an account, and they need reminders just as much.
-  ///
-  /// Asked once and remembered: iOS only ever shows the system prompt once
-  /// anyway, and re-asking a user who declined just runs a no-op.
-  Future<void> _askForNotificationsOnce(NotificationScheduler scheduler) async {
-    if (!ref.read(appStateProvider).onboarded) return;
-
-    final settings = ref.read(settingsRepositoryProvider);
-    if (await settings.getBool(SettingsKeys.askedNotifications, false)) return;
-
-    await scheduler.requestPermission();
-    await settings.set(SettingsKeys.askedNotifications, 'true');
   }
 
   /// Opens the confirmation screen for a tapped reminder. Deferred until the
@@ -93,7 +78,7 @@ class _MedRemindAppState extends ConsumerState<MedRemindApp> {
     final router = ref.watch(routerProvider);
 
     return MaterialApp.router(
-      title: 'MedRemind',
+      title: 'Medoly',
       debugShowCheckedModeBanner: false,
       routerConfig: router,
       theme: AppTheme.light,

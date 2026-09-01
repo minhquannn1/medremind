@@ -51,7 +51,7 @@ void main() {
         'common',
         'tabs',
         'auth',
-        'onboarding',
+        'welcome',
         'home',
         'dose',
         'prescriptions',
@@ -107,8 +107,7 @@ void main() {
 
     test('falls back to Vietnamese rather than showing a raw key', () {
       // Every key exists in both today; the fallback still must not crash.
-      expect(const Translations(AppLanguage.en).t('common.appName'),
-          'MedRemind');
+      expect(const Translations(AppLanguage.en).t('common.appName'), 'Medoly');
     });
   });
 

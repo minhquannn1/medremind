@@ -1,4 +1,4 @@
-# MedRemind — project notes for Claude
+# Medoly — project notes for Claude
 
 Medication adherence app. **Flutter** (iOS + Android) plus a Node/Express
 backend. Local-first (SQLite), bilingual (vi/en). See `README.md` for the app

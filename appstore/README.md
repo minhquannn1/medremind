@@ -1,4 +1,4 @@
-# App Store assets — MedRemind 1.0.0
+# App Store assets — Medoly 1.0.0
 
 Listing copy lives in [`../docs/app-store-listing.md`](../docs/app-store-listing.md);
 review notes in [`../docs/app-review-notes.md`](../docs/app-review-notes.md).
@@ -34,7 +34,7 @@ To go iPhone-only, edit the **Xcode project**, not `app.json` — this is a
 non-CNG project, so `expo.ios.supportsTablet` is ignored (see `CLAUDE.md`):
 
 ```
-ios/MedRemind.xcodeproj/project.pbxproj
+ios/Medoly.xcodeproj/project.pbxproj
   TARGETED_DEVICE_FAMILY = "1,2";   →   TARGETED_DEVICE_FAMILY = "1";
 ```
 

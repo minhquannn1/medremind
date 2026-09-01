@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:medremind/ui/core/components/app_button.dart';
 import 'package:medremind/ui/core/components/app_card.dart';
 import 'package:medremind/ui/core/components/app_text.dart';
 import 'package:medremind/ui/core/components/controls.dart';
@@ -84,32 +83,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         ],
         const SizedBox(height: Spacing.xl),
 
-        // First launch only. Replaces the onboarding screen as the place the
-        // medical disclaimer is shown (App Review guideline 1.4.1).
-        if (_vm.showWelcome) ...[
-          AppCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                AppText(t.t('onboarding.welcomeTitle'),
-                    variant: TextVariant.subheading),
-                const SizedBox(height: Spacing.xs),
-                AppText(t.t('onboarding.welcomeBody'),
-                    color: TextColorKey.textMuted),
-                const SizedBox(height: Spacing.md),
-                AppText(t.t('onboarding.disclaimer'),
-                    variant: TextVariant.caption,
-                    color: TextColorKey.textFaint),
-                const SizedBox(height: Spacing.md),
-                AppButton(
-                  label: t.t('onboarding.welcomeAck'),
-                  onPressed: _vm.dismissWelcome,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: Spacing.lg),
-        ],
 
         // Adherence
         AppCard(

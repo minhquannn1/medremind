@@ -10,6 +10,7 @@ import 'package:medremind/ui/core/components/controls.dart';
 import 'package:medremind/ui/core/components/layout.dart';
 import 'package:medremind/ui/core/components/fields.dart';
 import 'package:medremind/ui/core/tabs_shell.dart';
+import 'package:medremind/ui/features/welcome/view_models/welcome_view_model.dart';
 import 'package:medremind/ui/core/theme/tokens.dart';
 
 Widget _host(Widget child) => MaterialApp(home: Scaffold(body: child));
@@ -360,9 +361,16 @@ void main() {
   });
 
   group('TabsShell', () {
-    Future<void> pumpShell(WidgetTester tester) async {
-      await tester.pumpWidget(const ProviderScope(
-        child: MaterialApp(home: TabsShell()),
+    // Never loaded, so it stays hidden and touches no database: these tests
+    // are about the tab bar, not the first-run walkthrough.
+    Future<void> pumpShell(WidgetTester tester, {int initialIndex = 0}) async {
+      await tester.pumpWidget(ProviderScope(
+        child: MaterialApp(
+          home: TabsShell(
+            initialIndex: initialIndex,
+            welcome: WelcomeViewModel(),
+          ),
+        ),
       ));
       await tester.pump();
     }
@@ -396,10 +404,7 @@ void main() {
     });
 
     testWidgets('honours the initial tab', (tester) async {
-      await tester.pumpWidget(const ProviderScope(
-        child: MaterialApp(home: TabsShell(initialIndex: 1)),
-      ));
-      await tester.pump();
+      await pumpShell(tester, initialIndex: 1);
       expect(
         tester.widget<IndexedStack>(find.byType(IndexedStack)).index,
         1,

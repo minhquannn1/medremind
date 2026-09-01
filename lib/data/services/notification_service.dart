@@ -53,6 +53,21 @@ class ReminderPrefs {
   const ReminderPrefs({required this.sound, required this.vibration});
 }
 
+/// Asks for notification permission once per install, and remembers it.
+///
+/// Deliberately not called on the very first launch: the walkthrough explains
+/// what the reminders are for, and a permission sheet thrown up before that
+/// explanation is one people decline. Called when the walkthrough ends, and on
+/// later launches for anyone who has already seen it.
+Future<void> askForNotificationsOnce(
+  NotificationScheduler scheduler,
+  SettingsRepository settings,
+) async {
+  if (await settings.getBool(SettingsKeys.askedNotifications, false)) return;
+  await scheduler.requestPermission();
+  await settings.set(SettingsKeys.askedNotifications, 'true');
+}
+
 class NotificationScheduler {
   NotificationScheduler({
     FlutterLocalNotificationsPlugin? plugin,

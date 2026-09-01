@@ -12,7 +12,7 @@ time-sensitive wording there rather than in the description.
 
 ### App name (30 max)
 ```
-MedRemind – Nhắc uống thuốc
+Medoly – Nhắc uống thuốc
 ```
 `27 characters`
 
@@ -36,7 +36,7 @@ thuoc,nhac thuoc,uong thuoc,don thuoc,suc khoe,tieu duong,huyet ap,nguoi gia,tua
 
 ### Description (4000 max)
 ```
-MedRemind giúp bạn uống thuốc đúng giờ, đúng liều — và nhớ được mình đã uống hay chưa.
+Medoly giúp bạn uống thuốc đúng giờ, đúng liều — và nhớ được mình đã uống hay chưa.
 
 Ứng dụng dành cho người đang dùng thuốc dài ngày: tăng huyết áp, đái tháo đường, mỡ máu, hoặc bất kỳ đơn thuốc nào cần uống đều đặn. Giao diện chữ to, ít bước, dễ dùng cho cả người lớn tuổi.
 
@@ -73,7 +73,7 @@ RIÊNG TƯ
 • Xóa tài khoản ngay trong ứng dụng, xóa sạch cả dữ liệu trên máy chủ
 
 LƯU Ý QUAN TRỌNG
-MedRemind chỉ hỗ trợ nhắc lịch và ghi chép. Ứng dụng không chẩn đoán bệnh, không kê đơn và không thay thế bác sĩ hoặc dược sĩ. Luôn làm theo chỉ định của nhân viên y tế. Thông báo phụ thuộc vào cài đặt điện thoại, nên đừng dùng ứng dụng làm cách duy nhất để nhớ uống thuốc.
+Medoly chỉ hỗ trợ nhắc lịch và ghi chép. Ứng dụng không chẩn đoán bệnh, không kê đơn và không thay thế bác sĩ hoặc dược sĩ. Luôn làm theo chỉ định của nhân viên y tế. Thông báo phụ thuộc vào cài đặt điện thoại, nên đừng dùng ứng dụng làm cách duy nhất để nhớ uống thuốc.
 
 Điều khoản: https://medremind-backend-production.up.railway.app/terms
 Quyền riêng tư: https://medremind-backend-production.up.railway.app/privacy
@@ -86,7 +86,7 @@ Quyền riêng tư: https://medremind-backend-production.up.railway.app/privacy
 
 ### App name (30 max)
 ```
-MedRemind – Medication Alarm
+Medoly – Medication Alarm
 ```
 `28 characters`
 
@@ -110,7 +110,7 @@ medication,pill,reminder,alarm,adherence,prescription,diabetes,blood pressure,el
 
 ### Description (4000 max)
 ```
-MedRemind helps you take your medication on time — and remember whether you already did.
+Medoly helps you take your medication on time — and remember whether you already did.
 
 It is built for people on long-term treatment: blood pressure, diabetes, cholesterol, or any prescription that has to be taken consistently. Large text, few steps, usable by older patients.
 
@@ -147,7 +147,7 @@ PRIVACY
 • Delete your account from inside the app — server data goes with it
 
 IMPORTANT
-MedRemind provides reminders and record-keeping only. It does not diagnose, prescribe, or replace your doctor or pharmacist. Always follow your healthcare professional's instructions. Notifications depend on your phone's settings, so do not rely on this app as your only way of remembering medication.
+Medoly provides reminders and record-keeping only. It does not diagnose, prescribe, or replace your doctor or pharmacist. Always follow your healthcare professional's instructions. Notifications depend on your phone's settings, so do not rely on this app as your only way of remembering medication.
 
 Terms: https://medremind-backend-production.up.railway.app/terms
 Privacy: https://medremind-backend-production.up.railway.app/privacy
@@ -160,7 +160,7 @@ Privacy: https://medremind-backend-production.up.railway.app/privacy
 
 ### vi
 ```
-Phiên bản đầu tiên của MedRemind.
+Phiên bản đầu tiên của Medoly.
 
 • Nhắc uống thuốc theo giờ, hoạt động không cần mạng
 • Xác nhận đã uống ngay từ thông báo
@@ -173,7 +173,7 @@ Phiên bản đầu tiên của MedRemind.
 
 ### en
 ```
-The first release of MedRemind.
+The first release of Medoly.
 
 • Daily dose reminders that work offline
 • Confirm a dose straight from the notification
@@ -191,7 +191,7 @@ The first release of MedRemind.
 ```
 Demo account (patient app):
   Email: quan@medremind.vn
-  Password: MedRemind@2026
+  Password: Medoly@2026
 
 The account already contains prescriptions, dose history and an upcoming
 appointment, so the home screen is populated on first launch.
@@ -208,7 +208,7 @@ result is always shown for review and correction before it is saved.
 
 The app is bilingual; switch language in Settings.
 
-MedRemind is a reminder and record-keeping tool. It does not diagnose or
+Medoly is a reminder and record-keeping tool. It does not diagnose or
 recommend treatment, and disclaimers to that effect appear during onboarding,
 on the scan review screen and in the Terms.
 ```

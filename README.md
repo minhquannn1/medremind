@@ -1,6 +1,6 @@
-# MedRemind — Flutter port
+# Medoly — Flutter port
 
-A Flutter rewrite of the React Native (Expo) MedRemind app. The original lives
+A Flutter rewrite of the React Native (Expo) Medoly app. The original lives
 at `~/Documents/Medicine` and is still the version prepared for App Store
 submission; nothing here has replaced it.
 

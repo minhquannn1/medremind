@@ -1,4 +1,4 @@
-# App Review Information — MedRemind 1.0.0
+# App Review Information — Medoly 1.0.0
 
 Paste the "Notes" section below into App Store Connect →
 App Review Information → Notes.
@@ -18,7 +18,7 @@ needed. Data restores automatically from the account's cloud backup.
 ## Notes (paste into App Store Connect)
 
 ```
-MedRemind is a medication reminder and adherence tracker for patients in Vietnam
+Medoly is a medication reminder and adherence tracker for patients in Vietnam
 (bilingual Vietnamese/English). It is a reminder and record-keeping tool — it does
 not diagnose, does not prescribe, and does not replace professional medical advice.
 A disclaimer to that effect is shown on the prescription-scan review screen and

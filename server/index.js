@@ -327,7 +327,7 @@ app.use((err, _req, res, _next) => {
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`MedRemind scan API listening on http://0.0.0.0:${PORT}`);
+  console.log(`Medoly scan API listening on http://0.0.0.0:${PORT}`);
   console.log(`Model: ${MODEL}`);
   console.log(`Health: http://localhost:${PORT}/health`);
 });

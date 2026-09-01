@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:medremind/data/repositories/appointments_repository.dart';
 import 'package:medremind/data/repositories/doses_repository.dart';
 import 'package:medremind/data/repositories/patients_repository.dart';
-import 'package:medremind/data/repositories/settings_repository.dart';
 import 'package:medremind/data/services/backup_sync_service.dart';
 import 'package:medremind/domain/models/models.dart';
 
@@ -18,7 +17,6 @@ class HomeViewModel extends ChangeNotifier {
     required this.patientId,
     this.doses = const DosesRepository(),
     this.patients = const PatientsRepository(),
-    this.settings = const SettingsRepository(),
     this.appointments = const AppointmentsRepository(),
     this.backupSync,
     DateTime Function()? now,
@@ -27,7 +25,6 @@ class HomeViewModel extends ChangeNotifier {
   final int? patientId;
   final DosesRepository doses;
   final PatientsRepository patients;
-  final SettingsRepository settings;
   final AppointmentsRepository appointments;
   final BackupSyncApi? backupSync;
 
@@ -43,19 +40,6 @@ class HomeViewModel extends ChangeNotifier {
 
   Patient? _patient;
   Patient? get patient => _patient;
-
-  /// Shown once, on the very first launch. There is no onboarding screen to
-  /// carry the medical disclaimer any more (App Store Guideline 5.1.1(v) does
-  /// not allow one that asks for personal details), and Guideline 1.4.1 still
-  /// requires the disclaimer to be put in front of the user.
-  bool _showWelcome = false;
-  bool get showWelcome => _showWelcome;
-
-  Future<void> dismissWelcome() async {
-    _showWelcome = false;
-    _notify();
-    await settings.set(SettingsKeys.seenWelcome, 'true');
-  }
 
   /// The name to greet, or null when there is none. Onboarding can be skipped
   /// entirely, so a blank name is a normal state rather than an error.
@@ -113,8 +97,6 @@ class HomeViewModel extends ChangeNotifier {
       _notify();
       return;
     }
-
-    _showWelcome = !await settings.getBool(SettingsKeys.seenWelcome, false);
 
     _today = await doses.getDosesForDay(id);
     _adherence = await doses.getAdherence(id, days: 7);

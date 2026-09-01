@@ -4,7 +4,7 @@ library;
 
 const Map<String, String> localeEn = {
   // common
-  'common.appName': 'MedRemind',
+  'common.appName': 'Medoly',
   'common.save': 'Save',
   'common.cancel': 'Cancel',
   'common.delete': 'Delete',
@@ -57,7 +57,7 @@ const Map<String, String> localeEn = {
       'Reminders work on this device on their own. An account is only needed for cloud backup.',
   'auth.signIn': 'Sign in or create an account',
   'auth.localOnlyNote':
-      'You are using MedRemind without an account. Your data stays on this device only.',
+      'You are using Medoly without an account. Your data stays on this device only.',
   'auth.haveAccount': 'Already have an account?',
   'auth.errorEmailTaken': 'This email is already registered.',
   'auth.errorInvalidCredentials': 'Wrong email or password.',
@@ -87,13 +87,25 @@ const Map<String, String> localeEn = {
   'auth.deleteAccountError':
       'Could not delete the account. Check your connection and try again.',
 
-  // onboarding
-  'onboarding.welcomeTitle': 'Welcome to MedRemind',
-  'onboarding.welcomeBody':
-      'Track your prescriptions, get reminders on time, and never miss a dose.',
-  'onboarding.welcomeAck': 'Got it',
-  'onboarding.disclaimer':
-      'MedRemind provides reminders and reference information only — it does not diagnose or replace advice from your doctor or pharmacist.',
+
+  // welcome walkthrough
+  'welcome.skip': 'Skip',
+  'welcome.next': 'Next',
+  'welcome.start': 'Start using Medoly',
+  'welcome.introTitle': 'Welcome to Medoly',
+  'welcome.introBody':
+      'Medoly keeps track of what you have to take and when, and reminds you at the right time.',
+  'welcome.addTitle': 'Add your prescription',
+  'welcome.addBody':
+      'Photograph a prescription and Medoly reads the medicines, doses and times for you — or type them in yourself. You always review it before it is saved.',
+  'welcome.remindTitle': 'Get reminded, on time',
+  'welcome.remindBody':
+      'Each medicine gets a daily reminder. Tap the notification to confirm you have taken it — the reminders work with no internet.',
+  'welcome.trackTitle': 'See how you are doing',
+  'welcome.trackBody':
+      'A 7-day adherence ring and a 30-day log show what you took and what you missed. Everything stays on this device; an account is optional and only adds cloud backup.',
+  'welcome.disclaimer':
+      'Medoly provides reminders and reference information only — it does not diagnose or replace advice from your doctor or pharmacist.',
 
   // home
   'home.greetingMorning': 'Good morning',
@@ -293,13 +305,13 @@ const Map<String, String> localeEn = {
   'permissions.openSettings': 'Open Settings',
   'permissions.cameraTitle': 'Camera access needed',
   'permissions.cameraBody':
-      'MedRemind uses the camera to photograph prescriptions and medicines. Enable it in Settings → MedRemind → Camera.',
+      'Medoly uses the camera to photograph prescriptions and medicines. Enable it in Settings → Medoly → Camera.',
   'permissions.photosTitle': 'Photo access needed',
   'permissions.photosBody':
-      'MedRemind needs your photo library so you can pick a prescription photo. Enable it in Settings → MedRemind → Photos.',
+      'Medoly needs your photo library so you can pick a prescription photo. Enable it in Settings → Medoly → Photos.',
   'permissions.notificationsTitle': 'Notifications are off',
   'permissions.notificationsBody':
-      'Your prescription was saved, but you will NOT get dose reminders. Enable them in Settings → MedRemind → Notifications.',
+      'Your prescription was saved, but you will NOT get dose reminders. Enable them in Settings → Medoly → Notifications.',
 
   // scan
   'scan.title': 'Scan prescription',

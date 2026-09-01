@@ -5,7 +5,7 @@ library;
 
 const Map<String, String> localeVi = {
   // common
-  'common.appName': 'MedRemind',
+  'common.appName': 'Medoly',
   'common.save': 'Lưu',
   'common.cancel': 'Hủy',
   'common.delete': 'Xóa',
@@ -86,13 +86,25 @@ const Map<String, String> localeVi = {
   'auth.deleteAccountError':
       'Không xóa được tài khoản. Kiểm tra mạng rồi thử lại.',
 
-  // onboarding
-  'onboarding.welcomeTitle': 'Chào mừng đến với MedRemind',
-  'onboarding.welcomeBody':
-      'Theo dõi đơn thuốc, nhắc bạn uống đúng giờ và không bỏ lỡ liều nào.',
-  'onboarding.welcomeAck': 'Đã hiểu',
-  'onboarding.disclaimer':
-      'MedRemind chỉ hỗ trợ nhắc lịch và cung cấp thông tin tham khảo — không chẩn đoán hay thay thế tư vấn của bác sĩ, dược sĩ.',
+
+  // welcome walkthrough
+  'welcome.skip': 'Bỏ qua',
+  'welcome.next': 'Tiếp',
+  'welcome.start': 'Bắt đầu dùng Medoly',
+  'welcome.introTitle': 'Chào mừng đến với Medoly',
+  'welcome.introBody':
+      'Medoly ghi nhớ bạn phải uống thuốc gì, vào lúc nào, và nhắc bạn đúng giờ.',
+  'welcome.addTitle': 'Thêm đơn thuốc',
+  'welcome.addBody':
+      'Chụp ảnh đơn thuốc, Medoly tự đọc tên thuốc, liều và giờ uống — hoặc bạn nhập tay. Bạn luôn xem lại trước khi lưu.',
+  'welcome.remindTitle': 'Được nhắc đúng giờ',
+  'welcome.remindBody':
+      'Mỗi loại thuốc có một lời nhắc hằng ngày. Bấm vào thông báo để xác nhận đã uống — lời nhắc hoạt động cả khi không có mạng.',
+  'welcome.trackTitle': 'Theo dõi mức tuân thủ',
+  'welcome.trackBody':
+      'Vòng tuân thủ 7 ngày và nhật ký 30 ngày cho thấy bạn đã uống gì, bỏ lỡ hôm nào. Dữ liệu nằm trên máy; tài khoản là tuỳ chọn, chỉ để sao lưu đám mây.',
+  'welcome.disclaimer':
+      'Medoly chỉ hỗ trợ nhắc lịch và cung cấp thông tin tham khảo — không chẩn đoán hay thay thế tư vấn của bác sĩ, dược sĩ.',
 
   // home
   'home.greetingMorning': 'Chào buổi sáng',
@@ -292,13 +304,13 @@ const Map<String, String> localeVi = {
   'permissions.openSettings': 'Mở Cài đặt',
   'permissions.cameraTitle': 'Cần quyền camera',
   'permissions.cameraBody':
-      'MedRemind cần dùng camera để chụp đơn thuốc và ảnh thuốc. Vào Cài đặt → MedRemind → Camera để bật.',
+      'Medoly cần dùng camera để chụp đơn thuốc và ảnh thuốc. Vào Cài đặt → Medoly → Camera để bật.',
   'permissions.photosTitle': 'Cần quyền ảnh',
   'permissions.photosBody':
-      'MedRemind cần truy cập thư viện ảnh để bạn chọn ảnh đơn thuốc. Vào Cài đặt → MedRemind → Ảnh để bật.',
+      'Medoly cần truy cập thư viện ảnh để bạn chọn ảnh đơn thuốc. Vào Cài đặt → Medoly → Ảnh để bật.',
   'permissions.notificationsTitle': 'Thông báo đang tắt',
   'permissions.notificationsBody':
-      'Đơn thuốc đã được lưu, nhưng bạn sẽ KHÔNG nhận được nhắc nhở uống thuốc. Vào Cài đặt → MedRemind → Thông báo để bật.',
+      'Đơn thuốc đã được lưu, nhưng bạn sẽ KHÔNG nhận được nhắc nhở uống thuốc. Vào Cài đặt → Medoly → Thông báo để bật.',
 
   // scan
   'scan.title': 'Quét đơn thuốc',

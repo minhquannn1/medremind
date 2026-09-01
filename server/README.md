@@ -1,4 +1,4 @@
-# MedRemind Scan API
+# Medoly Scan API
 
 Backend proxy that keeps the OpenAI API key off the device. The app sends a
 prescription image; this server calls GPT-4o vision (with function calling for

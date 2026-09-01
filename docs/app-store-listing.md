@@ -1,4 +1,4 @@
-# App Store Connect — listing copy for MedRemind 1.0.0
+# App Store Connect — listing copy for Medoly 1.0.0
 
 Everything below is ready to paste into App Store Connect.
 Primary language: **Vietnamese**. Add English (U.S.) as a second localization.
@@ -19,7 +19,7 @@ Primary language: **Vietnamese**. Add English (U.S.) as a second localization.
 | Support URL | `https://medremind-backend-production.up.railway.app/support` |
 | Marketing URL | `https://medremind-backend-production.up.railway.app/about` |
 | Privacy Policy URL | `https://medremind-backend-production.up.railway.app/privacy` |
-| Export compliance | Nothing to answer — `ITSAppUsesNonExemptEncryption = false` is set in `ios/MedRemind/Info.plist`, so App Store Connect stops asking on upload. The app only uses HTTPS/TLS, which is exempt. |
+| Export compliance | Nothing to answer — `ITSAppUsesNonExemptEncryption = false` is set in `ios/Medoly/Info.plist`, so App Store Connect stops asking on upload. The app only uses HTTPS/TLS, which is exempt. |
 
 ---
 
@@ -27,7 +27,7 @@ Primary language: **Vietnamese**. Add English (U.S.) as a second localization.
 
 ### Name (≤30)
 ```
-MedRemind – Nhắc uống thuốc
+Medoly – Nhắc uống thuốc
 ```
 
 ### Subtitle (≤30)
@@ -49,7 +49,7 @@ Chụp đơn thuốc — AI tự điền tên thuốc, liều và giờ uống, 
 ```
 Uống thuốc đúng giờ, đúng liều — không phải cố nhớ.
 
-MedRemind biến tờ đơn thuốc của bác sĩ thành lịch nhắc hằng ngày trên điện thoại của bạn.
+Medoly biến tờ đơn thuốc của bác sĩ thành lịch nhắc hằng ngày trên điện thoại của bạn.
 
 QUÉT ĐƠN — KHÔNG PHẢI GÕ TAY
 Chụp ảnh đơn thuốc, AI đọc và điền sẵn tên thuốc, hàm lượng, liều mỗi lần, số lần uống trong ngày và số ngày dùng. Bạn chỉ cần xem lại rồi lưu. Không có đơn giấy? Nhập tay cũng rất nhanh.
@@ -76,7 +76,7 @@ HỒ SƠ SỨC KHỎE
 Lưu bệnh nền, dị ứng, chiều cao, cân nặng và BMI. App gợi ý lời khuyên sinh hoạt phù hợp với hồ sơ của bạn.
 
 KẾT NỐI VỚI BÁC SĨ (TÙY CHỌN)
-Nếu bác sĩ của bạn dùng MedRemind, nhập mã ghép nối để bác sĩ theo dõi mức độ tuân thủ điều trị của bạn. Bạn có thể ngắt kết nối bất cứ lúc nào.
+Nếu bác sĩ của bạn dùng Medoly, nhập mã ghép nối để bác sĩ theo dõi mức độ tuân thủ điều trị của bạn. Bạn có thể ngắt kết nối bất cứ lúc nào.
 
 DỮ LIỆU CỦA BẠN, DO BẠN QUYẾT ĐỊNH
 Dữ liệu lưu ngay trên máy và hoạt động offline. Đăng nhập để sao lưu tự động, đổi điện thoại mới chỉ cần đăng nhập là khôi phục đầy đủ. Xóa tài khoản và toàn bộ dữ liệu trên máy chủ bất cứ lúc nào trong Cài đặt.
@@ -85,7 +85,7 @@ SONG NGỮ
 Đầy đủ Tiếng Việt và English.
 
 LƯU Ý QUAN TRỌNG
-MedRemind là công cụ nhắc nhở và ghi chép, không phải thiết bị y tế. App không chẩn đoán, không kê đơn và không thay thế tư vấn của bác sĩ hoặc dược sĩ. Thông tin về thuốc do AI tạo ra chỉ mang tính tham khảo và có thể chưa đầy đủ — hãy luôn dùng thuốc theo chỉ định của bác sĩ và đọc kỹ hướng dẫn sử dụng. Trong trường hợp khẩn cấp, hãy gọi cấp cứu.
+Medoly là công cụ nhắc nhở và ghi chép, không phải thiết bị y tế. App không chẩn đoán, không kê đơn và không thay thế tư vấn của bác sĩ hoặc dược sĩ. Thông tin về thuốc do AI tạo ra chỉ mang tính tham khảo và có thể chưa đầy đủ — hãy luôn dùng thuốc theo chỉ định của bác sĩ và đọc kỹ hướng dẫn sử dụng. Trong trường hợp khẩn cấp, hãy gọi cấp cứu.
 ```
 
 ---
@@ -94,7 +94,7 @@ MedRemind là công cụ nhắc nhở và ghi chép, không phải thiết bị 
 
 ### Name (≤30)
 ```
-MedRemind – Medicine Reminder
+Medoly – Medicine Reminder
 ```
 
 ### Subtitle (≤30)
@@ -109,14 +109,14 @@ medication,pill reminder,prescription scan,adherence,refill,dosage,elderly care,
 
 ### Promotional text (≤170)
 ```
-Snap your prescription — AI fills in every medicine, dose and time, plus what each one is for. Then MedRemind reminds you daily and tracks what you actually took.
+Snap your prescription — AI fills in every medicine, dose and time, plus what each one is for. Then Medoly reminds you daily and tracks what you actually took.
 ```
 
 ### Description
 ```
 Take the right medicine at the right time — without having to remember.
 
-MedRemind turns your doctor's prescription into a daily reminder schedule on your phone.
+Medoly turns your doctor's prescription into a daily reminder schedule on your phone.
 
 SCAN INSTEAD OF TYPING
 Photograph the prescription and AI fills in each medicine: name, strength, dose per intake, times per day and how many days to take it. Review it, save it, done. No paper script? Manual entry is quick too.
@@ -143,7 +143,7 @@ HEALTH PROFILE
 Record conditions, allergies, height, weight and BMI. The app suggests lifestyle tips matched to your profile.
 
 CONNECT WITH YOUR DOCTOR (OPTIONAL)
-If your doctor uses MedRemind, enter their pairing code so they can follow your adherence. Unlink whenever you want.
+If your doctor uses Medoly, enter their pairing code so they can follow your adherence. Unlink whenever you want.
 
 YOUR DATA, YOUR CALL
 Everything is stored on your device and works offline. Sign in and your data is backed up automatically — switch phones and it all comes back on sign-in. Delete your account and all server data any time from Settings.
@@ -152,7 +152,7 @@ BILINGUAL
 Full Vietnamese and English.
 
 IMPORTANT
-MedRemind is a reminder and record-keeping tool, not a medical device. It does not diagnose, does not prescribe and does not replace advice from your doctor or pharmacist. AI-generated medicine information is for reference only and may be incomplete — always follow your doctor's instructions and read the patient leaflet. In an emergency, call your local emergency number.
+Medoly is a reminder and record-keeping tool, not a medical device. It does not diagnose, does not prescribe and does not replace advice from your doctor or pharmacist. AI-generated medicine information is for reference only and may be incomplete — always follow your doctor's instructions and read the patient leaflet. In an emergency, call your local emergency number.
 ```
 
 ---

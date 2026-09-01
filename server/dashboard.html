@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>MedRemind · Bảng theo dõi bác sĩ</title>
+<title>Medoly · Bảng theo dõi bác sĩ</title>
 <style>
   :root {
     --teal: #0E7C7B; --teal-soft: #E3F2F1; --coral: #F27059;
@@ -70,7 +70,7 @@
 <div class="wrap">
   <!-- Auth -->
   <div id="authView" class="auth hidden">
-    <div class="logo" style="justify-content:center;margin-bottom:20px"><span class="dot">✚</span> MedRemind</div>
+    <div class="logo" style="justify-content:center;margin-bottom:20px"><span class="dot">✚</span> Medoly</div>
     <div class="card">
       <h1 id="authTitle">Đăng nhập bác sĩ</h1>
       <p class="sub" id="authSub">Theo dõi việc tuân thủ uống thuốc của bệnh nhân.</p>
@@ -91,7 +91,7 @@
   <!-- App -->
   <div id="appView" class="hidden">
     <header>
-      <div class="logo"><span class="dot">✚</span> MedRemind</div>
+      <div class="logo"><span class="dot">✚</span> Medoly</div>
       <div class="row" style="gap:14px">
         <span class="muted" id="docName"></span>
         <button class="ghost" onclick="logout()">Đăng xuất</button>
@@ -119,7 +119,7 @@
           <button style="margin-top:16px" onclick="createPatient()">Tạo mã ghép nối</button>
         </div>
         <div id="codeResult" class="hidden">
-          <p class="muted" style="margin-top:12px">Đưa mã này cho bệnh nhân nhập vào app MedRemind:</p>
+          <p class="muted" style="margin-top:12px">Đưa mã này cho bệnh nhân nhập vào app Medoly:</p>
           <div class="code" id="newCode"></div>
           <button class="ghost" onclick="showList()">Xong</button>
         </div>
