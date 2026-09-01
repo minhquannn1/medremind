@@ -45,15 +45,34 @@ void main() {
     );
   }
 
-  test('a first launch with no account is ready and unonboarded', () async {
+  test('a first launch lands in the app with a profile already made',
+      () async {
     final notifier = build();
     await notifier.load();
 
     expect(notifier.state.ready, isTrue);
     expect(notifier.state.authed, isFalse);
-    expect(notifier.state.onboarded, isFalse,
-        reason: 'sends the user to onboarding, not to a login wall');
-    expect(notifier.state.activePatientId, isNull);
+    expect(notifier.state.onboarded, isTrue,
+        reason: 'nothing is asked for before the app works');
+    expect(notifier.state.activePatientId, isNotNull);
+
+    // Created empty: no name, no date of birth, no measurements.
+    final p = await patients.getPatient(notifier.state.activePatientId!);
+    expect(p!.fullName, isEmpty);
+    expect(p.dob, isNull);
+    expect(p.gender, isNull);
+    expect(p.heightCm, isNull);
+    expect(p.accountUserId, isNull);
+  });
+
+  test('a second launch reuses the profile instead of making another',
+      () async {
+    final first = build();
+    await first.load();
+    final second = build();
+    await second.load();
+
+    expect(second.state.activePatientId, first.state.activePatientId);
   });
 
   test('a local profile is picked up without signing in', () async {
@@ -69,9 +88,9 @@ void main() {
     expect(notifier.state.activePatientId, id);
   });
 
-  test('a profile owned by an account is not opened by a signed-out launch',
+  test("a signed-out launch does not open someone's account profile",
       () async {
-    await patients.createPatient(
+    final owned = await patients.createPatient(
       fullName: 'Quan',
       accountUserId: 7,
       accountEmail: 'a@b.com',
@@ -80,7 +99,8 @@ void main() {
     final notifier = build();
     await notifier.load();
 
-    expect(notifier.state.onboarded, isFalse);
-    expect(notifier.state.activePatientId, isNull);
+    expect(notifier.state.activePatientId, isNot(owned));
+    expect((await patients.getPatient(notifier.state.activePatientId!))!
+        .accountUserId, isNull);
   });
 }

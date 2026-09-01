@@ -18,6 +18,7 @@ class SettingsKeys {
   static const accountEmail = 'account_email';
   static const accountName = 'account_name';
   static const askedNotifications = 'asked_notifications';
+  static const seenWelcome = 'seen_welcome';
 }
 
 class SettingsRepository {

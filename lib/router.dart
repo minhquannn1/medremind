@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:medremind/ui/features/auth/views/auth_screen.dart';
-import 'package:medremind/ui/features/onboarding/views/onboarding_screen.dart';
 import 'package:medremind/ui/features/dose_confirm/views/dose_confirm_screen.dart';
 import 'package:medremind/ui/core/tabs_shell.dart';
 import 'package:medremind/ui/core/app_state.dart';
@@ -24,7 +23,7 @@ final routerRefreshProvider = ChangeNotifierProvider<RouterRefresh>((ref) {
   ref.listen<AppState>(appStateProvider, (previous, next) {
     if (previous?.ready != next.ready ||
         previous?.authed != next.authed ||
-        previous?.onboarded != next.onboarded) {
+        previous?.activePatientId != next.activePatientId) {
       refresh.bump();
     }
   });
@@ -51,18 +50,12 @@ final routerProvider = Provider<GoRouter>((ref) {
       // for at the point it is actually used.
       if (loc == '/auth') return app.authed ? '/home' : null;
 
-      if (!app.onboarded) return loc == '/onboarding' ? null : '/onboarding';
-
-      if (loc == '/' || loc == '/onboarding') return '/home';
+      if (loc == '/') return '/home';
       return null;
     },
     routes: [
       GoRoute(path: '/', builder: (_, _) => const _SplashScreen()),
       GoRoute(path: '/auth', builder: (_, _) => const AuthScreen()),
-      GoRoute(
-        path: '/onboarding',
-        builder: (_, _) => const OnboardingScreen(),
-      ),
       // One route for all four tabs: TabsShell owns the selected index, so a
       // tab tap never pushes a route and never rebuilds the other tabs.
       GoRoute(path: '/home', builder: (_, _) => const TabsShell()),

@@ -90,11 +90,7 @@ const Map<String, String> localeVi = {
   'onboarding.welcomeTitle': 'Chào mừng đến với MedRemind',
   'onboarding.welcomeBody':
       'Theo dõi đơn thuốc, nhắc bạn uống đúng giờ và không bỏ lỡ liều nào.',
-  'onboarding.createProfile': 'Tạo hồ sơ của bạn',
-  'onboarding.profileHint':
-      'Tất cả đều không bắt buộc — chỉ để cá nhân hoá. Bạn có thể bỏ qua và điền sau.',
-  'onboarding.skip': 'Bỏ qua',
-  'onboarding.start': 'Bắt đầu',
+  'onboarding.welcomeAck': 'Đã hiểu',
   'onboarding.disclaimer':
       'MedRemind chỉ hỗ trợ nhắc lịch và cung cấp thông tin tham khảo — không chẩn đoán hay thay thế tư vấn của bác sĩ, dược sĩ.',
 

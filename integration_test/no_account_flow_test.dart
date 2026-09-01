@@ -18,18 +18,18 @@ void main() {
     app.main();
     await tester.pumpAndSettle(const Duration(seconds: 5));
 
-    // A fresh install opens onboarding, not the login screen.
+    // A fresh install lands straight in the app: no login screen, and no form
+    // asking for a name, date of birth, gender, height or weight.
     expect(find.text('Log in'), findsNothing);
+    expect(find.text('Create your profile'), findsNothing);
+    expect(find.byType(TextField), findsNothing);
 
-    // Nothing on this screen is mandatory: skip it without typing a single
-    // personal detail — no name, date of birth, gender, height or weight.
-    await tester.dragUntilVisible(
-      find.text('Skip for now'),
-      find.byType(Scrollable).first,
-      const Offset(0, -200),
-    );
-    await tester.tap(find.text('Skip for now'));
-    await tester.pumpAndSettle(const Duration(seconds: 5));
+    // The medical disclaimer is still put in front of the user on first run
+    // (App Review guideline 1.4.1), and is dismissible.
+    expect(find.textContaining('does not diagnose'), findsOneWidget);
+    await tester.tap(find.text('Got it'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('does not diagnose'), findsNothing);
 
     // Landed in the tab shell with every tab reachable, still signed out.
     expect(find.text('Home'), findsWidgets);

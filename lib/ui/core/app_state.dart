@@ -96,11 +96,11 @@ class AppStateNotifier extends StateNotifier<AppState> {
       // No account: the app still runs on the local profile if there is one.
       // Signing in only adds cloud backup, so a signed-out user must not be
       // locked out of their reminders.
-      final local = await patients.getLocalPatient();
+      final local = await _ensureProfile(null, null);
       state = AppState(
         ready: true,
-        onboarded: local != null,
-        activePatientId: local?.id,
+        onboarded: true,
+        activePatientId: local,
         language: language,
       );
       return;
@@ -114,15 +114,35 @@ class AppStateNotifier extends StateNotifier<AppState> {
       email: await settings.get(SettingsKeys.accountEmail) ?? '',
       name: await settings.get(SettingsKeys.accountName) ?? '',
     );
-    final patient = await patients.getPatientByAccount(userId);
+    final patientId = await _ensureProfile(userId, account.email);
 
     state = AppState(
       ready: true,
       authed: true,
       account: account,
-      onboarded: patient != null,
-      activePatientId: patient?.id,
+      onboarded: true,
+      activePatientId: patientId,
       language: language,
+    );
+  }
+
+  /// The id of the profile everything hangs off, creating an empty one if
+  /// this device has none.
+  ///
+  /// There is no onboarding form: App Store Guideline 5.1.1(v) does not allow
+  /// the app to ask for personal details before it works, and a reminder needs
+  /// none of them. Name, date of birth and measurements are filled in later
+  /// under Profile, by whoever wants to.
+  Future<int> _ensureProfile(int? accountUserId, String? accountEmail) async {
+    final existing = accountUserId == null
+        ? await patients.getLocalPatient()
+        : await patients.getPatientByAccount(accountUserId);
+    if (existing != null) return existing.id;
+
+    return patients.createPatient(
+      fullName: '',
+      accountUserId: accountUserId,
+      accountEmail: accountEmail,
     );
   }
 
@@ -172,9 +192,9 @@ class AppStateNotifier extends StateNotifier<AppState> {
     state = state.copyWith(
       authed: true,
       account: res.account,
-      onboarded: patient != null,
-      activePatientId: patient?.id,
-      clearPatient: patient == null,
+      onboarded: true,
+      activePatientId: patient?.id ??
+          await _ensureProfile(res.account!.userId, res.account!.email),
     );
     return null;
   }
@@ -187,14 +207,13 @@ class AppStateNotifier extends StateNotifier<AppState> {
     await _persistSession(res.token!, res.account!);
     // Let this new account adopt any pre-existing on-device profile.
     await patients.claimOrphanPatient(res.account!.userId, res.account!.email);
-    final patient = await patients.getPatientByAccount(res.account!.userId);
 
     state = state.copyWith(
       authed: true,
       account: res.account,
-      onboarded: patient != null,
-      activePatientId: patient?.id,
-      clearPatient: patient == null,
+      onboarded: true,
+      activePatientId:
+          await _ensureProfile(res.account!.userId, res.account!.email),
     );
     return null;
   }
@@ -203,11 +222,13 @@ class AppStateNotifier extends StateNotifier<AppState> {
   /// is restored on the next sign-in.
   Future<void> signOut() async {
     await _clearSession();
+    // Straight back to a local profile rather than a gate: the account's data
+    // stays tied to the account and comes back on the next sign-in.
     state = state.copyWith(
       authed: false,
       clearAccount: true,
-      onboarded: false,
-      clearPatient: true,
+      onboarded: true,
+      activePatientId: await _ensureProfile(null, null),
     );
   }
 
@@ -240,8 +261,8 @@ class AppStateNotifier extends StateNotifier<AppState> {
     state = state.copyWith(
       authed: false,
       clearAccount: true,
-      onboarded: false,
-      clearPatient: true,
+      onboarded: true,
+      activePatientId: await _ensureProfile(null, null),
     );
     return true;
   }

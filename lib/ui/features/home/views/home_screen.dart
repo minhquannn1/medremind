@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:medremind/ui/core/components/app_button.dart';
 import 'package:medremind/ui/core/components/app_card.dart';
 import 'package:medremind/ui/core/components/app_text.dart';
 import 'package:medremind/ui/core/components/controls.dart';
@@ -72,14 +73,43 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     return AppScreen(
       onRefresh: _vm.load,
       children: [
-        AppText(_greetingText(t), color: TextColorKey.textMuted),
-        AppText(
-          // Onboarding is skippable, so the name is often blank — fall back to
-          // the app's own name rather than greeting nobody.
-          _vm.displayName ?? t.t('common.appName'),
-          variant: TextVariant.title,
-        ),
+        // The name is blank until the user chooses to add one under Profile,
+        // so the greeting carries the heading on its own rather than shouting
+        // a brand name at someone who never told us who they are.
+        if (_vm.displayName == null)
+          AppText(_greetingText(t), variant: TextVariant.title)
+        else ...[
+          AppText(_greetingText(t), color: TextColorKey.textMuted),
+          AppText(_vm.displayName!, variant: TextVariant.title),
+        ],
         const SizedBox(height: Spacing.xl),
+
+        // First launch only. Replaces the onboarding screen as the place the
+        // medical disclaimer is shown (App Review guideline 1.4.1).
+        if (_vm.showWelcome) ...[
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                AppText(t.t('onboarding.welcomeTitle'),
+                    variant: TextVariant.subheading),
+                const SizedBox(height: Spacing.xs),
+                AppText(t.t('onboarding.welcomeBody'),
+                    color: TextColorKey.textMuted),
+                const SizedBox(height: Spacing.md),
+                AppText(t.t('onboarding.disclaimer'),
+                    variant: TextVariant.caption,
+                    color: TextColorKey.textFaint),
+                const SizedBox(height: Spacing.md),
+                AppButton(
+                  label: t.t('onboarding.welcomeAck'),
+                  onPressed: _vm.dismissWelcome,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: Spacing.lg),
+        ],
 
         // Adherence
         AppCard(
