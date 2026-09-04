@@ -3,7 +3,7 @@ description: "Medoly — medication adherence app (Flutter port)."
 publish_to: 'none'
 
 # Matches the React Native app's marketing version so store builds line up.
-version: 1.0.0+6
+version: 1.0.0+7
 
 environment:
   sdk: ^3.12.2

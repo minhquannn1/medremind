@@ -65,6 +65,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
 
     return AppScreen(
       children: [
+        AppHeader(title: '', onBack: () => context.pop()),
         const SizedBox(height: Spacing.xxl),
         Center(
           child: Container(
@@ -191,7 +192,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           label: t.t('auth.continueWithoutAccount'),
           variant: ButtonVariant.ghost,
           disabled: _vm.busy,
-          onPressed: () => context.go('/home'),
+          onPressed: () => context.pop(),
         ),
       ],
     );
