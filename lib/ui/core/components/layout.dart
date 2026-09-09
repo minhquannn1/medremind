@@ -26,6 +26,11 @@ class AppScreen extends StatelessWidget {
   final ScreenBackground background;
   final Widget? bottomBar;
 
+  /// Above this window width the content is centered and capped rather than
+  /// stretched edge to edge — otherwise every form and card reads as an
+  /// iPhone layout blown up to iPad size instead of a tablet layout.
+  static const double _maxContentWidth = 560;
+
   Color get _bg {
     switch (background) {
       case ScreenBackground.primary:
@@ -39,18 +44,30 @@ class AppScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final content = Padding(
-      padding: padded
-          ? const EdgeInsets.only(
-              left: Spacing.xl,
-              right: Spacing.xl,
-              top: Spacing.lg,
-            )
-          : EdgeInsets.zero,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: children,
-      ),
+    final content = LayoutBuilder(
+      builder: (context, constraints) {
+        final inner = Padding(
+          padding: padded
+              ? const EdgeInsets.only(
+                  left: Spacing.xl,
+                  right: Spacing.xl,
+                  top: Spacing.lg,
+                )
+              : EdgeInsets.zero,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: children,
+          ),
+        );
+        if (constraints.maxWidth <= _maxContentWidth) return inner;
+        return Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: _maxContentWidth),
+            child: inner,
+          ),
+        );
+      },
     );
 
     Widget body;

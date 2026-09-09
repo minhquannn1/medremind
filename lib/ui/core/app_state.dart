@@ -155,47 +155,61 @@ class AppStateNotifier extends StateNotifier<AppState> {
     final res = await auth.login(email, password);
     if (!res.ok) return res.error;
 
-    await _persistSession(res.token!, res.account!);
-    var patient = await patients.getPatientByAccount(res.account!.userId);
+    // The server has already accepted these credentials: a local hiccup from
+    // here on (a repository call, a notification permission request) must
+    // fall back to a bare profile rather than strand the user mid-sign-in or
+    // report a credential failure that never happened.
+    try {
+      await _persistSession(res.token!, res.account!);
+      var patient = await patients.getPatientByAccount(res.account!.userId);
 
-    if (patient == null) {
-      // Fresh device: restore the account's cloud backup if one exists.
-      final backup = await backupSync.fetchServerBackup(res.token!);
-      if (backup != null) {
-        try {
-          final patientId = await backups.importPatientData(
-            backup,
-            res.account!.userId,
-            res.account!.email,
-          );
-          // A restored profile has medications but no scheduled alerts, and
-          // syncReminders no-ops without permission — ask here or the user
-          // gets their data back with every reminder missing.
-          await notifications.requestPermission();
-          await notifications.syncReminders(patientId, state.t);
-          patient = await patients.getPatientByAccount(res.account!.userId);
-        } catch (_) {
-          // A failed restore must not block sign-in; the user can start fresh.
-          patient = await patients.getPatientByAccount(res.account!.userId);
+      if (patient == null) {
+        // Fresh device: restore the account's cloud backup if one exists.
+        final backup = await backupSync.fetchServerBackup(res.token!);
+        if (backup != null) {
+          try {
+            final patientId = await backups.importPatientData(
+              backup,
+              res.account!.userId,
+              res.account!.email,
+            );
+            // A restored profile has medications but no scheduled alerts, and
+            // syncReminders no-ops without permission — ask here or the user
+            // gets their data back with every reminder missing.
+            await notifications.requestPermission();
+            await notifications.syncReminders(patientId, state.t);
+            patient = await patients.getPatientByAccount(res.account!.userId);
+          } catch (_) {
+            // A failed restore must not block sign-in; the user can start fresh.
+            patient = await patients.getPatientByAccount(res.account!.userId);
+          }
         }
       }
+
+      // Nothing in the cloud, but this device may already have been used
+      // without an account. Adopt that profile rather than sending the user
+      // through onboarding again and abandoning medications already entered.
+      patient ??= await patients.claimOrphanPatient(
+        res.account!.userId,
+        res.account!.email,
+      );
+
+      state = state.copyWith(
+        authed: true,
+        account: res.account,
+        onboarded: true,
+        activePatientId: patient?.id ??
+            await _ensureProfile(res.account!.userId, res.account!.email),
+      );
+    } catch (_) {
+      state = state.copyWith(
+        authed: true,
+        account: res.account,
+        onboarded: true,
+        activePatientId:
+            await _ensureProfile(res.account!.userId, res.account!.email),
+      );
     }
-
-    // Nothing in the cloud, but this device may already have been used without
-    // an account. Adopt that profile rather than sending the user through
-    // onboarding again and abandoning the medications they already entered.
-    patient ??= await patients.claimOrphanPatient(
-      res.account!.userId,
-      res.account!.email,
-    );
-
-    state = state.copyWith(
-      authed: true,
-      account: res.account,
-      onboarded: true,
-      activePatientId: patient?.id ??
-          await _ensureProfile(res.account!.userId, res.account!.email),
-    );
     return null;
   }
 
@@ -204,17 +218,31 @@ class AppStateNotifier extends StateNotifier<AppState> {
     final res = await auth.register(email, password, name);
     if (!res.ok) return res.error;
 
-    await _persistSession(res.token!, res.account!);
-    // Let this new account adopt any pre-existing on-device profile.
-    await patients.claimOrphanPatient(res.account!.userId, res.account!.email);
+    try {
+      await _persistSession(res.token!, res.account!);
+      // Let this new account adopt any pre-existing on-device profile.
+      await patients.claimOrphanPatient(
+          res.account!.userId, res.account!.email);
 
-    state = state.copyWith(
-      authed: true,
-      account: res.account,
-      onboarded: true,
-      activePatientId:
-          await _ensureProfile(res.account!.userId, res.account!.email),
-    );
+      state = state.copyWith(
+        authed: true,
+        account: res.account,
+        onboarded: true,
+        activePatientId:
+            await _ensureProfile(res.account!.userId, res.account!.email),
+      );
+    } catch (_) {
+      // Same reasoning as signIn: the account now exists on the server, so a
+      // local hiccup must still land the user signed in, not stuck or bounced
+      // back to a form that reports a failure that never happened.
+      state = state.copyWith(
+        authed: true,
+        account: res.account,
+        onboarded: true,
+        activePatientId:
+            await _ensureProfile(res.account!.userId, res.account!.email),
+      );
+    }
     return null;
   }
 

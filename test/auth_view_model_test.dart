@@ -54,6 +54,24 @@ void main() {
       expect(vm.errorKeyFor(AuthField.password),
           'auth.errorInvalidCredentials');
     });
+
+    test(
+        'an exception past the network call still clears busy '
+        'instead of leaving the button spinning forever', () async {
+      final vm = AuthViewModel(
+        signIn: (email, password) async =>
+            throw StateError('local hiccup after a valid login'),
+        signUp: (email, password, name) async => null,
+      );
+
+      final ok = await vm.submit(
+          email: 'a@b.com', password: 'secret123', confirmPassword: '', name: '');
+
+      expect(ok, isFalse);
+      expect(vm.busy, isFalse);
+      expect(
+          vm.errorKeyFor(AuthField.password), 'auth.errorNetwork');
+    });
   });
 
   group('sign-up validation', () {

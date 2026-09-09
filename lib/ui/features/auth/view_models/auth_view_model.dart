@@ -132,9 +132,17 @@ class AuthViewModel extends ChangeNotifier {
     _serverErrorKey = null;
     notifyListeners();
 
-    final err = _signUpMode
-        ? await signUp(email.trim(), password, name.trim())
-        : await signIn(email.trim(), password);
+    // Guarantee busy always clears: a local hiccup after the server round
+    // trip (a repository call, a notification permission request) must not
+    // leave the button spinning forever with no way back in.
+    AuthErrorCode? err;
+    try {
+      err = _signUpMode
+          ? await signUp(email.trim(), password, name.trim())
+          : await signIn(email.trim(), password);
+    } catch (_) {
+      err = AuthErrorCode.network;
+    }
 
     _busy = false;
     _serverErrorKey = err == null ? null : authErrorMessageKey(err);

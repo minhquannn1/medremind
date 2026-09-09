@@ -308,6 +308,45 @@ void main() {
       expect(find.byType(SingleChildScrollView), findsOneWidget);
     });
 
+    testWidgets(
+        'AppScreen caps and centers its content on a tablet-wide window '
+        'instead of stretching an iPhone layout across an iPad screen',
+        (tester) async {
+      // iPad Air 11" portrait, in logical pixels.
+      tester.view.physicalSize = const Size(1640, 2360);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(MaterialApp(
+        home: AppScreen(children: [AppButton(label: 'Đăng nhập')]),
+      ));
+
+      final buttonWidth = tester.getSize(find.byType(AppButton)).width;
+      expect(buttonWidth, lessThan(600),
+          reason:
+              'a form must stay a readable width, not stretch edge to edge');
+
+      final screenCenter = tester.getSize(find.byType(MaterialApp)).width / 2;
+      final buttonCenter = tester.getCenter(find.byType(AppButton)).dx;
+      expect(buttonCenter, closeTo(screenCenter, 1));
+    });
+
+    testWidgets('AppScreen still fills the width on a phone-sized window',
+        (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(MaterialApp(
+        home: AppScreen(children: [AppButton(label: 'Đăng nhập')]),
+      ));
+
+      final buttonWidth = tester.getSize(find.byType(AppButton)).width;
+      expect(buttonWidth, greaterThan(300));
+    });
+
     testWidgets('AppHeader shows title and pops on back', (tester) async {
       await tester.pumpWidget(MaterialApp(
         home: Scaffold(
