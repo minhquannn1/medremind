@@ -41,12 +41,28 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     super.dispose();
   }
 
-  Future<void> _submit() => _vm.submit(
-        email: _email.text,
-        password: _password.text,
-        confirmPassword: _confirmPassword.text,
-        name: _name.text,
-      );
+  /// Leaves the screen itself on success, with `go` rather than `pop`.
+  ///
+  /// The router cannot do it: /auth is pushed imperatively, and on a session
+  /// change go_router re-evaluates the redirect against the underlying `go`
+  /// location (/home), so a redirect guard on /auth never fires. And pop is
+  /// not safe here either: the sign-in that succeeds is also the state change
+  /// that makes the router refresh, and the refresh rebuilds the match list,
+  /// swallowing a pop issued in the same frame. Both were observed on a
+  /// simulator as a login that visibly did nothing — App Review filed it as
+  /// a broken login under Guideline 2.1(a). `go` wins the race because it
+  /// changes the location itself, which is what the refresh re-evaluates.
+  /// The Settings screen the user came from survives underneath and now
+  /// shows their account.
+  Future<void> _submit() async {
+    final ok = await _vm.submit(
+      email: _email.text,
+      password: _password.text,
+      confirmPassword: _confirmPassword.text,
+      name: _name.text,
+    );
+    if (ok && mounted) context.go('/home');
+  }
 
   @override
   Widget build(BuildContext context) {
