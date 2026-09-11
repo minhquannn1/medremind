@@ -65,6 +65,8 @@ const Map<String, String> localeEn = {
       'This account no longer exists — it was deleted. Please sign up for a new account.',
   'auth.errorWeakPassword': 'Password must be at least 8 characters.',
   'auth.errorMissingFields': 'Please fill in all fields.',
+  'auth.errorTooManyAttempts':
+      'Too many attempts. Please wait a few minutes and try again.',
   'auth.errorNetwork':
       'Could not reach the server. Check your connection and try again.',
   'auth.showPassword': 'Show password',

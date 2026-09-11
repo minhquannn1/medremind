@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -94,12 +95,55 @@ void main() {
           AuthErrorCode.weakPassword);
     });
 
-    test('a rate-limit or unknown error falls back to network', () async {
+    test('a rate limit says so instead of blaming the connection', () async {
+      // App Review hit the limiter on a working connection and was told to
+      // "check your connection" — filed as a login bug under 2.1(a).
       final api = PatientAuthApi(
         client: MockClient((_) async => http.Response(
               jsonEncode({'ok': false, 'error': 'too_many_requests'}), 429)),
       );
+      final res = await api.login('a@b.com', 'x');
+      expect(res.error, AuthErrorCode.tooManyAttempts);
+      expect(authErrorMessageKey(res.error!), 'auth.errorTooManyAttempts');
+    });
+
+    test('an unknown error code still falls back to network', () async {
+      final api = PatientAuthApi(
+        client: MockClient((_) async => http.Response(
+              jsonEncode({'ok': false, 'error': 'brand_new_code'}), 400)),
+      );
       expect((await api.login('a@b.com', 'x')).error, AuthErrorCode.network);
+    });
+
+    test('login retries once when the first attempt times out', () async {
+      // Cold-started backend: the first request can outlive the timeout, and
+      // login is the first thing a fresh install does.
+      var calls = 0;
+      final api = PatientAuthApi(
+        client: MockClient((_) async {
+          calls++;
+          if (calls == 1) throw TimeoutException('cold start');
+          return http.Response(
+              jsonEncode({'ok': true, 'token': 'tk', 'userId': 7}), 200);
+        }),
+      );
+      final res = await api.login('a@b.com', 'x');
+      expect(res.ok, isTrue);
+      expect(calls, 2);
+    });
+
+    test('login does not retry a definite rejection', () async {
+      var calls = 0;
+      final api = PatientAuthApi(
+        client: MockClient((_) async {
+          calls++;
+          return http.Response(
+              jsonEncode({'ok': false, 'error': 'invalid_credentials'}), 401);
+        }),
+      );
+      expect((await api.login('a@b.com', 'x')).error,
+          AuthErrorCode.invalidCredentials);
+      expect(calls, 1, reason: 'a wrong password stays wrong');
     });
 
     test('a non-JSON body does not crash the app', () async {

@@ -65,6 +65,8 @@ const Map<String, String> localeVi = {
       'Tài khoản này không tồn tại — tài khoản đã bị xóa. Vui lòng đăng ký tài khoản mới.',
   'auth.errorWeakPassword': 'Mật khẩu cần ít nhất 8 ký tự.',
   'auth.errorMissingFields': 'Vui lòng điền đầy đủ thông tin.',
+  'auth.errorTooManyAttempts':
+      'Bạn đã thử quá nhiều lần. Vui lòng đợi vài phút rồi thử lại.',
   'auth.errorNetwork': 'Không kết nối được máy chủ. Kiểm tra mạng rồi thử lại.',
   'auth.showPassword': 'Hiện mật khẩu',
   'auth.hidePassword': 'Ẩn mật khẩu',

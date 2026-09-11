@@ -26,6 +26,7 @@ enum AuthErrorCode {
   accountDeleted,
   weakPassword,
   missingFields,
+  tooManyAttempts,
   network,
 }
 
@@ -41,6 +42,11 @@ AuthErrorCode authErrorFromString(String? code) {
       return AuthErrorCode.weakPassword;
     case 'missing_fields':
       return AuthErrorCode.missingFields;
+    case 'too_many_requests':
+      // Falling through to `network` here told people with a working
+      // connection to check their connection — App Review read that as the
+      // login being broken (Guideline 2.1(a)).
+      return AuthErrorCode.tooManyAttempts;
     default:
       return AuthErrorCode.network;
   }
@@ -59,6 +65,8 @@ String authErrorMessageKey(AuthErrorCode code) {
       return 'auth.errorWeakPassword';
     case AuthErrorCode.missingFields:
       return 'auth.errorMissingFields';
+    case AuthErrorCode.tooManyAttempts:
+      return 'auth.errorTooManyAttempts';
     case AuthErrorCode.network:
       return 'auth.errorNetwork';
   }
@@ -140,11 +148,18 @@ class PatientAuthApi {
         'name': name.trim(),
       });
 
-  Future<AuthResult> login(String email, String password) =>
-      _post('/patient/login', {
-        'email': email.trim(),
-        'password': password,
-      });
+  /// One retry on timeout, for login only. The backend can cold-start slower
+  /// than [requestTimeout] after sitting idle, and the first thing a new
+  /// device does is log in — App Review hit exactly that. Logging in changes
+  /// nothing server-side, so a second attempt is safe; register is not
+  /// retried because a timed-out first attempt may still have created the
+  /// account.
+  Future<AuthResult> login(String email, String password) async {
+    final body = {'email': email.trim(), 'password': password};
+    final first = await _post('/patient/login', body);
+    if (first.error != AuthErrorCode.network) return first;
+    return _post('/patient/login', body);
+  }
 
   /// Permanently deletes the account and all server-side data (backup plus any
   /// doctor-shared snapshot identified by [pairCode]).

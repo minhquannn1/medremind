@@ -13,8 +13,12 @@ const base = {
   handler: limitReached,
 };
 
-// Brute-force protection on credential endpoints: 10 attempts / 15 min / IP.
-export const authLimiter = rateLimit({ ...base, windowMs: 15 * MIN, limit: 10 });
+// Brute-force protection on credential endpoints. Per IP, so it has to
+// tolerate many people behind one NAT: App Review runs several devices
+// through shared egress IPs and blew through the old limit of 10, which the
+// app then surfaced as an error — and a rejection under Guideline 2.1(a).
+// Real brute-force protection comes from bcrypt cost, not from this number.
+export const authLimiter = rateLimit({ ...base, windowMs: 15 * MIN, limit: 60 });
 
 // Pair-code guessing: 20 lookups / 15 min / IP.
 export const pairLimiter = rateLimit({ ...base, windowMs: 15 * MIN, limit: 20 });
