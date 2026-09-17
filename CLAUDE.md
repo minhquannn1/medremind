@@ -106,6 +106,26 @@ npx skills add dart-lang/skills --skill '*' --agent universal
 They are instructions only — plain markdown, no scripts — but they run with
 full agent permissions, so read a skill before relying on it.
 
+## Web / PWA
+
+The same Flutter app compiles for the web and is served by the backend at the
+Railway root URL (`/`), installable as a PWA. The doctor dashboard moved to
+`/dashboard`. `server/webapp/` is the committed build output — regenerate it
+after app changes with:
+
+```bash
+flutter build web --release --no-web-resources-cdn
+rm -rf server/webapp && cp -R build/web server/webapp
+rm -f server/webapp/canvaskit/*.symbols server/webapp/canvaskit/chromium/*.symbols
+rm -rf server/webapp/canvaskit/experimental_webparagraph
+```
+
+`--no-web-resources-cdn` matters: the CSP in `server/security.js` only allows
+self-hosted scripts/wasm (plus fonts.gstatic.com for Roboto). On the web,
+SQLite runs as WASM against IndexedDB (`web/sqflite_sw.js`, `web/sqlite3.wasm`
+— regenerate with `dart run sqflite_common_ffi_web:setup`) and notifications
+are a no-op (`kIsWeb` guards in `notification_service.dart`).
+
 ## Verifying
 
 ```bash

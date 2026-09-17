@@ -56,7 +56,29 @@ app.use(['/api/scan-prescription', '/api/explain-medication'], aiLimiter);
 app.use('/api', doctorRouter);
 // Patient app auth (sign-up / sign-in).
 app.use('/api', patientRouter);
-app.get(['/', '/dashboard'], (_req, res) => {
+// The patient app, compiled from the same Flutter code the stores get and
+// installable as a PWA. It owns the root; doctors keep /dashboard. Hashed
+// Flutter assets can be cached hard, but index.html and the service worker
+// must revalidate or users would be pinned to a stale build after deploys.
+app.use(
+  express.static(join(__dirname, 'webapp'), {
+    index: 'index.html',
+    setHeaders: (res, path) => {
+      if (
+        path.endsWith('index.html') ||
+        path.endsWith('flutter_service_worker.js') ||
+        path.endsWith('flutter_bootstrap.js') ||
+        path.endsWith('version.json')
+      ) {
+        res.setHeader('Cache-Control', 'no-cache');
+      } else {
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      }
+    },
+  }),
+);
+
+app.get('/dashboard', (_req, res) => {
   res.sendFile(join(__dirname, 'dashboard.html'));
 });
 // Public legal pages — linked from the app and App Store Connect.

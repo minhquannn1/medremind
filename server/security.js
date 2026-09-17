@@ -42,11 +42,17 @@ export const securityHeaders = helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc: ["'self'", "'unsafe-inline'"],
+      // 'wasm-unsafe-eval' is for the patient web app served at /: Flutter
+      // web runs CanvasKit and SQLite as WebAssembly, all self-hosted.
+      scriptSrc: ["'self'", "'unsafe-inline'", "'wasm-unsafe-eval'"],
       scriptSrcAttr: ["'unsafe-inline'"],
       styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", 'data:'],
-      connectSrc: ["'self'"],
+      imgSrc: ["'self'", 'data:', 'blob:'],
+      // fonts.gstatic.com: the Flutter web engine lazy-loads Roboto glyph
+      // subsets at runtime; everything else (scripts, wasm) is self-hosted.
+      connectSrc: ["'self'", 'https://fonts.gstatic.com'],
+      fontSrc: ["'self'", 'data:', 'https://fonts.gstatic.com'],
+      workerSrc: ["'self'", 'blob:'],
       objectSrc: ["'none'"],
       frameAncestors: ["'none'"],
       baseUri: ["'self'"],

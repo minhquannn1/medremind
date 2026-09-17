@@ -1,8 +1,8 @@
 import 'dart:convert';
-import 'dart:io' show Platform;
 import 'dart:ui' show Color;
 
-import 'package:flutter/foundation.dart' show visibleForTesting;
+import 'package:flutter/foundation.dart'
+    show defaultTargetPlatform, kIsWeb, visibleForTesting, TargetPlatform;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tzdata;
@@ -20,6 +20,13 @@ import 'package:medremind/ui/core/i18n/app_localizations.dart';
 /// the user travels.
 
 const String androidChannelId = 'medication-reminders';
+
+// dart:io's Platform does not compile for the web, and on the web there is no
+// flutter_local_notifications implementation at all — every entry point below
+// answers "no" there instead of hitting a missing plugin.
+bool get _isAndroid =>
+    !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+bool get _isIos => !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
 
 /// What a tapped dose reminder identifies. The dose log for a given day is
 /// created lazily, so the notification carries the medication and its
@@ -105,6 +112,7 @@ class NotificationScheduler {
 
   /// Must run before any scheduling. Safe to call more than once.
   Future<void> initialize(Translations t) async {
+    if (kIsWeb) return;
     await _ensureTimezone();
 
     const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -127,7 +135,7 @@ class NotificationScheduler {
   }
 
   Future<void> configureAndroidChannel(Translations t) async {
-    if (!Platform.isAndroid) return;
+    if (!_isAndroid) return;
     final prefs = await getReminderPrefs();
     final android = _plugin
         .resolvePlatformSpecificImplementation<
@@ -149,7 +157,7 @@ class NotificationScheduler {
   /// created, so the channel is deleted and recreated, then reminders are
   /// rescheduled so queued notifications pick up the new sound setting.
   Future<void> applyReminderPrefs(int? patientId, Translations t) async {
-    if (Platform.isAndroid) {
+    if (_isAndroid) {
       final android = _plugin
           .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin
@@ -172,7 +180,7 @@ class NotificationScheduler {
 
   Future<bool> requestPermission() async {
     if (suppressPermissionPrompt) return false;
-    if (Platform.isIOS) {
+    if (_isIos) {
       final ios = _plugin
           .resolvePlatformSpecificImplementation<
             IOSFlutterLocalNotificationsPlugin
@@ -184,7 +192,7 @@ class NotificationScheduler {
       );
       return granted ?? false;
     }
-    if (Platform.isAndroid) {
+    if (_isAndroid) {
       final android = _plugin
           .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin
@@ -196,14 +204,14 @@ class NotificationScheduler {
   }
 
   Future<bool> hasPermission() async {
-    if (Platform.isAndroid) {
+    if (_isAndroid) {
       final android = _plugin
           .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin
           >();
       return await android?.areNotificationsEnabled() ?? false;
     }
-    if (Platform.isIOS) {
+    if (_isIos) {
       final ios = _plugin
           .resolvePlatformSpecificImplementation<
             IOSFlutterLocalNotificationsPlugin
@@ -256,6 +264,7 @@ class NotificationScheduler {
   /// whether to warn, because silently doing nothing is how users end up with
   /// medications and no reminders.
   Future<bool> syncReminders(int patientId, Translations t) async {
+    if (kIsWeb) return false;
     if (!await hasPermission()) return false;
     await _ensureTimezone();
     await _plugin.cancelAll();
@@ -335,11 +344,15 @@ class NotificationScheduler {
 
   Future<void> cancel(int id) => _plugin.cancel(id);
 
-  Future<void> cancelAll() => _plugin.cancelAll();
+  Future<void> cancelAll() async {
+    if (kIsWeb) return;
+    await _plugin.cancelAll();
+  }
 
   /// The reminder that launched the app from a cold start, if any. Tapping a
   /// notification while the app is closed does not fire the tap callback.
   Future<DoseTapPayload?> launchPayload() async {
+    if (kIsWeb) return null;
     final details = await _plugin.getNotificationAppLaunchDetails();
     if (details?.didNotificationLaunchApp != true) return null;
     return DoseTapPayload.decode(details?.notificationResponse?.payload);

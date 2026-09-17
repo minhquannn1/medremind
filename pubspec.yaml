@@ -48,6 +48,7 @@ dependencies:
 
   # Opens the privacy and support pages in the browser.
   url_launcher: ^6.3.1
+  sqflite_common_ffi_web: ^1.2.0
 
 dev_dependencies:
   flutter_test:

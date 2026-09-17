@@ -1,5 +1,7 @@
-import 'package:sqflite/sqflite.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:path/path.dart' as p;
+import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 
 /// SQLite client + schema creation.
 ///
@@ -29,6 +31,16 @@ class AppDatabase {
   }
 
   Future<Database> _open() async {
+    if (kIsWeb) {
+      // Same schema, same code, different storage: on the web sqflite has no
+      // native plugin, so the ffi-web factory runs SQLite compiled to WASM
+      // and persists it in IndexedDB (web/sqflite_sw.js + sqlite3.wasm).
+      databaseFactory = databaseFactoryFfiWeb;
+      final database = await openDatabase(databaseName, version: 1);
+      await _createSchema(database);
+      return database;
+    }
+
     final dir = await getDatabasesPath();
     final path = p.join(dir, databaseName);
     final database = await openDatabase(path, version: 1);

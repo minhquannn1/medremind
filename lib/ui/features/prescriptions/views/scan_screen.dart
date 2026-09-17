@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,7 +28,7 @@ class ScanScreen extends ConsumerStatefulWidget {
 class _ScanScreenState extends ConsumerState<ScanScreen> {
   final _picker = ImagePicker();
 
-  File? _image;
+  Uint8List? _imageBytes;
   bool _busy = false;
   String? _error;
 
@@ -53,16 +53,17 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
     }
     if (file == null) return;
 
+    final bytes = await file.readAsBytes();
     setState(() {
-      _image = File(file!.path);
+      _imageBytes = bytes;
       _busy = true;
     });
 
-    await _send(File(file.path), t);
+    await _send(t);
   }
 
-  Future<void> _send(File image, Translations t) async {
-    final bytes = await image.readAsBytes();
+  Future<void> _send(Translations t) async {
+    final bytes = _imageBytes!;
     final result = await const AiScannerApi().scanPrescriptionImage(
       base64Encode(bytes),
       lang: ref.read(appStateProvider).language.name,
@@ -112,10 +113,10 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
         AppCard(
           child: Column(
             children: [
-              if (_image != null)
+              if (_imageBytes != null)
                 ClipRRect(
                   borderRadius: BorderRadius.circular(Radii.md),
-                  child: Image.file(_image!,
+                  child: Image.memory(_imageBytes!,
                       height: 220, width: double.infinity, fit: BoxFit.cover),
                 )
               else
@@ -169,7 +170,8 @@ class _ScanScreenState extends ConsumerState<ScanScreen> {
         ],
 
         AppButton(
-          label: _image == null ? t.t('scan.capture') : t.t('scan.retake'),
+          label:
+              _imageBytes == null ? t.t('scan.capture') : t.t('scan.retake'),
           size: ButtonSize.lg,
           icon: Icons.photo_camera_outlined,
           disabled: _busy,
