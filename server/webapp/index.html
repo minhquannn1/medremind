@@ -33,6 +33,10 @@
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
+  <div id="medoly-loader">
+    <div class="logo">+</div>
+    <div class="ring"></div>
+  </div>
   <!--
     You can customize the "flutter_bootstrap.js" script.
     This is useful to provide a custom configuration to the Flutter loader
@@ -41,6 +45,34 @@
     For more details:
     * https://docs.flutter.dev/platform-integration/web/initialization
   -->
+  <style>
+    /* First-load splash: the wasm bundle takes a few seconds on first visit,
+       and a blank white page reads as broken. Removed on flutter-first-frame. */
+    #medoly-loader {
+      position: fixed; inset: 0; z-index: 9999;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: #0E7C7B; transition: opacity .3s ease-out;
+    }
+    #medoly-loader .logo {
+      width: 76px; height: 76px; border-radius: 20px; background: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font: 700 40px system-ui, sans-serif; color: #0E7C7B;
+    }
+    #medoly-loader .ring {
+      margin-top: 28px; width: 28px; height: 28px; border-radius: 50%;
+      border: 3px solid rgba(255,255,255,.3); border-top-color: #fff;
+      animation: medoly-spin 900ms linear infinite;
+    }
+    @keyframes medoly-spin { to { transform: rotate(360deg); } }
+  </style>
+  <script>
+    window.addEventListener('flutter-first-frame', function () {
+      var el = document.getElementById('medoly-loader');
+      if (!el) return;
+      el.style.opacity = '0';
+      setTimeout(function () { el.remove(); }, 350);
+    });
+  </script>
   <script src="push.js" defer></script>
   <script src="flutter_bootstrap.js" async></script>
 </body>

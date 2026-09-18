@@ -114,7 +114,7 @@ Railway root URL (`/`), installable as a PWA. The doctor dashboard moved to
 after app changes with:
 
 ```bash
-flutter build web --release --no-web-resources-cdn
+flutter build web --wasm --no-web-resources-cdn
 rm -rf server/webapp && cp -R build/web server/webapp
 rm -f server/webapp/canvaskit/*.symbols server/webapp/canvaskit/chromium/*.symbols
 rm -rf server/webapp/canvaskit/experimental_webparagraph

@@ -39,6 +39,13 @@ export const apiLimiter = rateLimit({ ...base, windowMs: 15 * MIN, limit: 300 })
 // its defaults, and its default 'none' blocks every onclick= handler on the
 // dashboard, leaving all its buttons dead.
 export const securityHeaders = helmet({
+  // Cross-origin isolation unlocks SharedArrayBuffer, which lets the Flutter
+  // web app's WebAssembly renderer run multi-threaded — visibly smoother
+  // scrolling and animation. require-corp (not credentialless) because
+  // Safari only implements the former; every subresource is same-origin
+  // except the Google-Fonts glyph fetches, which are CORS-approved.
+  crossOriginEmbedderPolicy: { policy: 'require-corp' },
+  crossOriginOpenerPolicy: { policy: 'same-origin' },
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
