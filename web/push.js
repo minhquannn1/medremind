@@ -19,7 +19,19 @@
     const reg = await navigator.serviceWorker.register('push_sw.js', {
       scope: './push-scope/',
     });
-    await navigator.serviceWorker.ready.catch(() => {});
+    // Wait for THIS registration's worker. navigator.serviceWorker.ready is
+    // the page's root-scope registration — Flutter's caching worker — and
+    // awaiting it stalled sign-in behind a 30MB precache on first load.
+    const worker = reg.installing || reg.waiting || reg.active;
+    if (worker && worker.state !== 'activated') {
+      await new Promise((resolve) => {
+        const done = () => resolve();
+        worker.addEventListener('statechange', () => {
+          if (worker.state === 'activated' || worker.state === 'redundant') done();
+        });
+        setTimeout(done, 10000);
+      });
+    }
 
     const keyRes = await fetch('api/push/public-key');
     const { key } = await keyRes.json();

@@ -383,7 +383,25 @@ class _MedicationEditorState extends ConsumerState<_MedicationEditor> {
               size: ButtonSize.sm,
               icon: Icons.add,
               fullWidth: false,
-              onPressed: () => setState(() => d.times.add('12:00')),
+              // Ask for the hour up front. This used to append a silent
+              // default of 12:00, which read as the app getting the time
+              // wrong when the user never noticed the new row.
+              onPressed: () async {
+                final picked = await showTimeSheet(
+                  context,
+                  initial: '08:00',
+                  title: t.t('medication.times'),
+                  presetLabels: {
+                    'schedule.morning': t.t('schedule.morning'),
+                    'schedule.noon': t.t('schedule.noon'),
+                    'schedule.evening': t.t('schedule.evening'),
+                    'schedule.night': t.t('schedule.night'),
+                  },
+                  doneLabel: t.t('common.done'),
+                  cancelLabel: t.t('common.cancel'),
+                );
+                if (picked != null) setState(() => d.times.add(picked));
+              },
             ),
             const SizedBox(height: Spacing.lg),
 

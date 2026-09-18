@@ -1,3 +1,4 @@
+import 'dart:async' show TimeoutException, unawaited;
 import 'dart:ui' show Locale, PlatformDispatcher;
 
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -127,7 +128,7 @@ class AppStateNotifier extends StateNotifier<AppState> {
       activePatientId: patientId,
       language: language,
     );
-    await _enableWebPush(token, onlyIfGranted: true);
+    unawaited(_enableWebPush(token, onlyIfGranted: true));
   }
 
   /// The id of the profile everything hangs off, creating an empty one if
@@ -152,17 +153,29 @@ class AppStateNotifier extends StateNotifier<AppState> {
 
   /// PWA only: subscribes this browser to server-pushed dose reminders.
   /// [onlyIfGranted] avoids a permission prompt outside a user gesture.
-  Future<void> _enableWebPush(String token, {bool onlyIfGranted = false}) async {
+  ///
+  /// Fire-and-forget by every caller, and capped here as well: the browser's
+  /// permission prompt keeps the promise pending until the user answers it,
+  /// and version one awaited that inside signIn — the Log in button spun
+  /// until the prompt was dealt with, which read as a hung login.
+  Future<void> _enableWebPush(String token,
+      {bool onlyIfGranted = false}) async {
     if (!kIsWeb) return;
-    final result = await enableWebPush(
-      token,
-      languageCode(state.language),
-      onlyIfGranted: onlyIfGranted,
-    );
-    await settings.set(
-      SettingsKeys.webPushEnabled,
-      result == 'enabled' ? 'true' : '',
-    );
+    try {
+      final result = await enableWebPush(
+        token,
+        languageCode(state.language),
+        onlyIfGranted: onlyIfGranted,
+      ).timeout(const Duration(seconds: 45));
+      await settings.set(
+        SettingsKeys.webPushEnabled,
+        result == 'enabled' ? 'true' : '',
+      );
+    } on TimeoutException {
+      // An unanswered prompt: leave the stored state as it was.
+    } catch (_) {
+      // Push is an enhancement; it must never surface as a session error.
+    }
   }
 
   Locale _deviceLocale() {
@@ -229,7 +242,7 @@ class AppStateNotifier extends StateNotifier<AppState> {
             await _ensureProfile(res.account!.userId, res.account!.email),
       );
     }
-    await _enableWebPush(res.token!);
+    unawaited(_enableWebPush(res.token!));
     return null;
   }
 
@@ -263,7 +276,7 @@ class AppStateNotifier extends StateNotifier<AppState> {
             await _ensureProfile(res.account!.userId, res.account!.email),
       );
     }
-    await _enableWebPush(res.token!);
+    unawaited(_enableWebPush(res.token!));
     return null;
   }
 

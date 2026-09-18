@@ -145,7 +145,19 @@ class DosesRepository {
   }
 
   /// Lazily create pending dose logs for a given day for all active meds.
-  Future<void> ensureDoseLogsForDay(int patientId, [DateTime? forDay]) async {
+  /// Serialises [ensureDoseLogsForDay]: Home and Schedule live in one
+  /// IndexedStack and load in the same frame, and two interleaved runs each
+  /// saw "no logs yet" and both inserted — every dose appeared twice. The
+  /// duplicates users kept reporting came from this race, not from restore.
+  static Future<void> _ensureLock = Future.value();
+
+  Future<void> ensureDoseLogsForDay(int patientId, [DateTime? forDay]) {
+    final run = _ensureLock.then((_) => _ensureDoseLogsForDay(patientId, forDay));
+    _ensureLock = run.then((_) {}, onError: (_) {});
+    return run;
+  }
+
+  Future<void> _ensureDoseLogsForDay(int patientId, [DateTime? forDay]) async {
     final day = forDay ?? DateTime.now();
     final database = await AppDatabase.instance.db;
 
@@ -183,9 +195,31 @@ class DosesRepository {
       where: 'scheduled_at >= ? AND scheduled_at <= ?',
       whereArgs: [dayStart, dayEnd],
     );
-    final existingKeys = existingRows
-        .map((e) => '${e['medication_id']}-${e['schedule_time_id']}')
-        .toSet();
+    // Databases that lived through the race already hold duplicates; heal
+    // them here, keeping the row that carries history (taken or skipped)
+    // over an untouched pending one.
+    final byKey = <String, List<Map<String, Object?>>>{};
+    for (final e in existingRows) {
+      byKey
+          .putIfAbsent(
+              '${e['medication_id']}-${_hhmm(e['scheduled_at'] as String)}',
+              () => [])
+          .add(e);
+    }
+    for (final rows in byKey.values) {
+      if (rows.length < 2) continue;
+      rows.sort((a, b) {
+        final aPending = (a['status'] as String?) == 'pending' ? 1 : 0;
+        final bPending = (b['status'] as String?) == 'pending' ? 1 : 0;
+        if (aPending != bPending) return aPending - bPending;
+        return (a['id'] as int).compareTo(b['id'] as int);
+      });
+      for (final surplus in rows.skip(1)) {
+        await database.delete('dose_logs',
+            where: 'id = ?', whereArgs: [surplus['id']]);
+      }
+    }
+    final existingKeys = byKey.keys.toSet();
 
     for (final t in times) {
       Medication? med;
@@ -199,7 +233,7 @@ class DosesRepository {
       if (!_withinMedicationWindow(med.startDate, med.durationDays, day)) {
         continue;
       }
-      final key = '${t.medicationId}-${t.id}';
+      final key = '${t.medicationId}-${t.time}';
       if (existingKeys.contains(key)) continue;
 
       await database.insert('dose_logs', {
@@ -224,9 +258,10 @@ SELECT d.id, d.medication_id, d.scheduled_at, d.status, d.quantity,
        m.relation_to_meal, m.take_with, m.image_uri
 FROM dose_logs d
 INNER JOIN medications m ON d.medication_id = m.id
-WHERE d.scheduled_at >= ? AND d.scheduled_at <= ?
+INNER JOIN prescriptions p ON m.prescription_id = p.id
+WHERE p.patient_id = ? AND d.scheduled_at >= ? AND d.scheduled_at <= ?
 ''',
-      [_iso(_startOfDay(day)), _iso(_endOfDay(day))],
+      [patientId, _iso(_startOfDay(day)), _iso(_endOfDay(day))],
     );
 
     final doses = rows.map((r) {

@@ -84,6 +84,36 @@ const List<_Preset> _presets = [
   _Preset('21:00', 'schedule.night'),
 ];
 
+/// Opens the time sheet and returns the picked "HH:mm", or null on cancel.
+/// Shared by [TimeField] and by "add" affordances that create a new time —
+/// adding silently with a default looked like the app picking a wrong hour.
+Future<String?> showTimeSheet(
+  BuildContext context, {
+  required String initial,
+  String? title,
+  Map<String, String>? presetLabels,
+  String? doneLabel,
+  String? cancelLabel,
+}) {
+  return showModalBottomSheet<String>(
+    context: context,
+    backgroundColor: AppColors.surface,
+    // The sheet is tall; without this it is capped at half the screen and
+    // overflows on short phones or at large text sizes.
+    isScrollControlled: true,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(Radii.xl)),
+    ),
+    builder: (_) => _TimeSheet(
+      initial: initial,
+      title: title,
+      presetLabels: presetLabels,
+      doneLabel: doneLabel,
+      cancelLabel: cancelLabel,
+    ),
+  );
+}
+
 class TimeField extends StatelessWidget {
   const TimeField({
     super.key,
@@ -117,23 +147,13 @@ class TimeField extends StatelessWidget {
       icon: Icons.access_time,
       editableLook: false,
       onPressContainer: () async {
-        final picked = await showModalBottomSheet<String>(
-          context: context,
-          backgroundColor: AppColors.surface,
-          // The sheet is tall; without this it is capped at half the screen
-          // and overflows on short phones or at large text sizes.
-          isScrollControlled: true,
-          shape: const RoundedRectangleBorder(
-            borderRadius:
-                BorderRadius.vertical(top: Radius.circular(Radii.xl)),
-          ),
-          builder: (_) => _TimeSheet(
-            initial: value,
-            title: title,
-            presetLabels: presetLabels,
-            doneLabel: doneLabel,
-            cancelLabel: cancelLabel,
-          ),
+        final picked = await showTimeSheet(
+          context,
+          initial: value,
+          title: title,
+          presetLabels: presetLabels,
+          doneLabel: doneLabel,
+          cancelLabel: cancelLabel,
         );
         if (picked != null) onChanged(picked);
       },
