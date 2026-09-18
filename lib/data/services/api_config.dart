@@ -6,11 +6,21 @@
 /// Flutter equivalent of the RN `EXPO_PUBLIC_SCAN_API_URL` env var.
 library;
 
+import 'package:flutter/foundation.dart' show kIsWeb;
+
 const String _defaultScanUrl =
     'https://medremind-backend-production.up.railway.app/api/scan-prescription';
 
-const String scanApiUrl =
-    String.fromEnvironment('SCAN_API_URL', defaultValue: _defaultScanUrl);
+/// On the web the app is served by the same server that hosts the API, so the
+/// base is the page's own origin. Hardcoding the Railway URL there broke on
+/// any other origin (localhost, a future custom domain) via CSP and CORS; the
+/// mobile apps keep the absolute URL since they have no origin of their own.
+/// An explicit --dart-define=SCAN_API_URL still wins everywhere.
+const String _envScanUrl = String.fromEnvironment('SCAN_API_URL');
+
+final String scanApiUrl = _envScanUrl.isNotEmpty
+    ? _envScanUrl
+    : (kIsWeb ? '${Uri.base.origin}/api/scan-prescription' : _defaultScanUrl);
 
 /// Everything else hangs off the same `/api` root.
 final String apiBase =

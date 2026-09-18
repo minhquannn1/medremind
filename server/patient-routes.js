@@ -1,6 +1,12 @@
 import crypto from 'crypto';
 import express from 'express';
 import { db } from './db.js';
+import {
+  vapidPublicKey,
+  saveSubscription,
+  deleteSubscription,
+  deleteSubscriptionsForAccount,
+} from './push.js';
 import { hashPassword, verifyPassword, signToken, requirePatient } from './auth.js';
 
 export const patientRouter = express.Router();
@@ -75,6 +81,36 @@ patientRouter.get('/patient/me', requirePatient, (req, res) => {
   return res.json({ ok: true, account });
 });
 
+// ---- Web Push (dose reminders for the PWA) ----------------------------------
+
+patientRouter.get('/push/public-key', (_req, res) => {
+  res.json({ ok: true, key: vapidPublicKey });
+});
+
+patientRouter.post('/push/subscribe', requirePatient, (req, res) => {
+  const { subscription, timezone, lang } = req.body || {};
+  if (!subscription || typeof timezone !== 'string' || !timezone) {
+    return res.status(400).json({ ok: false, error: 'missing_fields' });
+  }
+  const saved = saveSubscription(
+    req.accountId,
+    subscription,
+    timezone,
+    lang === 'en' ? 'en' : 'vi',
+  );
+  if (!saved) return res.status(400).json({ ok: false, error: 'bad_subscription' });
+  return res.json({ ok: true });
+});
+
+patientRouter.delete('/push/subscribe', requirePatient, (req, res) => {
+  const { endpoint } = req.body || {};
+  if (typeof endpoint !== 'string' || !endpoint) {
+    return res.status(400).json({ ok: false, error: 'missing_fields' });
+  }
+  deleteSubscription(req.accountId, endpoint);
+  return res.json({ ok: true });
+});
+
 // ---- Full-data backup (upload) / restore (download) -------------------------
 // The app uploads a JSON export of its entire local database. Stored as an
 // opaque blob keyed by account so a new device can restore everything.
@@ -121,6 +157,7 @@ patientRouter.delete('/patient/account', requirePatient, (req, res) => {
   const { pairCode } = req.body || {};
   db.transaction(() => {
     db.prepare('DELETE FROM backups WHERE account_id = ?').run(account.id);
+    deleteSubscriptionsForAccount(account.id);
     if (pairCode) {
       const p = db
         .prepare('SELECT id FROM patients WHERE pair_code = ?')

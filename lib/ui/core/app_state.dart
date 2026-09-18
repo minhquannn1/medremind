@@ -1,5 +1,7 @@
 import 'dart:ui' show Locale, PlatformDispatcher;
 
+import 'package:flutter/foundation.dart' show kIsWeb;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:medremind/data/repositories/backup_repository.dart';
@@ -8,6 +10,7 @@ import 'package:medremind/data/repositories/settings_repository.dart';
 import 'package:medremind/data/services/patient_auth_service.dart';
 import 'package:medremind/data/services/notification_service.dart';
 import 'package:medremind/data/services/backup_sync_service.dart';
+import 'package:medremind/data/services/web_push/web_push.dart';
 import 'package:medremind/ui/core/i18n/app_localizations.dart';
 
 /// Session + app-wide state. Ported from `src/store/appStore.ts` (zustand →
@@ -124,6 +127,7 @@ class AppStateNotifier extends StateNotifier<AppState> {
       activePatientId: patientId,
       language: language,
     );
+    await _enableWebPush(token, onlyIfGranted: true);
   }
 
   /// The id of the profile everything hangs off, creating an empty one if
@@ -143,6 +147,21 @@ class AppStateNotifier extends StateNotifier<AppState> {
       fullName: '',
       accountUserId: accountUserId,
       accountEmail: accountEmail,
+    );
+  }
+
+  /// PWA only: subscribes this browser to server-pushed dose reminders.
+  /// [onlyIfGranted] avoids a permission prompt outside a user gesture.
+  Future<void> _enableWebPush(String token, {bool onlyIfGranted = false}) async {
+    if (!kIsWeb) return;
+    final result = await enableWebPush(
+      token,
+      languageCode(state.language),
+      onlyIfGranted: onlyIfGranted,
+    );
+    await settings.set(
+      SettingsKeys.webPushEnabled,
+      result == 'enabled' ? 'true' : '',
     );
   }
 
@@ -210,6 +229,7 @@ class AppStateNotifier extends StateNotifier<AppState> {
             await _ensureProfile(res.account!.userId, res.account!.email),
       );
     }
+    await _enableWebPush(res.token!);
     return null;
   }
 
@@ -243,12 +263,18 @@ class AppStateNotifier extends StateNotifier<AppState> {
             await _ensureProfile(res.account!.userId, res.account!.email),
       );
     }
+    await _enableWebPush(res.token!);
     return null;
   }
 
   /// Clears the session only — on-device data stays, tied to the account, and
   /// is restored on the next sign-in.
   Future<void> signOut() async {
+    if (kIsWeb) {
+      final token = await settings.get(SettingsKeys.authToken);
+      if (token != null && token.isNotEmpty) await disableWebPush(token);
+      await settings.set(SettingsKeys.webPushEnabled, '');
+    }
     await _clearSession();
     // Straight back to a local profile rather than a gate: the account's data
     // stays tied to the account and comes back on the next sign-in.
@@ -272,6 +298,8 @@ class AppStateNotifier extends StateNotifier<AppState> {
       (pairCode == null || pairCode.isEmpty) ? null : pairCode,
     );
     if (!deleted) return false;
+
+    if (kIsWeb) await settings.set(SettingsKeys.webPushEnabled, '');
 
     final userId =
         int.tryParse(await settings.get(SettingsKeys.accountUserId) ?? '') ?? 0;

@@ -264,7 +264,9 @@ class NotificationScheduler {
   /// whether to warn, because silently doing nothing is how users end up with
   /// medications and no reminders.
   Future<bool> syncReminders(int patientId, Translations t) async {
-    if (kIsWeb) return false;
+    // On the web the server pushes at dose times instead (see web_push.dart),
+    // so "are reminders on?" means "is this browser subscribed?".
+    if (kIsWeb) return settings.getBool(SettingsKeys.webPushEnabled, false);
     if (!await hasPermission()) return false;
     await _ensureTimezone();
     await _plugin.cancelAll();

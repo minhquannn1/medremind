@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { doctorRouter } from './doctor-routes.js';
 import { patientRouter } from './patient-routes.js';
+import { startPushScheduler } from './push.js';
 import {
   securityHeaders,
   corsMiddleware,
@@ -63,17 +64,13 @@ app.use('/api', patientRouter);
 app.use(
   express.static(join(__dirname, 'webapp'), {
     index: 'index.html',
-    setHeaders: (res, path) => {
-      if (
-        path.endsWith('index.html') ||
-        path.endsWith('flutter_service_worker.js') ||
-        path.endsWith('flutter_bootstrap.js') ||
-        path.endsWith('version.json')
-      ) {
-        res.setHeader('Cache-Control', 'no-cache');
-      } else {
-        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
-      }
+    setHeaders: (res) => {
+      // Flutter web output is NOT content-hashed (main.dart.js keeps its name
+      // across builds), so nothing here may be served immutable — that pinned
+      // browsers to a stale bundle after a deploy. no-cache still allows
+      // conditional revalidation (ETag/304), and Flutter's own service worker
+      // handles offline caching with its hash manifest.
+      res.setHeader('Cache-Control', 'no-cache');
     },
   }),
 );
@@ -350,6 +347,7 @@ app.use((err, _req, res, _next) => {
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Medoly scan API listening on http://0.0.0.0:${PORT}`);
+  startPushScheduler();
   console.log(`Model: ${MODEL}`);
   console.log(`Health: http://localhost:${PORT}/health`);
 });
