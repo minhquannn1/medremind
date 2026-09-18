@@ -80,16 +80,26 @@ class _TabsShellState extends ConsumerState<TabsShell> {
   }
 
   Widget _shell(Translations t) {
+    // Signing in (or out) mid-session swaps the active profile, but each tab's
+    // view model captured its patientId when the tab was first built — so the
+    // screens kept showing the old profile's data until a full restart. Keying
+    // the stack on the patient rebuilds every tab against the new profile.
+    final patientId =
+        ref.watch(appStateProvider.select((s) => s.activePatientId));
+
     return Scaffold(
       backgroundColor: AppColors.canvas,
-      body: IndexedStack(
-        index: _index,
-        children: const [
-          HomeScreen(),
-          PrescriptionsScreen(),
-          ScheduleScreen(),
-          ProfileScreen(),
-        ],
+      body: KeyedSubtree(
+        key: ValueKey('tabs-$patientId'),
+        child: IndexedStack(
+          index: _index,
+          children: const [
+            HomeScreen(),
+            PrescriptionsScreen(),
+            ScheduleScreen(),
+            ProfileScreen(),
+          ],
+        ),
       ),
       // Colours, height, indicator and label styles all come from
       // navigationBarTheme so the bar stays token-driven.
