@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,7 +8,9 @@ import 'package:medremind/ui/core/components/app_text.dart';
 import 'package:medremind/ui/core/components/controls.dart';
 import 'package:medremind/ui/core/components/layout.dart';
 import 'package:medremind/ui/features/doctor/views/doctor_screen.dart';
+import 'package:medremind/data/repositories/settings_repository.dart';
 import 'package:medremind/ui/features/settings/view_models/settings_view_model.dart';
+import 'package:medremind/ui/features/settings/view_models/web_push_view_model.dart';
 import 'package:medremind/data/services/links.dart';
 import 'package:medremind/ui/core/i18n/app_localizations.dart';
 import 'package:medremind/ui/core/app_state.dart';
@@ -23,6 +26,12 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
+  late final WebPushViewModel _webPush = WebPushViewModel(
+    readToken: () =>
+        ref.read(settingsRepositoryProvider).get(SettingsKeys.authToken),
+    lang: languageCode(ref.read(appStateProvider).language),
+  );
+
   late final SettingsViewModel _vm = SettingsViewModel(
     applyReminderPrefs: () {
       final app = ref.read(appStateProvider);
@@ -37,12 +46,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   void initState() {
     super.initState();
+    if (kIsWeb) _webPush.refresh();
     _vm.load();
   }
 
   @override
   void dispose() {
     _vm.dispose();
+    _webPush.dispose();
     super.dispose();
   }
 
@@ -247,6 +258,67 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
         ),
         const SizedBox(height: Spacing.lg),
+
+        // Web only: whether THIS browser gets pushed dose reminders, with a
+        // subscribe action and a real test push. Signed-in only — the server
+        // reads the schedule from the account's backup.
+        if (kIsWeb && app.account != null) ...[
+          ListenableBuilder(
+            listenable: _webPush,
+            builder: (context, _) => AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(children: [
+                    const Icon(Icons.notifications_active_outlined,
+                        color: AppColors.primary, size: 20),
+                    const SizedBox(width: Spacing.sm),
+                    Expanded(
+                        child: AppText(t.t('settings.webPush'),
+                            variant: TextVariant.bodyStrong)),
+                  ]),
+                  const SizedBox(height: Spacing.sm),
+                  AppText(
+                    _webPush.count == null || _webPush.count == 0
+                        ? t.t('settings.webPushNone')
+                        : t.t('settings.webPushCount',
+                            params: {'count': '${_webPush.count}'}),
+                    variant: TextVariant.caption,
+                    color: TextColorKey.textMuted,
+                  ),
+                  if (_webPush.messageKey != null) ...[
+                    const SizedBox(height: Spacing.sm),
+                    AppText(t.t(_webPush.messageKey!),
+                        variant: TextVariant.caption,
+                        color: TextColorKey.primary),
+                  ],
+                  const SizedBox(height: Spacing.md),
+                  Row(children: [
+                    Expanded(
+                      child: AppButton(
+                        label: t.t('settings.webPushEnableHere'),
+                        size: ButtonSize.sm,
+                        loading: _webPush.busy,
+                        onPressed: _webPush.enableHere,
+                      ),
+                    ),
+                    const SizedBox(width: Spacing.md),
+                    Expanded(
+                      child: AppButton(
+                        label: t.t('settings.webPushSendTest'),
+                        variant: ButtonVariant.secondary,
+                        size: ButtonSize.sm,
+                        disabled: _webPush.busy,
+                        onPressed: _webPush.sendTest,
+                      ),
+                    ),
+                  ]),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: Spacing.lg),
+        ],
 
         // Doctor monitoring — optional, pairing-code based, disconnectable.
         AppCard(

@@ -9,8 +9,8 @@ self.addEventListener('push', (event) => {
     self.registration.showNotification(data.title, {
       body: data.body,
       tag: data.tag,
-      icon: 'icons/Icon-192.png',
-      badge: 'icons/Icon-192.png',
+      icon: '/icons/Icon-192.png',
+      badge: '/icons/Icon-192.png',
       renotify: true,
     }),
   );

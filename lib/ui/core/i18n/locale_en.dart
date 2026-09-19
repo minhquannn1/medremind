@@ -356,6 +356,21 @@ const Map<String, String> localeEn = {
   'settings.reminderSound': 'Reminder sound',
   'settings.reminderVibration': 'Reminder vibration',
   'settings.about': 'About',
+  'settings.webPush': 'Reminders in this browser',
+  'settings.webPushCount': 'Enabled on {{count}} device(s)',
+  'settings.webPushNone':
+      'No device receives reminders yet. Tap "Enable on this device" and allow notifications.',
+  'settings.webPushEnableHere': 'Enable on this device',
+  'settings.webPushSendTest': 'Send a test notification',
+  'settings.webPushEnabled': 'Enabled — tap "Send a test notification" to check.',
+  'settings.webPushDenied':
+      'The browser is blocking notifications. Allow Notifications in the site settings and try again.',
+  'settings.webPushUnsupported':
+      'This browser does not support push. On iPhone, add Medoly to the Home Screen and open it from there.',
+  'settings.webPushTestSent':
+      'Sent! If nothing appeared, check Focus mode / system notification settings.',
+  'settings.webPushNoDevices': 'No subscribed device to send to.',
+  'settings.webPushFailed': 'Could not send. Check your connection and try again.',
   'settings.privacyPolicy': 'Privacy policy',
   'settings.terms': 'Terms of service',
   'settings.support': 'Support & contact',

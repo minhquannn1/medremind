@@ -353,6 +353,21 @@ const Map<String, String> localeVi = {
   'settings.reminderSound': 'Âm báo khi nhắc',
   'settings.reminderVibration': 'Rung khi nhắc',
   'settings.about': 'Giới thiệu',
+  'settings.webPush': 'Nhắc thuốc trên trình duyệt này',
+  'settings.webPushCount': 'Đang bật trên {{count}} thiết bị',
+  'settings.webPushNone':
+      'Chưa thiết bị nào nhận nhắc thuốc. Bấm "Bật trên máy này" và cho phép thông báo.',
+  'settings.webPushEnableHere': 'Bật trên máy này',
+  'settings.webPushSendTest': 'Gửi thông báo thử',
+  'settings.webPushEnabled': 'Đã bật — bấm "Gửi thông báo thử" để kiểm tra.',
+  'settings.webPushDenied':
+      'Trình duyệt đang chặn thông báo. Mở cài đặt trang web và cho phép Notifications rồi thử lại.',
+  'settings.webPushUnsupported':
+      'Trình duyệt này không hỗ trợ thông báo đẩy. Trên iPhone, hãy thêm Medoly vào màn hình chính rồi mở từ đó.',
+  'settings.webPushTestSent':
+      'Đã gửi! Nếu không thấy thông báo, kiểm tra chế độ tập trung / cài đặt thông báo của máy.',
+  'settings.webPushNoDevices': 'Chưa có thiết bị nào đăng ký để gửi.',
+  'settings.webPushFailed': 'Không gửi được. Kiểm tra mạng rồi thử lại.',
   'settings.privacyPolicy': 'Chính sách quyền riêng tư',
   'settings.terms': 'Điều khoản sử dụng',
   'settings.support': 'Hỗ trợ & liên hệ',

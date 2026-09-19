@@ -6,6 +6,8 @@ import {
   saveSubscription,
   deleteSubscription,
   deleteSubscriptionsForAccount,
+  subscriptionStatus,
+  sendTestNotification,
 } from './push.js';
 import { hashPassword, verifyPassword, signToken, requirePatient } from './auth.js';
 
@@ -100,6 +102,16 @@ patientRouter.post('/push/subscribe', requirePatient, (req, res) => {
   );
   if (!saved) return res.status(400).json({ ok: false, error: 'bad_subscription' });
   return res.json({ ok: true });
+});
+
+patientRouter.get('/push/status', requirePatient, (req, res) => {
+  res.json({ ok: true, ...subscriptionStatus(req.accountId) });
+});
+
+patientRouter.post('/push/test', requirePatient, async (req, res) => {
+  const lang = (req.body || {}).lang === 'en' ? 'en' : 'vi';
+  const result = await sendTestNotification(req.accountId, lang);
+  res.json({ ok: true, ...result });
 });
 
 patientRouter.delete('/push/subscribe', requirePatient, (req, res) => {

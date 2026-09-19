@@ -116,13 +116,15 @@ const TEXT = {
 };
 
 // Once-per-day dedupe, in memory: a redeploy may re-send at most one dose,
-// which is preferable to a missed one.
+// which is preferable to a missed one. Values are timestamps so cleanup can
+// age entries out without parsing the local-date segment of the key.
 const sent = new Map();
+const SENT_TTL_MS = 48 * 60 * 60 * 1000;
 
 export async function tick(now = new Date()) {
-  // Drop yesterday's dedupe keys so the map cannot grow without bound.
-  const today = new Date(now).toISOString().slice(0, 10);
-  for (const key of sent.keys()) if (!key.endsWith(today) && !key.includes(today)) sent.delete(key);
+  for (const [key, at] of sent) {
+    if (now.getTime() - at > SENT_TTL_MS) sent.delete(key);
+  }
 
   const subs = db.prepare(
     `SELECT s.endpoint, s.subscription, s.timezone, s.lang, b.data
@@ -138,7 +140,7 @@ export async function tick(now = new Date()) {
     for (const med of dueMedications(sub.data, hhmm)) {
       const key = `${sub.endpoint}|${med.name}|${med.time}|${dateKey}`;
       if (sent.has(key)) continue;
-      sent.set(key, true);
+      sent.set(key, now.getTime());
 
       const text = (TEXT[sub.lang] || TEXT.vi)(med.name);
       try {
@@ -147,7 +149,9 @@ export async function tick(now = new Date()) {
           JSON.stringify({ ...text, tag: `dose-${med.name}-${med.time}` }),
           { TTL: 15 * 60 },
         );
+        console.log(`[push] sent "${med.name}" ${med.time} (${sub.timezone})`);
       } catch (err) {
+        console.error(`[push] send failed (${err?.statusCode}): ${err?.message}`);
         // 404/410 mean the browser revoked the subscription — clean it up.
         if (err && (err.statusCode === 404 || err.statusCode === 410)) {
           db.prepare('DELETE FROM push_subscriptions WHERE endpoint = ?').run(sub.endpoint);
@@ -155,6 +159,46 @@ export async function tick(now = new Date()) {
       }
     }
   }
+}
+
+/** How many browsers this account has subscribed, for the settings screen. */
+export function subscriptionStatus(accountId) {
+  const rows = db.prepare(
+    'SELECT timezone, created_at FROM push_subscriptions WHERE account_id = ?',
+  ).all(accountId);
+  return { count: rows.length, timezones: rows.map((r) => r.timezone) };
+}
+
+/** Immediate test push to every browser this account subscribed. The one
+ *  link in the chain no automated test can cover is the push service
+ *  actually delivering to a real device — this lets the user (and support)
+ *  close that loop in one tap. */
+export async function sendTestNotification(accountId, lang) {
+  const subs = db.prepare(
+    'SELECT endpoint, subscription FROM push_subscriptions WHERE account_id = ?',
+  ).all(accountId);
+
+  const text = lang === 'en'
+    ? { title: 'Medoly test', body: 'Reminders reach this device. You are set.' }
+    : { title: 'Medoly thử nghiệm', body: 'Thông báo đã đến máy này. Mọi thứ sẵn sàng.' };
+
+  let delivered = 0;
+  for (const sub of subs) {
+    try {
+      await webpush.sendNotification(
+        JSON.parse(sub.subscription),
+        JSON.stringify({ ...text, tag: 'medoly-test' }),
+        { TTL: 60 },
+      );
+      delivered += 1;
+    } catch (err) {
+      console.error(`[push] test send failed (${err?.statusCode}): ${err?.message}`);
+      if (err && (err.statusCode === 404 || err.statusCode === 410)) {
+        db.prepare('DELETE FROM push_subscriptions WHERE endpoint = ?').run(sub.endpoint);
+      }
+    }
+  }
+  return { subscriptions: subs.length, delivered };
 }
 
 export function startPushScheduler() {
