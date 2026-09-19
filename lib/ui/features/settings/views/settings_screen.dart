@@ -262,6 +262,37 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         // Web only: whether THIS browser gets pushed dose reminders, with a
         // subscribe action and a real test push. Signed-in only — the server
         // reads the schedule from the account's backup.
+        if (kIsWeb && app.account == null) ...[
+          // A guest sees why there are no reminders and where the switch is,
+          // instead of nothing at all — being signed out looked like a bug.
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [
+                  const Icon(Icons.notifications_active_outlined,
+                      color: AppColors.primary, size: 20),
+                  const SizedBox(width: Spacing.sm),
+                  Expanded(
+                      child: AppText(t.t('settings.webPush'),
+                          variant: TextVariant.bodyStrong)),
+                ]),
+                const SizedBox(height: Spacing.sm),
+                AppText(t.t('settings.webPushSignIn'),
+                    variant: TextVariant.caption,
+                    color: TextColorKey.textMuted),
+                const SizedBox(height: Spacing.md),
+                AppButton(
+                  label: t.t('auth.signIn'),
+                  size: ButtonSize.sm,
+                  onPressed: () => context.push('/auth'),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: Spacing.lg),
+        ],
+
         if (kIsWeb && app.account != null) ...[
           ListenableBuilder(
             listenable: _webPush,

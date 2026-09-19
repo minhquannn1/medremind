@@ -314,6 +314,8 @@ const Map<String, String> localeEn = {
   'permissions.photosBody':
       'Medoly needs your photo library so you can pick a prescription photo. Enable it in Settings → Medoly → Photos.',
   'permissions.notificationsTitle': 'Notifications are off',
+  'permissions.webNotificationsBody':
+      'Saved, but this device gets no reminders yet. Sign in, then open Settings → "Reminders in this browser" → Enable on this device.',
   'permissions.notificationsBody':
       'Your prescription was saved, but you will NOT get dose reminders. Enable them in Settings → Medoly → Notifications.',
 
@@ -357,6 +359,8 @@ const Map<String, String> localeEn = {
   'settings.reminderVibration': 'Reminder vibration',
   'settings.about': 'About',
   'settings.webPush': 'Reminders in this browser',
+  'settings.webPushSignIn':
+      'On the web, reminders are sent by the server to your browser — sign in so it knows your schedule, then come back here to enable them.',
   'settings.webPushCount': 'Enabled on {{count}} device(s)',
   'settings.webPushNone':
       'No device receives reminders yet. Tap "Enable on this device" and allow notifications.',

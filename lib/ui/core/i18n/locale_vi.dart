@@ -313,6 +313,8 @@ const Map<String, String> localeVi = {
   'permissions.photosBody':
       'Medoly cần truy cập thư viện ảnh để bạn chọn ảnh đơn thuốc. Vào Cài đặt → Medoly → Ảnh để bật.',
   'permissions.notificationsTitle': 'Thông báo đang tắt',
+  'permissions.webNotificationsBody':
+      'Đơn đã lưu, nhưng máy này chưa nhận nhắc thuốc. Đăng nhập, rồi vào Cài đặt → "Nhắc thuốc trên trình duyệt này" → Bật trên máy này.',
   'permissions.notificationsBody':
       'Đơn thuốc đã được lưu, nhưng bạn sẽ KHÔNG nhận được nhắc nhở uống thuốc. Vào Cài đặt → Medoly → Thông báo để bật.',
 
@@ -354,6 +356,8 @@ const Map<String, String> localeVi = {
   'settings.reminderVibration': 'Rung khi nhắc',
   'settings.about': 'Giới thiệu',
   'settings.webPush': 'Nhắc thuốc trên trình duyệt này',
+  'settings.webPushSignIn':
+      'Trên web, nhắc thuốc do máy chủ gửi tới trình duyệt của bạn — cần đăng nhập để máy chủ biết lịch thuốc. Đăng nhập xong, quay lại đây để bật.',
   'settings.webPushCount': 'Đang bật trên {{count}} thiết bị',
   'settings.webPushNone':
       'Chưa thiết bị nào nhận nhắc thuốc. Bấm "Bật trên máy này" và cho phép thông báo.',

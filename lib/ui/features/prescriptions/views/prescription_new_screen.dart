@@ -1,4 +1,7 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+
+import 'package:medremind/data/repositories/settings_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:medremind/ui/core/components/app_button.dart';
@@ -95,8 +98,15 @@ class _PrescriptionNewScreenState
     // New doses need reminders, and the cloud copy needs refreshing.
     final patientId = ref.read(appStateProvider).activePatientId;
     final scheduler = ref.read(notificationSchedulerProvider);
-    final granted = await scheduler.requestPermission();
-    if (granted && patientId != null) {
+    // On the web, reminders are pushed by the server to subscribed browsers;
+    // "granted" means this account has that switched on, and the guidance for
+    // the missing case is entirely different from the iOS/Android one.
+    final granted = kIsWeb
+        ? await ref
+            .read(settingsRepositoryProvider)
+            .getBool(SettingsKeys.webPushEnabled, false)
+        : await scheduler.requestPermission();
+    if (granted && !kIsWeb && patientId != null) {
       await scheduler.syncReminders(patientId, t);
     }
     if (patientId != null) ref.read(backupSyncProvider).queueBackup(patientId);
@@ -106,8 +116,10 @@ class _PrescriptionNewScreenState
       // Saved, but alerts will not fire — say so rather than letting the user
       // assume they are covered.
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(t.t('permissions.notificationsBody')),
-        duration: const Duration(seconds: 6),
+        content: Text(t.t(kIsWeb
+            ? 'permissions.webNotificationsBody'
+            : 'permissions.notificationsBody')),
+        duration: const Duration(seconds: 8),
       ));
     }
     Navigator.of(context).pop(true);
