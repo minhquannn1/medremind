@@ -58,6 +58,8 @@ const Map<String, String> localeVi = {
   'auth.signIn': 'Đăng nhập hoặc tạo tài khoản',
   'auth.localOnlyNote':
       'Bạn đang dùng không cần tài khoản. Dữ liệu chỉ nằm trên máy này.',
+  'auth.detailsOptionalHint':
+      'Không bắt buộc — giúp cá nhân hoá hồ sơ, bạn có thể bổ sung sau.',
   'auth.haveAccount': 'Đã có tài khoản?',
   'auth.errorEmailTaken': 'Email này đã được đăng ký.',
   'auth.errorInvalidCredentials': 'Sai email hoặc mật khẩu.',

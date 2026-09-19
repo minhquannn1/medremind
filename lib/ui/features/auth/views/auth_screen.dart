@@ -6,6 +6,8 @@ import 'package:medremind/data/services/links.dart';
 import 'package:medremind/ui/core/app_state.dart';
 import 'package:medremind/ui/core/components/app_button.dart';
 import 'package:medremind/ui/core/components/app_input.dart';
+import 'package:medremind/ui/core/components/controls.dart';
+import 'package:medremind/ui/core/components/fields.dart';
 import 'package:medremind/ui/core/components/app_text.dart';
 import 'package:medremind/ui/core/components/layout.dart';
 import 'package:medremind/ui/core/i18n/app_localizations.dart';
@@ -25,6 +27,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
   final _password = TextEditingController();
   final _confirmPassword = TextEditingController();
   final _name = TextEditingController();
+  final _height = TextEditingController();
+  final _weight = TextEditingController();
+  String? _dob;
+  String? _gender;
 
   late final AuthViewModel _vm = AuthViewModel(
     signIn: ref.read(appStateProvider.notifier).signIn,
@@ -37,6 +43,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
     _password.dispose();
     _confirmPassword.dispose();
     _name.dispose();
+    _height.dispose();
+    _weight.dispose();
     _vm.dispose();
     super.dispose();
   }
@@ -61,7 +69,17 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
       confirmPassword: _confirmPassword.text,
       name: _name.text,
     );
-    if (ok && mounted) context.go('/home');
+    if (!ok || !mounted) return;
+    if (_vm.signUpMode) {
+      // Optional details from the sign-up form; blanks are simply skipped.
+      await ref.read(appStateProvider.notifier).saveProfileDetails(
+            dob: _dob,
+            gender: _gender,
+            heightCm: _height.text,
+            weightKg: _weight.text,
+          );
+    }
+    if (mounted) context.go('/home');
   }
 
   @override
@@ -157,6 +175,53 @@ class _AuthScreenState extends ConsumerState<AuthScreen> {
           ),
 
         if (_vm.signUpMode) ...[
+          const SizedBox(height: Spacing.sm),
+          AppText(t.t('profile.anthropometry'),
+              variant: TextVariant.bodyStrong),
+          const SizedBox(height: Spacing.xs),
+          AppText(t.t('auth.detailsOptionalHint'),
+              variant: TextVariant.caption, color: TextColorKey.textFaint),
+          const SizedBox(height: Spacing.md),
+          DateField(
+            label: t.t('profile.dob'),
+            value: _dob,
+            maximumDate: DateTime.now(),
+            onChanged: (v) => setState(() => _dob = v),
+          ),
+          ChipSelect<String>(
+            label: t.t('profile.gender'),
+            value: _gender,
+            options: [
+              ChipOption(value: 'male', label: t.t('profile.genders.male')),
+              ChipOption(
+                  value: 'female', label: t.t('profile.genders.female')),
+              ChipOption(value: 'other', label: t.t('profile.genders.other')),
+            ],
+            onChanged: (v) => setState(() => _gender = v),
+          ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: AppInput(
+                  controller: _height,
+                  label: t.t('profile.height'),
+                  keyboardType: TextInputType.number,
+                  suffix: 'cm',
+                ),
+              ),
+              const SizedBox(width: Spacing.md),
+              Expanded(
+                child: AppInput(
+                  controller: _weight,
+                  label: t.t('profile.weight'),
+                  keyboardType: TextInputType.number,
+                  suffix: 'kg',
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: Spacing.sm),
           _PolicyConsent(
             accepted: _vm.acceptedPolicies,
             onChanged: _vm.setAcceptedPolicies,

@@ -131,6 +131,16 @@ class AppStateNotifier extends StateNotifier<AppState> {
     unawaited(_enableWebPush(token, onlyIfGranted: true));
   }
 
+  /// The registration name belongs on the profile too: the adopted guest
+  /// profile is nameless, and without this the name typed at sign-up only
+  /// ever existed server-side — Home kept greeting nobody.
+  Future<void> _adoptAccountName(int patientId, String name) async {
+    if (name.trim().isEmpty) return;
+    final patient = await patients.getPatient(patientId);
+    if (patient == null || patient.fullName.trim().isNotEmpty) return;
+    await patients.updatePatient(patientId, {'full_name': name.trim()});
+  }
+
   /// The id of the profile everything hangs off, creating an empty one if
   /// this device has none.
   ///
@@ -226,12 +236,16 @@ class AppStateNotifier extends StateNotifier<AppState> {
         res.account!.email,
       );
 
+      final patientId = patient?.id ??
+          await _ensureProfile(res.account!.userId, res.account!.email);
+      // A claimed guest profile is nameless; give it the account's name.
+      await _adoptAccountName(patientId, res.account!.name);
+
       state = state.copyWith(
         authed: true,
         account: res.account,
         onboarded: true,
-        activePatientId: patient?.id ??
-            await _ensureProfile(res.account!.userId, res.account!.email),
+        activePatientId: patientId,
       );
     } catch (_) {
       state = state.copyWith(
@@ -257,12 +271,15 @@ class AppStateNotifier extends StateNotifier<AppState> {
       await patients.claimOrphanPatient(
           res.account!.userId, res.account!.email);
 
+      final patientId =
+          await _ensureProfile(res.account!.userId, res.account!.email);
+      await _adoptAccountName(patientId, res.account!.name);
+
       state = state.copyWith(
         authed: true,
         account: res.account,
         onboarded: true,
-        activePatientId:
-            await _ensureProfile(res.account!.userId, res.account!.email),
+        activePatientId: patientId,
       );
     } catch (_) {
       // Same reasoning as signIn: the account now exists on the server, so a
@@ -338,6 +355,30 @@ class AppStateNotifier extends StateNotifier<AppState> {
 
   Future<void> completeOnboarding(int patientId) async {
     state = state.copyWith(onboarded: true, activePatientId: patientId);
+  }
+
+  /// Optional details from the sign-up form. Everything may be blank —
+  /// requiring them would walk straight back into Guideline 5.1.1(v).
+  Future<void> saveProfileDetails({
+    String? dob,
+    String? gender,
+    String heightCm = '',
+    String weightKg = '',
+  }) async {
+    final id = state.activePatientId;
+    if (id == null) return;
+
+    final values = <String, Object?>{
+      if (dob != null && dob.isNotEmpty) 'dob': dob,
+      if (gender != null && gender.isNotEmpty) 'gender': gender,
+      if (double.tryParse(heightCm.trim()) != null)
+        'height_cm': double.parse(heightCm.trim()),
+      if (double.tryParse(weightKg.trim()) != null)
+        'weight_kg': double.parse(weightKg.trim()),
+    };
+    if (values.isEmpty) return;
+    await patients.updatePatient(id, values);
+    backupSync.queueBackup(id);
   }
 
   Future<void> setLanguage(AppLanguage lang) async {

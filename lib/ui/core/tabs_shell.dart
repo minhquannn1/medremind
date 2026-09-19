@@ -86,11 +86,16 @@ class _TabsShellState extends ConsumerState<TabsShell> {
     // the stack on the patient rebuilds every tab against the new profile.
     final patientId =
         ref.watch(appStateProvider.select((s) => s.activePatientId));
+    // The account id is part of the key too: signing up adopts the guest
+    // profile, so the patient id alone does not change — but the profile's
+    // name just did, and the tabs must repaint to show it.
+    final accountId =
+        ref.watch(appStateProvider.select((s) => s.account?.userId));
 
     return Scaffold(
       backgroundColor: AppColors.canvas,
       body: KeyedSubtree(
-        key: ValueKey('tabs-$patientId'),
+        key: ValueKey('tabs-$patientId-$accountId'),
         child: IndexedStack(
           index: _index,
           children: const [

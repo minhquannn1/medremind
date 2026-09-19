@@ -1,4 +1,8 @@
+import 'dart:convert';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'package:medremind/data/repositories/backup_repository.dart';
@@ -86,6 +90,55 @@ void main() {
     expect(notifier.state.onboarded, isTrue,
         reason: 'the app opens on the local profile with no account');
     expect(notifier.state.activePatientId, id);
+  });
+
+  test('signing up writes the registration name onto the guest profile',
+      () async {
+    // The adopted guest profile is nameless; before this, the name typed at
+    // sign-up existed only server-side and Home kept greeting nobody.
+    final first = build();
+    await first.load(); // creates the nameless guest profile
+
+    final notifier = AppStateNotifier(
+      settings: const SettingsRepository(),
+      patients: patients,
+      backups: const BackupRepository(),
+      auth: PatientAuthApi(
+        client: MockClient((req) async => http.Response(
+            jsonEncode({
+              'ok': true,
+              'token': 'tk',
+              'userId': 9,
+              'name': 'Trần Thị B',
+            }),
+            200,
+            // Without an explicit charset, http.Response encodes the body as
+            // Latin-1 and the Vietnamese name cannot be represented.
+            headers: {'content-type': 'application/json; charset=utf-8'})),
+      ),
+      backupSync: BackupSyncApi(),
+      notifications: NotificationScheduler(),
+    );
+    final err = await notifier.signUp('b@t.vn', 'Password!1', 'Trần Thị B');
+
+    expect(err, isNull);
+    final p = await patients.getPatient(notifier.state.activePatientId!);
+    expect(p!.fullName, 'Trần Thị B');
+    expect(p.accountUserId, 9, reason: 'the guest profile was adopted');
+  });
+
+  test('saveProfileDetails writes only the fields that were given', () async {
+    final notifier = build();
+    await notifier.load();
+
+    await notifier.saveProfileDetails(
+        dob: '1990-05-20', gender: 'male', heightCm: '170', weightKg: '');
+
+    final p = await patients.getPatient(notifier.state.activePatientId!);
+    expect(p!.dob, '1990-05-20');
+    expect(p.gender, 'male');
+    expect(p.heightCm, 170);
+    expect(p.weightKg, isNull, reason: 'blank fields stay untouched');
   });
 
   test("a signed-out launch does not open someone's account profile",

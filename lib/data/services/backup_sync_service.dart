@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+import 'package:medremind/data/services/doctor_sync_service.dart';
 import 'package:medremind/data/repositories/backup_repository.dart';
 import 'package:medremind/data/repositories/settings_repository.dart';
 import 'package:medremind/data/services/api_config.dart';
@@ -51,11 +52,16 @@ class BackupSyncApi {
 
   /// Schedules a backup shortly after the current burst of data changes.
   /// Fire-and-forget: failures are silent and retried on the next change.
+  ///
+  /// The doctor snapshot rides the same debounce: every place that changes
+  /// data already calls this, so a paired doctor stays current without each
+  /// screen knowing the feature exists. syncToDoctor no-ops when unpaired.
   void queueBackup(int patientId) {
     _pending?.cancel();
     _pending = Timer(_debounce, () {
       _pending = null;
       unawaited(backupNow(patientId));
+      unawaited(const DoctorSyncApi().syncToDoctor(patientId));
     });
   }
 

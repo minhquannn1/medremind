@@ -58,6 +58,8 @@ const Map<String, String> localeEn = {
   'auth.signIn': 'Sign in or create an account',
   'auth.localOnlyNote':
       'You are using Medoly without an account. Your data stays on this device only.',
+  'auth.detailsOptionalHint':
+      'Optional — personalises your profile; you can add it later.',
   'auth.haveAccount': 'Already have an account?',
   'auth.errorEmailTaken': 'This email is already registered.',
   'auth.errorInvalidCredentials': 'Wrong email or password.',

@@ -6,6 +6,7 @@ import 'package:medremind/ui/core/components/app_card.dart';
 import 'package:medremind/ui/core/components/app_text.dart';
 import 'package:medremind/ui/core/components/controls.dart';
 import 'package:medremind/ui/core/components/layout.dart';
+import 'package:medremind/ui/features/doctor/views/doctor_screen.dart';
 import 'package:medremind/ui/features/settings/view_models/settings_view_model.dart';
 import 'package:medremind/data/services/links.dart';
 import 'package:medremind/ui/core/i18n/app_localizations.dart';
@@ -244,6 +245,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ],
             ],
           ),
+        ),
+        const SizedBox(height: Spacing.lg),
+
+        // Doctor monitoring — optional, pairing-code based, disconnectable.
+        AppCard(
+          onPress: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const DoctorScreen()),
+          ),
+          child: Row(children: [
+            const Icon(Icons.medical_services_outlined,
+                color: AppColors.primary, size: 20),
+            const SizedBox(width: Spacing.md),
+            Expanded(child: AppText(t.t('doctor.title'))),
+            const Icon(Icons.chevron_right, color: AppColors.textMuted),
+          ]),
         ),
         const SizedBox(height: Spacing.lg),
 
