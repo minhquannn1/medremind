@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Medoly · Bảng quản trị</title>
+<style>
+  :root {
+    --teal: #0E7C7B; --teal-soft: #E3F2F1; --coral: #F27059;
+    --ink: #1C2A2A; --muted: #5B6B6B; --faint: #8A9A9A;
+    --bg: #F6F9F9; --surface: #FFFFFF; --border: #E1E9E9;
+    --good: #2E9E5B; --warn: #D98A0B; --bad: #D64545;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg); color: var(--ink); line-height: 1.5; }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 24px 16px 64px; }
+  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 20px; }
+  .logo .dot { width: 34px; height: 34px; border-radius: 10px; background: var(--ink);
+    display: grid; place-items: center; color: #fff; font-size: 16px; }
+  .logo .tag { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase;
+    color: var(--coral); border: 1px solid var(--coral); border-radius: 6px; padding: 1px 6px; }
+  button { font: inherit; cursor: pointer; border: none; border-radius: 10px; padding: 10px 16px;
+    background: var(--teal); color: #fff; font-weight: 600; transition: opacity .15s; }
+  button:hover { opacity: .9; }
+  button.ghost { background: transparent; color: var(--teal); padding: 6px 10px; }
+  button.danger { background: transparent; color: var(--bad); padding: 4px 8px; font-size: 13px; }
+  input { font: inherit; width: 100%; padding: 11px 13px; border: 1px solid var(--border);
+    border-radius: 10px; background: var(--surface); margin-top: 6px; }
+  input:focus { outline: 2px solid var(--teal-soft); border-color: var(--teal); }
+  label { display: block; font-size: 13px; color: var(--muted); margin-top: 14px; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+    padding: 20px; margin-bottom: 16px; }
+  .auth { max-width: 380px; margin: 8vh auto 0; }
+  .auth h1 { font-size: 22px; margin-bottom: 4px; }
+  .auth p.sub { color: var(--muted); margin-bottom: 20px; font-size: 14px; }
+  .auth button { width: 100%; margin-top: 20px; }
+  .err { color: var(--bad); font-size: 14px; margin-top: 12px; min-height: 18px; }
+  .hint { font-size: 13px; color: var(--muted); }
+
+  .hero { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-end;
+    padding: 26px 24px; margin-bottom: 16px; background: var(--ink); border-radius: 18px; color: #fff; }
+  .hero .big { font-size: 54px; font-weight: 800; line-height: 1; letter-spacing: -.02em; }
+  .hero .big-label { font-size: 13px; color: #A9BDBD; margin-top: 6px; }
+  .hero .side { display: flex; gap: 26px; margin-left: auto; flex-wrap: wrap; }
+  .hero .side div { text-align: right; }
+  .hero .side b { display: block; font-size: 26px; font-weight: 700; }
+  .hero .side span { font-size: 12px; color: #A9BDBD; }
+
+  h2 { font-size: 13px; letter-spacing: .07em; text-transform: uppercase; color: var(--faint);
+    margin: 26px 0 10px; font-weight: 700; }
+  .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+  .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; }
+  .stat b { display: block; font-size: 24px; font-weight: 700; }
+  .stat span { font-size: 12.5px; color: var(--muted); }
+  .stat.accent b { color: var(--teal); }
+
+  .note { background: var(--teal-soft); border-radius: 12px; padding: 12px 14px; font-size: 13px;
+    color: #2A4A49; margin-bottom: 16px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; font-size: 12px; color: var(--faint); font-weight: 600;
+    text-transform: uppercase; letter-spacing: .05em; padding-bottom: 8px; }
+  td { padding: 11px 0; border-top: 1px solid var(--border); }
+  td.num { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .muted { color: var(--muted); }
+  @media (max-width: 560px) {
+    .hero .side { margin-left: 0; }
+    th.hide, td.hide { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div id="authView" class="wrap">
+  <div class="auth card">
+    <h1>Bảng quản trị Medoly</h1>
+    <p class="sub">Chỉ dành cho quản trị viên hệ thống.</p>
+    <label>Mật khẩu quản trị
+      <input id="pw" type="password" placeholder="••••••••" autocomplete="current-password" />
+    </label>
+    <button id="authBtn" onclick="login()">Đăng nhập</button>
+    <div class="err" id="authErr"></div>
+  </div>
+</div>
+
+<div id="mainView" class="wrap" hidden>
+  <header>
+    <div class="logo"><span class="dot">✛</span> Medoly <span class="tag">Admin</span></div>
+    <div>
+      <button class="ghost" onclick="load()">Làm mới</button>
+      <button class="ghost" onclick="logout()">Đăng xuất</button>
+    </div>
+  </header>
+
+  <div class="note">
+    Số liệu chỉ tính người <b>đã đăng ký tài khoản</b>. Medoly chạy được hoàn toàn
+    trên máy không cần tài khoản, nên người dùng ẩn danh không xuất hiện ở đây —
+    con số thật luôn cao hơn.
+  </div>
+
+  <div class="hero">
+    <div>
+      <div class="big" id="hActive">–</div>
+      <div class="big-label">hoạt động trong 30 ngày</div>
+    </div>
+    <div class="side">
+      <div><b id="hAccounts">–</b><span>tài khoản</span></div>
+      <div><b id="hData">–</b><span>đã dùng thật</span></div>
+      <div><b id="hAdh">–</b><span>tuân thủ chung</span></div>
+    </div>
+  </div>
+
+  <h2>Người dùng</h2>
+  <div class="grid">
+    <div class="stat accent"><b id="uNew7">–</b><span>mới trong 7 ngày</span></div>
+    <div class="stat"><b id="uNew30">–</b><span>mới trong 30 ngày</span></div>
+    <div class="stat"><b id="uActive7">–</b><span>hoạt động 7 ngày</span></div>
+    <div class="stat"><b id="uDeleted">–</b><span>đã xoá tài khoản</span></div>
+  </div>
+
+  <h2>Mức độ sử dụng</h2>
+  <div class="grid">
+    <div class="stat"><b id="fPres">–</b><span>đơn thuốc</span></div>
+    <div class="stat"><b id="fMeds">–</b><span>loại thuốc</span></div>
+    <div class="stat"><b id="fDoses">–</b><span>liều đã ghi nhận</span></div>
+    <div class="stat"><b id="fTaken">–</b><span>liều đã uống</span></div>
+    <div class="stat"><b id="fMissed">–</b><span>liều bỏ lỡ</span></div>
+    <div class="stat"><b id="fAppt">–</b><span>lịch hẹn</span></div>
+    <div class="stat"><b id="fHasPres">–</b><span>tài khoản có đơn thuốc</span></div>
+  </div>
+
+  <h2>Bác sĩ &amp; thông báo</h2>
+  <div class="grid">
+    <div class="stat"><b id="dDoctors">–</b><span>bác sĩ</span></div>
+    <div class="stat"><b id="dRecords">–</b><span>hồ sơ bác sĩ tạo</span></div>
+    <div class="stat"><b id="dPaired">–</b><span>đã ghép nối</span></div>
+    <div class="stat"><b id="pSubs">–</b><span>trình duyệt nhận nhắc</span></div>
+  </div>
+
+  <h2>Tài khoản gần đây</h2>
+  <div class="card">
+    <table>
+      <thead><tr>
+        <th>Email</th><th class="hide">Tên</th><th>Đăng ký</th>
+        <th class="hide">Đồng bộ cuối</th><th></th>
+      </tr></thead>
+      <tbody id="accRows"></tbody>
+    </table>
+    <div class="hint" id="accEmpty" hidden>Chưa có tài khoản nào.</div>
+  </div>
+
+  <div class="hint" id="stamp"></div>
+</div>
+
+<script>
+var token = sessionStorage.getItem('medolyAdminToken') || '';
+function el(id) { return document.getElementById(id); }
+function n(v) { return (v === null || v === undefined) ? '–' : Number(v).toLocaleString('vi-VN'); }
+
+async function api(path, options) {
+  options = options || {};
+  options.headers = Object.assign(
+    { 'Content-Type': 'application/json' },
+    options.headers || {},
+    token ? { Authorization: 'Bearer ' + token } : {}
+  );
+  var res = await fetch('/api' + path, options);
+  var data = {};
+  try { data = await res.json(); } catch (e) { /* non-JSON error page */ }
+  if (!res.ok) throw new Error(data.error || ('http_' + res.status));
+  return data;
+}
+
+async function login() {
+  el('authErr').textContent = '';
+  el('authBtn').disabled = true;
+  try {
+    var data = await api('/admin/login', {
+      method: 'POST',
+      body: JSON.stringify({ password: el('pw').value })
+    });
+    token = data.token;
+    sessionStorage.setItem('medolyAdminToken', token);
+    show();
+    await load();
+  } catch (err) {
+    el('authErr').textContent =
+      err.message === 'admin_disabled'
+        ? 'Bảng quản trị chưa được bật. Đặt biến môi trường ADMIN_PASSWORD trên máy chủ.'
+        : err.message === 'too_many_requests'
+          ? 'Thử quá nhiều lần. Đợi vài phút rồi thử lại.'
+          : 'Mật khẩu không đúng.';
+  } finally {
+    el('authBtn').disabled = false;
+  }
+}
+
+function logout() {
+  token = '';
+  sessionStorage.removeItem('medolyAdminToken');
+  el('mainView').hidden = true;
+  el('authView').hidden = false;
+}
+
+function show() {
+  el('authView').hidden = true;
+  el('mainView').hidden = false;
+}
+
+function fmtDate(iso) {
+  if (!iso) return '–';
+  var d = new Date(iso);
+  return isNaN(d) ? '–' : d.toLocaleDateString('vi-VN') + ' ' +
+    d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+}
+
+async function load() {
+  try {
+    var s = await api('/admin/stats');
+    el('hActive').textContent = n(s.users.active30d);
+    el('hAccounts').textContent = n(s.users.accounts);
+    el('hData').textContent = n(s.users.withData);
+    el('hAdh').textContent = s.adherence === null ? '–' : s.adherence + '%';
+
+    el('uNew7').textContent = n(s.users.new7d);
+    el('uNew30').textContent = n(s.users.new30d);
+    el('uActive7').textContent = n(s.users.active7d);
+    el('uDeleted').textContent = n(s.users.deleted);
+
+    el('fPres').textContent = n(s.features.prescriptions);
+    el('fMeds').textContent = n(s.features.medications);
+    el('fDoses').textContent = n(s.features.doseLogs);
+    el('fTaken').textContent = n(s.features.dosesTaken);
+    el('fMissed').textContent = n(s.features.dosesMissed);
+    el('fAppt').textContent = n(s.features.appointments);
+    el('fHasPres').textContent = n(s.features.accountsWithPrescription);
+
+    el('dDoctors').textContent = n(s.doctors.total);
+    el('dRecords').textContent = n(s.doctors.patientRecords);
+    el('dPaired').textContent = n(s.doctors.paired);
+    el('pSubs').textContent = n(s.push.subscriptions);
+
+    el('stamp').textContent = 'Cập nhật ' + fmtDate(s.generatedAt);
+
+    var a = await api('/admin/accounts?limit=25');
+    var rows = el('accRows');
+    rows.innerHTML = '';
+    el('accEmpty').hidden = a.accounts.length > 0;
+    a.accounts.forEach(function (acc) {
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>' + acc.email + '</td>' +
+        '<td class="hide muted">' + (acc.name || '–') + '</td>' +
+        '<td class="num">' + fmtDate(acc.createdAt) + '</td>' +
+        '<td class="num hide">' + (acc.lastSync ? fmtDate(acc.lastSync) : 'chưa đồng bộ') + '</td>';
+      var td = document.createElement('td');
+      var btn = document.createElement('button');
+      btn.className = 'danger';
+      btn.textContent = 'Xoá';
+      btn.onclick = function () { removeAccount(acc.id, acc.email); };
+      td.appendChild(btn);
+      tr.appendChild(td);
+      rows.appendChild(tr);
+    });
+  } catch (err) {
+    if (err.message === 'invalid_token' || err.message === 'unauthorized') return logout();
+    alert('Không tải được số liệu: ' + err.message);
+  }
+}
+
+// Deleting asks for the full address, which the table never shows — so this
+// cannot be fired by a mis-click on the wrong row.
+async function removeAccount(id, masked) {
+  var email = prompt(
+    'Xoá vĩnh viễn tài khoản ' + masked + ' và toàn bộ dữ liệu sao lưu.\n' +
+    'Nhập đầy đủ email để xác nhận:'
+  );
+  if (!email) return;
+  try {
+    await api('/admin/accounts/' + id, {
+      method: 'DELETE',
+      body: JSON.stringify({ email: email })
+    });
+    await load();
+  } catch (err) {
+    alert(err.message === 'email_mismatch'
+      ? 'Email không khớp. Không xoá gì cả.'
+      : 'Không xoá được: ' + err.message);
+  }
+}
+
+el('pw').addEventListener('keydown', function (e) { if (e.key === 'Enter') login(); });
+if (token) { show(); load(); }
+</script>
+</body>
+</html>

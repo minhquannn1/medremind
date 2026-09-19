@@ -28,6 +28,24 @@ doctor dashboard, the AI scan proxy, patient auth, cloud backup and the
   handlers; the CSP in `server/security.js` must keep
   `scriptSrcAttr: ["'unsafe-inline'"]` or every button silently stops working.
 
+## Admin console
+
+`/admin` (page) + `/api/admin/*` (API, `server/admin-routes.js`) report
+aggregate usage: accounts, active users, feature totals and overall adherence
+computed by walking `backups`, plus doctor and push counts.
+
+It is **disabled unless `ADMIN_PASSWORD` is set in the environment** — there is
+no default password, and every admin route answers 503 without it. The console
+never displays health data, and account listings mask email addresses; the
+delete action requires the operator to retype the full address.
+
+Adherence there must match the app's own ring: doses with an outcome
+(`taken` + `skipped` + `missed`), excluding `pending`. Counting only
+taken/skipped reports a flattering 100%.
+
+Tests: `cd server && node --test admin.test.mjs` (drives a throwaway server
+over HTTP, covers role confusion and the delete guard).
+
 ## Architecture
 
 Flutter's recommended layering (see the `flutter-apply-architecture-best-practices`

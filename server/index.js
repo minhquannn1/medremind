@@ -4,6 +4,7 @@ import OpenAI from 'openai';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { doctorRouter } from './doctor-routes.js';
+import { adminRouter } from './admin-routes.js';
 import { patientRouter } from './patient-routes.js';
 import { startPushScheduler } from './push.js';
 import {
@@ -47,7 +48,7 @@ app.use(express.json({ limit: '128kb' }));
 
 // Rate limiting per surface (registered before the routes they protect).
 app.use('/api', apiLimiter);
-app.use(['/api/patient/login', '/api/patient/register', '/api/doctor/login', '/api/doctor/register'], authLimiter);
+app.use(['/api/patient/login', '/api/patient/register', '/api/doctor/login', '/api/doctor/register', '/api/admin/login'], authLimiter);
 app.use('/api/pair', pairLimiter);
 app.use('/api/sync', syncLimiter);
 app.use('/api/patient/backup', syncLimiter);
@@ -57,6 +58,7 @@ app.use(['/api/scan-prescription', '/api/explain-medication'], aiLimiter);
 app.use('/api', doctorRouter);
 // Patient app auth (sign-up / sign-in).
 app.use('/api', patientRouter);
+app.use('/api', adminRouter);
 // The patient app, compiled from the same Flutter code the stores get and
 // installable as a PWA. It owns the root; doctors keep /dashboard. Hashed
 // Flutter assets can be cached hard, but index.html and the service worker
@@ -77,6 +79,12 @@ app.use(
 
 app.get('/dashboard', (_req, res) => {
   res.sendFile(join(__dirname, 'dashboard.html'));
+});
+
+// Operations console. The page always loads; the API behind it refuses
+// everything unless ADMIN_PASSWORD is configured.
+app.get('/admin', (_req, res) => {
+  res.sendFile(join(__dirname, 'admin.html'));
 });
 // Public legal pages — linked from the app and App Store Connect.
 app.get('/privacy', (_req, res) => {
